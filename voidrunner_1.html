@@ -116,7 +116,7 @@
   .hull1-fill{background:var(--hull1);box-shadow:0 0 8px var(--hull1);}
   .hull2-fill{background:var(--hull2);box-shadow:0 0 8px var(--hull2);}
   .enemy-fill{background:var(--danger);box-shadow:0 0 8px var(--danger);}
-  .ship-visual{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .ship-visual{flex:1;min-height:0;max-height:160px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
   .ship-svg{opacity:0.7;filter:drop-shadow(0 0 12px var(--accent));transition:all 0.2s;}
   #player-ship-svg{animation:playerWiggle 4s ease-in-out infinite;}
   #enemy-ship-svg{animation:enemyWiggle 3.5s ease-in-out infinite;}
@@ -276,14 +276,14 @@
     #fight-indicator{font-size:8px;letter-spacing:1px;}
     #turn-display{display:none;}
 
-    /* Arena: single column stack */
-    #arena{grid-template-columns:1fr;grid-template-rows:auto 1fr auto;}
+    /* Arena: single column stack, fully bounded */
+    #arena{grid-template-columns:1fr;grid-template-rows:auto 1fr auto;overflow:hidden;}
 
     /* Enemy → top strip */
     #enemy-panel{
       order:1;flex-direction:row;flex-wrap:wrap;align-items:center;
       border-left:none;border-bottom:1px solid var(--border);
-      padding:8px 12px;gap:8px;min-height:0;
+      padding:8px 12px;gap:8px;flex:0 0 auto;
     }
     #enemy-panel .ship-visual{display:none;}
     #enemy-panel .ship-label{display:none;}
@@ -294,15 +294,18 @@
     #enemy-panel .status-chips{display:none;}
     #enemy-panel button{display:none;}
 
-    /* Combat center → middle */
-    #combat-center{order:2;}
-    #combat-log{height:44px;}
+    /* Combat center → fills remaining space, clips overflow */
+    #combat-center{order:2;overflow:hidden;min-height:0;}
+    #combat-log{height:40px;}
+    #hand-section{min-height:0;overflow:hidden;}
+    #hand-cards{align-items:flex-start;height:150px;min-height:150px;max-height:150px;}
+    .card{width:100px;min-height:130px;max-height:150px;}
 
-    /* Player → bottom strip */
+    /* Player → bottom strip, always visible */
     #player-panel{
       order:3;flex-direction:row;flex-wrap:wrap;align-items:center;
       border-right:none;border-top:1px solid var(--border);
-      padding:8px 12px;gap:8px;min-height:0;
+      padding:8px 12px;gap:8px;flex:0 0 auto;
     }
     #player-panel .ship-visual{display:none;}
     #player-panel .ship-label{display:none;}
@@ -312,9 +315,6 @@
     #action-bar-combat{flex:0 0 auto;margin-top:0;gap:4px;}
     .btn{padding:7px 8px;}
     #player-panel div[style*="v0.2"]{display:none;}
-
-    /* Cards */
-    .card{width:100px;min-height:110px;}
   }
 </style>
 </head>
