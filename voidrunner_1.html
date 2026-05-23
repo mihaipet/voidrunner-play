@@ -281,6 +281,7 @@
       <span><span class="rank-dot" style="background:#fff"></span>VII</span>
     </div>
     <div id="run-status">CLEARED <span id="status-node">0</span> / 7</div>
+    <button class="btn btn-ghost" id="btn-mute-map" style="flex:0;padding:4px 10px;font-size:10px;" onclick="toggleMute(this)">🔊</button>
   </div>
   <div id="starfield"></div>
   <div id="map-container">
@@ -321,6 +322,7 @@
     <div id="phase-indicator">INITIALIZING</div>
     <div id="turn-display">TURN <span id="turn-num">1</span></div>
     <button class="btn btn-ghost" id="btn-collection" style="flex:0;padding:4px 10px;font-size:8px;" onclick="showCollection()">CARDS ▸</button>
+    <button class="btn btn-ghost" id="btn-mute-combat" style="flex:0;padding:4px 10px;font-size:10px;" onclick="toggleMute(this)">🔊</button>
   </div>
   <div id="arena">
     <div class="ship-panel" id="player-panel">
@@ -445,6 +447,49 @@
 <div id="notif"></div>
 
 <script>
+// ═══════════════════════════════════════════════════
+// AUDIO
+// ═══════════════════════════════════════════════════
+const SND = {
+  _bg:null, _started:false, _queued:null, _muted:false,
+  boot() {
+    if(this._started)return;
+    this._started=true;
+    if(this._queued){this._playBg(...this._queued);this._queued=null;}
+  },
+  sfx(file,vol=0.65) {
+    if(this._muted)return;
+    try{const a=new Audio('sounds/'+file);a.volume=vol;a.play().catch(()=>{});}catch(e){}
+  },
+  bg(file,vol=0.32) {
+    if(!this._started){this._queued=[file,vol];return;}
+    if(this._bg&&this._bg._file===file)return;
+    this._playBg(file,vol);
+  },
+  _playBg(file,vol) {
+    const old=this._bg;
+    const a=new Audio('sounds/'+file);
+    a._file=file;a.loop=true;a.volume=0;
+    a.play().catch(()=>{});
+    this._ramp(a,vol,1200);
+    if(old)this._ramp(old,0,800,()=>old.pause());
+    this._bg=a;
+  },
+  _ramp(audio,to,ms,cb) {
+    const from=audio.volume,steps=20,dt=ms/steps;let i=0;
+    const t=setInterval(()=>{
+      audio.volume=Math.max(0,Math.min(1,from+(to-from)*(++i/steps)));
+      if(i>=steps){clearInterval(t);if(cb)cb();}
+    },dt);
+  },
+  mute() {
+    this._muted=!this._muted;
+    if(this._bg)this._ramp(this._bg,this._muted?0:0.32,400);
+    return this._muted;
+  }
+};
+document.addEventListener('pointerdown',()=>SND.boot(),{once:true});
+
 // ═══════════════════════════════════════════════════
 // CONSTANTS & DATA
 // ═══════════════════════════════════════════════════
@@ -627,6 +672,7 @@ function startFight(){
   document.getElementById('combat-log').innerHTML='';
   document.getElementById('action-panel').classList.remove('visible');
   showScreen('screen-combat');
+  SND.bg('urgent.mp3');
   updateCombatUI();
   startPlayerTurn();
 }
@@ -641,6 +687,7 @@ function returnToMap(result){
   mapState.selectedNode=null;
   document.getElementById('end-overlay').classList.remove('active');
   showScreen('screen-map');
+  SND.bg('sector.mp3');
   requestAnimationFrame(()=>renderMap());
   checkMapComplete();
 }
@@ -707,6 +754,7 @@ function playSelected(){
   if(gs.heatsink<card.cost){clog('Not enough heat for '+card.name+' (need '+card.cost+', have '+gs.heatsink+')','heat');return;}
   gs.heatsink-=card.cost;
   card.play();
+  SND.sfx('pulse.mp3');
   const idx=gs.hand.indexOf(cardId);if(idx!==-1)gs.hand.splice(idx,1);
   gs.discard.push(cardId);gs.selected=null;
   renderHand();updateHeatUI();
@@ -751,6 +799,7 @@ function setEnemyIntent(){
 }
 function fightVictory(){
   gs.phase='end';clog('ENEMY DESTROYED.','important');
+  SND.sfx('victory.mp3');
   setTimeout(()=>showRewardScreen(),700);
 }
 function debugKill(){
@@ -791,6 +840,7 @@ function afterReward(){
 }
 function showDefeat(){
   gs.phase='end';
+  SND.sfx('airy.mp3');
   document.getElementById('end-title').textContent='HULL BREACH';
   document.getElementById('end-title').className='defeat';
   document.getElementById('end-sub').textContent='STRUCTURAL FAILURE — MISSION ABORTED';
@@ -805,6 +855,7 @@ function fullReset(){
   mapState.cleared=[];mapState.deck=[];mapState.selectedNode=null;
   gs.player.shield=gs.player.maxShield;gs.player.hull=gs.player.maxHull;
   showScreen('screen-map');
+  SND.bg('sector.mp3');
   requestAnimationFrame(()=>renderMap());
 }
 
@@ -815,6 +866,7 @@ function clog(msg,cls){
   const el=document.createElement('div');
   el.className='log-entry'+(cls?' '+cls:'');el.textContent='> '+msg;
   document.getElementById('combat-log').prepend(el);
+  if(cls==='important')SND.sfx('transmission.mp3',0.5);
 }
 function updateCombatUI(){
   const p=gs.player;
@@ -848,6 +900,7 @@ function renderHand(){
     el.setAttribute('data-type',card.type);
     el.innerHTML='<div class="card-type-tag">'+card.type+'</div><div class="card-name">'+card.name+'</div><div class="card-desc">'+card.desc+'</div><div class="card-cost"><span class="cost-num">'+card.cost+'</span> HEAT</div>';
     el.addEventListener('click',()=>handleCardClick(cardId));
+    el.addEventListener('mouseenter',()=>SND.sfx('hover.mp3',0.2));
     container.appendChild(el);
   });
   document.getElementById('hand-count').textContent=gs.hand.length+' CARD'+(gs.hand.length!==1?'S':'');
@@ -934,7 +987,13 @@ document.getElementById('btn-endturn').addEventListener('click',endPlayerTurn);
 // ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
+function toggleMute(btn){
+  const muted=SND.mute();
+  document.querySelectorAll('[id^="btn-mute"]').forEach(b=>b.textContent=muted?'🔇':'🔊');
+}
+
 buildStarfield();
+SND.bg('sector.mp3');
 requestAnimationFrame(()=>{
   renderMap();
   window.addEventListener('resize',()=>renderMap());

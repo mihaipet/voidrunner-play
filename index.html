@@ -119,6 +119,28 @@
 </div>
 
 <script>
+// Title music — starts on first interaction
+let _titleStarted = false;
+function _bootAudio() {
+  if (_titleStarted) return;
+  _titleStarted = true;
+  try {
+    const a = new Audio('sounds/title.mp3');
+    a.loop = true; a.volume = 0;
+    a.play().catch(() => {});
+    let v = 0;
+    const t = setInterval(() => { a.volume = Math.min(0.32, v += 0.016); if (v >= 0.32) clearInterval(t); }, 50);
+  } catch(e) {}
+}
+document.addEventListener('pointerdown', _bootAudio, { once: true });
+
+// Hover SFX on menu items
+document.querySelectorAll('.menu-item:not(.disabled)').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    try { const a = new Audio('sounds/hover.mp3'); a.volume = 0.25; a.play().catch(() => {}); } catch(e) {}
+  });
+});
+
 (function() {
   const sf = document.getElementById('starfield');
   for (let i = 0; i < 200; i++) {
