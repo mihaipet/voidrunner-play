@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VOIDRUNNER — CARD LIBRARY</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+  :root {
+    --bg:#060810;--bg2:#0d1117;--bg3:#111820;--panel:#0a0f18;
+    --border:#1a2a3a;--border-bright:#2a4a6a;
+    --text:#8fb3cc;--text-dim:#3a5a7a;--text-bright:#c8e8ff;
+    --accent:#00c8ff;--accent-dim:#005a7a;
+    --heat:#ff6820;--heat-dim:#3a1a00;
+    --gold:#ffaa00;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;height:100vh;display:flex;flex-direction:column;overflow:hidden;user-select:none;}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:100;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);}
+
+  #starfield{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+  .star{position:absolute;border-radius:50%;background:white;}
+
+  /* ── HEADER ── */
+  #header{flex-shrink:0;z-index:10;background:var(--panel);}
+  #topbar{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .logo{font-family:'Orbitron',monospace;font-size:11px;font-weight:900;letter-spacing:4px;color:var(--accent-dim);}
+  #page-title{font-family:'Orbitron',monospace;font-size:13px;font-weight:900;letter-spacing:5px;color:var(--gold);flex:1;}
+  #card-count{font-size:9px;letter-spacing:2px;color:var(--text-dim);white-space:nowrap;}
+  #card-count span{color:var(--text-bright);font-family:'Orbitron',monospace;}
+
+  #filterbar{display:flex;align-items:center;gap:8px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap;}
+  .filter-group{display:flex;align-items:center;gap:6px;}
+  .filter-label{font-size:8px;letter-spacing:2px;color:var(--text-dim);white-space:nowrap;}
+  .filter-divider{width:1px;height:22px;background:var(--border);margin:0 4px;flex-shrink:0;}
+  .chip{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:5px 12px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;text-transform:uppercase;transition:all 0.15s;}
+  .chip:hover{border-color:var(--border-bright);color:var(--text);}
+  .chip.active{background:var(--bg3);color:var(--text-bright);border-color:var(--accent);}
+  .chip[data-value="attack"].active{border-color:#ff4a4a;color:#ff6666;}
+  .chip[data-value="defend"].active{border-color:#4a4aff;color:#6666ff;}
+  .chip[data-value="power"].active{border-color:#4aff4a;color:#66ff66;}
+  .chip[data-value="special"].active{border-color:var(--gold);color:var(--gold);}
+  .sort-select{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;padding:5px 10px;border:1px solid var(--border);background:var(--bg);color:var(--text-dim);cursor:pointer;text-transform:uppercase;appearance:none;-webkit-appearance:none;outline:none;}
+  .sort-select:focus{border-color:var(--border-bright);}
+
+  /* ── GRID ── */
+  #grid-wrap{flex:1;overflow-y:auto;position:relative;z-index:1;}
+  #grid-wrap::-webkit-scrollbar{width:4px;}
+  #grid-wrap::-webkit-scrollbar-thumb{background:var(--border-bright);}
+  #card-grid{padding:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px;align-content:start;}
+
+  /* ── CARDS ── */
+  .lib-card{border:1px solid var(--border);display:flex;flex-direction:column;transition:all 0.2s;}
+  .lib-card[data-type="attack"]{background:#1a0a0a;}
+  .lib-card[data-type="attack"]:hover{border-color:#ff4a4a;box-shadow:0 0 16px rgba(255,74,74,0.2);}
+  .lib-card[data-type="defend"]{background:#0a0a1a;}
+  .lib-card[data-type="defend"]:hover{border-color:#4a4aff;box-shadow:0 0 16px rgba(74,74,255,0.2);}
+  .lib-card[data-type="power"]{background:#0a1a0a;}
+  .lib-card[data-type="power"]:hover{border-color:#4aff4a;box-shadow:0 0 16px rgba(74,255,74,0.2);}
+  .lib-card[data-type="special"]{background:#1a1a0a;}
+  .lib-card[data-type="special"]:hover{border-color:var(--gold);box-shadow:0 0 16px rgba(255,170,0,0.2);}
+
+  .card-type-row{display:flex;align-items:center;justify-content:space-between;padding:3px 8px;border-bottom:1px solid var(--border);}
+  .card-type-label{font-size:7px;letter-spacing:2px;text-transform:uppercase;}
+  .lib-card[data-type="attack"] .card-type-label{color:#ff6666;}
+  .lib-card[data-type="defend"] .card-type-label{color:#6666ff;}
+  .lib-card[data-type="power"] .card-type-label{color:#66ff66;}
+  .lib-card[data-type="special"] .card-type-label{color:var(--gold);}
+
+  .source-badge{font-size:6px;letter-spacing:1px;padding:1px 5px;border:1px solid;}
+  .source-badge.starting{border-color:var(--accent-dim);color:var(--accent);}
+  .source-badge.reward{border-color:#2a2a1a;color:#555544;}
+
+  .card-name{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;padding:6px 8px 3px;color:var(--text-bright);line-height:1.3;}
+  .card-desc{font-size:8px;padding:0 8px 6px;color:var(--text-dim);line-height:1.45;flex:1;}
+  .card-desc em{color:var(--text);font-style:normal;}
+  .card-cost{display:flex;align-items:center;gap:5px;padding:5px 8px;border-top:1px solid var(--border);font-size:8px;color:var(--heat);}
+  .cost-num{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;}
+
+  .empty-state{grid-column:1/-1;text-align:center;padding:80px 20px;font-size:10px;letter-spacing:3px;color:var(--text-dim);}
+</style>
+</head>
+<body>
+
+<div id="starfield"></div>
+
+<div id="header">
+  <div id="topbar">
+    <div class="logo">// VOIDRUNNER</div>
+    <div id="page-title">CARD LIBRARY</div>
+    <div id="card-count">SHOWING <span id="count-shown">0</span> OF <span id="count-total">0</span></div>
+  </div>
+  <div id="filterbar">
+    <div class="filter-group">
+      <span class="filter-label">TYPE</span>
+      <button class="chip active" data-filter="type" data-value="all">ALL</button>
+      <button class="chip" data-filter="type" data-value="attack">ATTACK</button>
+      <button class="chip" data-filter="type" data-value="defend">DEFEND</button>
+      <button class="chip" data-filter="type" data-value="power">POWER</button>
+      <button class="chip" data-filter="type" data-value="special">SPECIAL</button>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span class="filter-label">SOURCE</span>
+      <button class="chip active" data-filter="source" data-value="all">ALL</button>
+      <button class="chip" data-filter="source" data-value="starting">STARTING</button>
+      <button class="chip" data-filter="source" data-value="reward">REWARD</button>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span class="filter-label">SORT</span>
+      <select class="sort-select" id="sort-select">
+        <option value="cost-asc">HEAT ↑</option>
+        <option value="cost-desc">HEAT ↓</option>
+        <option value="name">NAME</option>
+        <option value="type">TYPE</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div id="grid-wrap">
+  <div id="card-grid"></div>
+</div>
+
+<script>
+const STARTING_IDS = new Set(['basic_shot','heavy_shot','burst_fire','shield_pulse','hull_patch','deflector']);
+
+const ALL_CARDS = [
+  {id:'basic_shot',       name:'BASIC SHOT',       type:'attack',  cost:2,  desc:'Fire primary weapon. Deal <em>12 damage</em>.'},
+  {id:'heavy_shot',       name:'HEAVY SHOT',        type:'attack',  cost:4,  desc:'Overcharged fire. Deal <em>22 damage</em>.'},
+  {id:'burst_fire',       name:'BURST FIRE',        type:'attack',  cost:3,  desc:'Three rapid shots. Deal <em>5 damage</em> three times.'},
+  {id:'shield_pulse',     name:'SHIELD PULSE',      type:'defend',  cost:2,  desc:'Restore <em>15 shield</em>.'},
+  {id:'hull_patch',       name:'HULL PATCH',        type:'defend',  cost:3,  desc:'Emergency repair. Restore <em>12 hull</em>.'},
+  {id:'deflector',        name:'DEFLECTOR',         type:'defend',  cost:2,  desc:'Raise barriers. Gain <em>10 block</em>.'},
+  {id:'rail_slug',        name:'RAIL SLUG',         type:'attack',  cost:3,  desc:'Magnetic round. Deal <em>20 damage</em>.'},
+  {id:'void_pulse',       name:'VOID PULSE',        type:'attack',  cost:2,  desc:'Resonance burst. Deal <em>8 damage</em> twice.'},
+  {id:'reactive_plating', name:'REACTIVE PLATING',  type:'defend',  cost:2,  desc:'Adaptive armor. Gain <em>14 block</em>.'},
+  {id:'plasma_burst',     name:'PLASMA BURST',      type:'attack',  cost:4,  desc:'Superheated bolt. Deal <em>28 damage</em>.'},
+  {id:'scatter_shot',     name:'SCATTER SHOT',      type:'attack',  cost:3,  desc:'Spread fire. Deal <em>6 damage</em> four times.'},
+  {id:'emergency_patch',  name:'EMERGENCY PATCH',   type:'defend',  cost:3,  desc:'Field repair. Restore <em>20 hull</em>.'},
+  {id:'lance_cannon',     name:'LANCE CANNON',      type:'attack',  cost:5,  desc:'Focused beam. Deal <em>38 damage</em>.'},
+  {id:'targeting_matrix', name:'TARGETING MATRIX',  type:'power',   cost:3,  desc:'Lock targeting. Gain <em>AIM+15</em> this turn.'},
+  {id:'force_barrier',    name:'FORCE BARRIER',     type:'defend',  cost:3,  desc:'Energy shield. Gain <em>20 block</em> + restore <em>10 shield</em>.'},
+  {id:'annihilator',      name:'ANNIHILATOR',       type:'attack',  cost:6,  desc:'Maximum output. Deal <em>50 damage</em>.'},
+  {id:'morphic_strike',   name:'MORPHIC STRIKE',    type:'special', cost:4,  desc:'Matter spike. Deal <em>18 damage</em> three times.'},
+  {id:'hull_fortress',    name:'HULL FORTRESS',     type:'defend',  cost:4,  desc:'Full lockdown. Gain <em>30 block</em>.'},
+  {id:'void_lance',       name:'VOID LANCE',        type:'attack',  cost:5,  desc:'Dimensional spear. Deal <em>35 damage</em> twice.'},
+  {id:'morphic_echo',     name:'MORPHIC ECHO',      type:'special', cost:0,  desc:'Matter duplicate. <em>Double all damage</em> this turn.'},
+  {id:'full_restore',     name:'FULL RESTORE',      type:'defend',  cost:5,  desc:'Emergency protocol. Full <em>shield</em> + restore <em>30 hull</em>.'},
+];
+
+const state = { type: 'all', source: 'all', sort: 'cost-asc' };
+
+function getCards() {
+  let cards = ALL_CARDS.filter(c => {
+    if (state.type !== 'all' && c.type !== state.type) return false;
+    if (state.source === 'starting' && !STARTING_IDS.has(c.id)) return false;
+    if (state.source === 'reward' && STARTING_IDS.has(c.id)) return false;
+    return true;
+  });
+  return cards.sort((a, b) => {
+    if (state.sort === 'cost-asc')  return a.cost - b.cost || a.name.localeCompare(b.name);
+    if (state.sort === 'cost-desc') return b.cost - a.cost || a.name.localeCompare(b.name);
+    if (state.sort === 'name')      return a.name.localeCompare(b.name);
+    if (state.sort === 'type')      return a.type.localeCompare(b.type) || a.cost - b.cost;
+    return 0;
+  });
+}
+
+function render() {
+  const cards = getCards();
+  const grid = document.getElementById('card-grid');
+  document.getElementById('count-shown').textContent = cards.length;
+  document.getElementById('count-total').textContent = ALL_CARDS.length;
+  grid.innerHTML = '';
+
+  if (!cards.length) {
+    const el = document.createElement('div');
+    el.className = 'empty-state';
+    el.textContent = '— NO CARDS MATCH —';
+    grid.appendChild(el);
+    return;
+  }
+
+  cards.forEach(card => {
+    const isStart = STARTING_IDS.has(card.id);
+    const el = document.createElement('div');
+    el.className = 'lib-card';
+    el.setAttribute('data-type', card.type);
+    el.innerHTML =
+      '<div class="card-type-row">' +
+        '<span class="card-type-label">' + card.type + '</span>' +
+        '<span class="source-badge ' + (isStart ? 'starting' : 'reward') + '">' + (isStart ? 'START' : 'REWARD') + '</span>' +
+      '</div>' +
+      '<div class="card-name">' + card.name + '</div>' +
+      '<div class="card-desc">' + card.desc + '</div>' +
+      '<div class="card-cost"><span class="cost-num">' + card.cost + '</span>&nbsp;HEAT</div>';
+    grid.appendChild(el);
+  });
+}
+
+document.querySelectorAll('.chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.filter;
+    state[key] = btn.dataset.value;
+    document.querySelectorAll('.chip[data-filter="' + key + '"]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  });
+});
+
+document.getElementById('sort-select').addEventListener('change', e => {
+  state.sort = e.target.value;
+  render();
+});
+
+// Starfield
+(function() {
+  const sf = document.getElementById('starfield');
+  for (let i = 0; i < 180; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() * 2 + 0.4;
+    s.style.cssText = 'width:' + sz + 'px;height:' + sz + 'px;left:' + (Math.random()*100) + '%;top:' + (Math.random()*100) + '%;opacity:' + (Math.random()*0.5+0.1) + ';';
+    if (Math.random() > 0.65) s.style.background = '#ffbbaa';
+    sf.appendChild(s);
+  }
+})();
+
+render();
+</script>
+</body>
+</html>
