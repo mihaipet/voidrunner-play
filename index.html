@@ -51,6 +51,15 @@
   #footer{margin-top:48px;display:flex;align-items:center;gap:24px;font-size:8px;letter-spacing:2px;color:var(--text-dim);animation:fadeUp 1s 0.5s ease both;}
   #footer span{color:#2a4a3a;}
 
+  /* ── PREVIOUS VERSIONS ── */
+  #versions{margin-top:32px;width:100%;animation:fadeUp 1s 0.6s ease both;}
+  #versions-label{font-size:7px;letter-spacing:4px;color:var(--text-dim);margin-bottom:8px;text-align:center;}
+  #versions-list{display:flex;flex-direction:column;gap:2px;}
+  .version-link{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border:1px solid var(--border);text-decoration:none;color:var(--text-dim);font-size:9px;letter-spacing:2px;transition:all 0.15s;}
+  .version-link:hover{border-color:var(--border-bright);color:var(--text);}
+  .version-link + .version-link{border-top:none;}
+  #versions-empty{font-size:8px;letter-spacing:2px;color:var(--text-dim);opacity:0.4;text-align:center;padding:10px 0;}
+
   @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 </style>
 </head>
@@ -93,6 +102,18 @@
 
   <div id="footer">
     <span>MIHAI PETICA — 2026</span>
+  </div>
+
+  <div id="versions">
+    <div id="versions-label">PREVIOUS VERSIONS</div>
+    <div id="versions-list">
+      <!-- Add entries here when a new version ships. Example:
+      <a class="version-link" href="v0.2/">
+        <span>v0.2 — 2026-04-13</span><span>▶</span>
+      </a>
+      -->
+      <div id="versions-empty">— NONE YET —</div>
+    </div>
   </div>
 
 </div>
