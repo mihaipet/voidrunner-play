@@ -101,7 +101,7 @@
   #turn-display{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;color:var(--text-dim);}
   #turn-display span{color:var(--accent);}
   #arena{flex:1;display:grid;grid-template-columns:1fr 2fr 1fr;overflow:hidden;min-height:0;}
-  .ship-panel{display:flex;flex-direction:column;padding:14px;border-right:1px solid var(--border);background:var(--panel);gap:8px;overflow:hidden;min-height:0;}
+  .ship-panel{display:flex;flex-direction:column;padding:14px;padding-bottom:54px;border-right:1px solid var(--border);background:var(--panel);gap:8px;overflow:hidden;min-height:0;position:relative;}
   #enemy-panel{border-right:none;border-left:1px solid var(--border);align-items:flex-end;} #enemy-panel .ship-visual{justify-content:center;} #enemy-panel .bar-track{height:10px;}
   .ship-label{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:3px;color:var(--text-dim);}
   .ship-name{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--text-bright);line-height:1.2;}
@@ -185,7 +185,7 @@
   .card-desc em{color:var(--text);font-style:normal;}
   .card-cost{display:flex;align-items:center;gap:4px;padding:4px 6px;border-top:1px solid var(--border);font-size:8px;color:var(--heat);flex-shrink:0;}
   .card-cost .cost-num{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;}
-  #action-bar-combat{display:flex;gap:6px;align-items:center;margin-top:auto;}
+  #action-bar-combat{display:flex;gap:6px;align-items:center;position:absolute;bottom:14px;left:14px;right:14px;}
 
   /* SHARED BUTTONS */
   .btn{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:8px 10px;border:1px solid;background:transparent;cursor:pointer;text-transform:uppercase;transition:all 0.15s;flex:1;}
@@ -306,13 +306,14 @@
       order:3;flex-direction:row;flex-wrap:wrap;align-items:center;
       border-right:none;border-top:1px solid var(--border);
       padding:8px 12px;gap:8px;flex:0 0 auto;
+      position:static;
     }
     #player-panel .ship-visual{display:none;}
     #player-panel .ship-label{display:none;}
     #player-panel .ship-name{font-size:10px;letter-spacing:1px;flex:0 0 auto;}
     #player-panel .hull-section{flex:1;min-width:120px;}
     #player-panel .status-chips{display:none;}
-    #action-bar-combat{flex:0 0 auto;margin-top:0;gap:4px;}
+    #action-bar-combat{position:static;bottom:auto;left:auto;right:auto;flex:0 0 auto;gap:4px;}
     .btn{padding:7px 8px;}
     #player-panel div[style*="v0.2"]{display:none;}
   }
