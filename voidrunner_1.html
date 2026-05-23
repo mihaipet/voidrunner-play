@@ -17,7 +17,7 @@
     --r1:#4a9fff;--r2:#4aff9f;--r3:#ffcc00;--r4:#ff8800;--r5:#ff2840;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;height:100vh;overflow:hidden;display:flex;flex-direction:column;user-select:none;}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;height:100vh;height:100dvh;overflow:hidden;display:flex;flex-direction:column;user-select:none;}
   body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:100;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);}
 
   /* ── SCREENS ── */
@@ -316,6 +316,13 @@
     #action-bar-combat{position:static;bottom:auto;left:auto;right:auto;flex:0 0 auto;gap:4px;}
     .btn{padding:7px 8px;}
     #player-panel div[style*="v0.2"]{display:none;}
+  }
+
+  /* Landscape on short screens (phones/tablets in landscape) */
+  @media (max-height:600px) and (min-width:641px) {
+    .card{min-height:80px;}
+    #combat-log{height:36px;}
+    .ship-visual{max-height:100px;}
   }
 </style>
 </head>
