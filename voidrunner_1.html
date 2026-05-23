@@ -263,6 +263,59 @@
   .col-empty{font-size:10px;letter-spacing:2px;color:var(--text-dim);width:100%;text-align:center;margin-top:60px;}
   #col-footer{flex-shrink:0;padding:10px 20px;border-top:1px solid var(--border);background:var(--panel);display:flex;gap:14px;align-items:center;font-size:9px;color:var(--text-dim);letter-spacing:1px;}
   #col-footer span{color:var(--text);font-family:'Orbitron',monospace;}
+
+  /* ══════════════════════════════════════
+     RESPONSIVE — mobile portrait
+  ══════════════════════════════════════ */
+  @media (max-width:640px){
+    /* Map topbar */
+    #rank-legend{display:none;}
+
+    /* Combat topbar */
+    #combat-topbar{gap:6px;padding:6px 10px;flex-wrap:wrap;}
+    #fight-indicator{font-size:8px;letter-spacing:1px;}
+    #turn-display{display:none;}
+
+    /* Arena: single column stack */
+    #arena{grid-template-columns:1fr;grid-template-rows:auto 1fr auto;}
+
+    /* Enemy → top strip */
+    #enemy-panel{
+      order:1;flex-direction:row;flex-wrap:wrap;align-items:center;
+      border-left:none;border-bottom:1px solid var(--border);
+      padding:8px 12px;gap:8px;min-height:0;
+    }
+    #enemy-panel .ship-visual{display:none;}
+    #enemy-panel .ship-label{display:none;}
+    #enemy-panel .ship-name{font-size:10px;letter-spacing:1px;flex:0 0 auto;}
+    #enemy-panel .hull-section{flex:1;min-width:120px;}
+    #enemy-panel .bar-track{height:6px;}
+    #enemy-panel .intent-box{flex:1;min-width:90px;width:auto;}
+    #enemy-panel .status-chips{display:none;}
+    #enemy-panel button{display:none;}
+
+    /* Combat center → middle */
+    #combat-center{order:2;}
+    #combat-log{height:44px;}
+
+    /* Player → bottom strip */
+    #player-panel{
+      order:3;flex-direction:row;flex-wrap:wrap;align-items:center;
+      border-right:none;border-top:1px solid var(--border);
+      padding:8px 12px;gap:8px;min-height:0;
+    }
+    #player-panel .ship-visual{display:none;}
+    #player-panel .ship-label{display:none;}
+    #player-panel .ship-name{font-size:10px;letter-spacing:1px;flex:0 0 auto;}
+    #player-panel .hull-section{flex:1;min-width:120px;}
+    #player-panel .status-chips{display:none;}
+    #action-bar-combat{flex:0 0 auto;margin-top:0;gap:4px;}
+    .btn{padding:7px 8px;}
+    #player-panel div[style*="v0.2"]{display:none;}
+
+    /* Cards */
+    .card{width:100px;min-height:110px;}
+  }
 </style>
 </head>
 <body>
