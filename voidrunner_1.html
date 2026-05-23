@@ -754,7 +754,6 @@ function playSelected(){
   if(gs.heatsink<card.cost){clog('Not enough heat for '+card.name+' (need '+card.cost+', have '+gs.heatsink+')','heat');return;}
   gs.heatsink-=card.cost;
   card.play();
-  SND.sfx('pulse.mp3');
   const idx=gs.hand.indexOf(cardId);if(idx!==-1)gs.hand.splice(idx,1);
   gs.discard.push(cardId);gs.selected=null;
   renderHand();updateHeatUI();
@@ -799,7 +798,6 @@ function setEnemyIntent(){
 }
 function fightVictory(){
   gs.phase='end';clog('ENEMY DESTROYED.','important');
-  SND.sfx('victory.mp3');
   setTimeout(()=>showRewardScreen(),700);
 }
 function debugKill(){
@@ -840,7 +838,6 @@ function afterReward(){
 }
 function showDefeat(){
   gs.phase='end';
-  SND.sfx('airy.mp3');
   document.getElementById('end-title').textContent='HULL BREACH';
   document.getElementById('end-title').className='defeat';
   document.getElementById('end-sub').textContent='STRUCTURAL FAILURE — MISSION ABORTED';
@@ -866,7 +863,6 @@ function clog(msg,cls){
   const el=document.createElement('div');
   el.className='log-entry'+(cls?' '+cls:'');el.textContent='> '+msg;
   document.getElementById('combat-log').prepend(el);
-  if(cls==='important')SND.sfx('transmission.mp3',0.5);
 }
 function updateCombatUI(){
   const p=gs.player;
@@ -900,7 +896,6 @@ function renderHand(){
     el.setAttribute('data-type',card.type);
     el.innerHTML='<div class="card-type-tag">'+card.type+'</div><div class="card-name">'+card.name+'</div><div class="card-desc">'+card.desc+'</div><div class="card-cost"><span class="cost-num">'+card.cost+'</span> HEAT</div>';
     el.addEventListener('click',()=>handleCardClick(cardId));
-    el.addEventListener('mouseenter',()=>SND.sfx('hover.mp3',0.2));
     container.appendChild(el);
   });
   document.getElementById('hand-count').textContent=gs.hand.length+' CARD'+(gs.hand.length!==1?'S':'');

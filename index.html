@@ -134,13 +134,6 @@ function _bootAudio() {
 }
 document.addEventListener('pointerdown', _bootAudio, { once: true });
 
-// Hover SFX on menu items
-document.querySelectorAll('.menu-item:not(.disabled)').forEach(el => {
-  el.addEventListener('mouseenter', () => {
-    try { const a = new Audio('sounds/hover.mp3'); a.volume = 0.25; a.play().catch(() => {}); } catch(e) {}
-  });
-});
-
 (function() {
   const sf = document.getElementById('starfield');
   for (let i = 0; i < 200; i++) {
