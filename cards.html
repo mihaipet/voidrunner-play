@@ -6,227 +6,167 @@
 <title>VOIDRUNNER — CARD LIBRARY</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
-  :root {
+  :root{
     --bg:#060810;--bg2:#0d1117;--bg3:#111820;--panel:#0a0f18;
     --border:#1a2a3a;--border-bright:#2a4a6a;
     --text:#8fb3cc;--text-dim:#3a5a7a;--text-bright:#c8e8ff;
     --accent:#00c8ff;--accent-dim:#005a7a;
-    --heat:#ff6820;--heat-dim:#3a1a00;
     --gold:#ffaa00;
+    --c-attack:#ff4a4a;--c-defend:#4a6aff;--c-power:#4aff4a;--c-special:#ffaa00;
+    --c-starter:#888;--c-common:#8fb3cc;--c-rare:#4a9aff;--c-epic:#b04aff;--c-unique:#ffaa00;--c-unassigned:#3a5a7a;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;height:100vh;display:flex;flex-direction:column;overflow:hidden;user-select:none;}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;height:100dvh;height:100vh;display:flex;flex-direction:column;overflow:hidden;user-select:none;}
   body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:100;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);}
 
-  #starfield{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
-  .star{position:absolute;border-radius:50%;background:white;}
-
-  /* ── HEADER ── */
-  #header{flex-shrink:0;z-index:10;background:var(--panel);}
-  #topbar{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
-  .logo{font-family:'Orbitron',monospace;font-size:11px;font-weight:900;letter-spacing:4px;color:var(--accent-dim);}
-  #page-title{font-family:'Orbitron',monospace;font-size:13px;font-weight:900;letter-spacing:5px;color:var(--gold);flex:1;}
+  /* TOPBAR */
+  #topbar{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--panel);flex-shrink:0;z-index:10;}
+  .logo{font-family:'Orbitron',monospace;font-size:10px;font-weight:900;letter-spacing:4px;color:var(--accent-dim);text-decoration:none;}
+  #page-title{font-family:'Orbitron',monospace;font-size:12px;font-weight:900;letter-spacing:5px;color:var(--gold);flex:1;}
   #card-count{font-size:9px;letter-spacing:2px;color:var(--text-dim);white-space:nowrap;}
   #card-count span{color:var(--text-bright);font-family:'Orbitron',monospace;}
 
-  #filterbar{display:flex;align-items:center;gap:8px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap;}
-  .filter-group{display:flex;align-items:center;gap:6px;}
-  .filter-label{font-size:8px;letter-spacing:2px;color:var(--text-dim);white-space:nowrap;}
-  .filter-divider{width:1px;height:22px;background:var(--border);margin:0 4px;flex-shrink:0;}
-  .chip{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:5px 12px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;text-transform:uppercase;transition:all 0.15s;}
+  /* FILTERBAR */
+  #filterbar{display:flex;align-items:center;gap:6px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;flex-wrap:wrap;z-index:10;}
+  .filter-label{font-size:7px;letter-spacing:2px;color:var(--text-dim);white-space:nowrap;margin-right:2px;}
+  .divider{width:1px;height:20px;background:var(--border);margin:0 6px;flex-shrink:0;}
+  .chip{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;padding:4px 10px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;text-transform:uppercase;transition:all 0.15s;white-space:nowrap;}
   .chip:hover{border-color:var(--border-bright);color:var(--text);}
-  .chip.active{background:var(--bg3);color:var(--text-bright);border-color:var(--accent);}
-  .chip[data-value="attack"].active{border-color:#ff4a4a;color:#ff6666;}
-  .chip[data-value="defend"].active{border-color:#4a4aff;color:#6666ff;}
-  .chip[data-value="power"].active{border-color:#4aff4a;color:#66ff66;}
-  .chip[data-value="special"].active{border-color:var(--gold);color:var(--gold);}
-  .sort-select{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;padding:5px 10px;border:1px solid var(--border);background:var(--bg);color:var(--text-dim);cursor:pointer;text-transform:uppercase;appearance:none;-webkit-appearance:none;outline:none;}
-  .sort-select:focus{border-color:var(--border-bright);}
+  .chip.on{background:var(--bg3);color:var(--text-bright);border-color:var(--accent);}
+  .chip[data-v="A"].on{border-color:var(--c-attack);color:var(--c-attack);}
+  .chip[data-v="D"].on{border-color:var(--c-defend);color:var(--c-defend);}
+  .chip[data-v="P"].on{border-color:var(--c-power);color:var(--c-power);}
+  .chip[data-v="S"].on{border-color:var(--c-special);color:var(--c-special);}
+  .chip[data-v="ST"].on{border-color:var(--c-starter);color:var(--c-starter);}
+  .chip[data-v="C"].on{border-color:var(--c-common);color:var(--c-common);}
+  .chip[data-v="R"].on{border-color:var(--c-rare);color:var(--c-rare);}
+  .chip[data-v="E"].on{border-color:var(--c-epic);color:var(--c-epic);}
+  .chip[data-v="U"].on{border-color:var(--c-unique);color:var(--c-unique);}
 
-  /* ── GRID ── */
-  #grid-wrap{flex:1;overflow-y:auto;position:relative;z-index:1;}
+  /* GRID */
+  #grid-wrap{flex:1;overflow-y:auto;padding:20px;}
   #grid-wrap::-webkit-scrollbar{width:4px;}
   #grid-wrap::-webkit-scrollbar-thumb{background:var(--border-bright);}
-  #card-grid{padding:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px;align-content:start;}
+  #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;align-content:start;}
 
-  /* ── CARDS ── */
-  .lib-card{border:1px solid var(--border);display:flex;flex-direction:column;transition:all 0.2s;}
-  .lib-card[data-type="attack"]{background:#1a0a0a;}
-  .lib-card[data-type="attack"]:hover{border-color:#ff4a4a;box-shadow:0 0 16px rgba(255,74,74,0.2);}
-  .lib-card[data-type="defend"]{background:#0a0a1a;}
-  .lib-card[data-type="defend"]:hover{border-color:#4a4aff;box-shadow:0 0 16px rgba(74,74,255,0.2);}
-  .lib-card[data-type="power"]{background:#0a1a0a;}
-  .lib-card[data-type="power"]:hover{border-color:#4aff4a;box-shadow:0 0 16px rgba(74,255,74,0.2);}
-  .lib-card[data-type="special"]{background:#1a1a0a;}
-  .lib-card[data-type="special"]:hover{border-color:var(--gold);box-shadow:0 0 16px rgba(255,170,0,0.2);}
-
-  .card-type-row{display:flex;align-items:center;justify-content:space-between;padding:3px 8px;border-bottom:1px solid var(--border);}
-  .card-type-label{font-size:7px;letter-spacing:2px;text-transform:uppercase;}
-  .lib-card[data-type="attack"] .card-type-label{color:#ff6666;}
-  .lib-card[data-type="defend"] .card-type-label{color:#6666ff;}
-  .lib-card[data-type="power"] .card-type-label{color:#66ff66;}
-  .lib-card[data-type="special"] .card-type-label{color:var(--gold);}
-
-  .source-badge{font-size:6px;letter-spacing:1px;padding:1px 5px;border:1px solid;}
-  .source-badge.starting{border-color:var(--accent-dim);color:var(--accent);}
-  .source-badge.reward{border-color:#2a2a1a;color:#555544;}
-
+  /* CARD */
+  .card{border:1px solid var(--border);display:flex;flex-direction:column;transition:all 0.15s;position:relative;}
+  .card:hover{transform:translateY(-3px);}
+  .card[data-type="A"]{background:#1a0a0a;} .card[data-type="A"]:hover{border-color:var(--c-attack);box-shadow:0 0 16px rgba(255,74,74,0.15);}
+  .card[data-type="D"]{background:#0a0a1a;} .card[data-type="D"]:hover{border-color:var(--c-defend);box-shadow:0 0 16px rgba(74,106,255,0.15);}
+  .card[data-type="P"]{background:#0a1a0a;} .card[data-type="P"]:hover{border-color:var(--c-power);box-shadow:0 0 16px rgba(74,255,74,0.15);}
+  .card[data-type="S"]{background:#1a1a0a;} .card[data-type="S"]:hover{border-color:var(--c-special);box-shadow:0 0 16px rgba(255,170,0,0.15);}
+  .card[data-status="retired"]{opacity:0.4;}
+  .card[data-status="unassigned"]{border-style:dashed;}
+  .card-header{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-bottom:1px solid var(--border);}
+  .card-type{font-size:7px;letter-spacing:2px;text-transform:uppercase;}
+  .card[data-type="A"] .card-type{color:var(--c-attack);}
+  .card[data-type="D"] .card-type{color:var(--c-defend);}
+  .card[data-type="P"] .card-type{color:var(--c-power);}
+  .card[data-type="S"] .card-type{color:var(--c-special);}
+  .card-rarity{font-size:6px;letter-spacing:1px;padding:1px 5px;border:1px solid;text-transform:uppercase;}
+  .rarity-ST{border-color:var(--c-starter);color:var(--c-starter);}
+  .rarity-C {border-color:var(--c-common); color:var(--c-common);}
+  .rarity-R {border-color:var(--c-rare);   color:var(--c-rare);}
+  .rarity-E {border-color:var(--c-epic);   color:var(--c-epic);}
+  .rarity-U {border-color:var(--c-unique); color:var(--c-unique);}
+  .rarity-\?{border-color:var(--text-dim); color:var(--text-dim);}
   .card-name{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;padding:6px 8px 3px;color:var(--text-bright);line-height:1.3;}
-  .card-desc{font-size:8px;padding:0 8px 6px;color:var(--text-dim);line-height:1.45;flex:1;}
-  .card-desc em{color:var(--text);font-style:normal;}
-  .card-cost{display:flex;align-items:center;gap:5px;padding:5px 8px;border-top:1px solid var(--border);font-size:8px;color:var(--heat);}
-  .cost-num{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;}
+  .card-effect{font-size:8px;padding:0 8px 6px;color:var(--text-dim);line-height:1.4;flex:1;}
+  .card-footer{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-top:1px solid var(--border);}
+  .card-cost{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:#ff6820;}
+  .card-cost-label{font-size:7px;color:var(--text-dim);letter-spacing:1px;}
+  .card-output{font-size:7px;letter-spacing:1px;color:var(--text-dim);text-align:right;max-width:90px;}
+  .card-notes{font-size:7px;padding:4px 8px 6px;color:var(--text-dim);opacity:0.6;border-top:1px dashed var(--border);line-height:1.4;display:none;}
+  .card:hover .card-notes{display:block;}
 
-  .empty-state{grid-column:1/-1;text-align:center;padding:80px 20px;font-size:10px;letter-spacing:3px;color:var(--text-dim);}
+  #empty{display:none;text-align:center;padding:60px;font-size:10px;letter-spacing:3px;color:var(--text-dim);}
 </style>
 </head>
 <body>
 
-<div id="starfield"></div>
+<div id="topbar">
+  <a class="logo" href="index.html">// VOIDRUNNER</a>
+  <div id="page-title">CARD LIBRARY</div>
+  <div id="card-count">SHOWING <span id="count-num">0</span> CARDS</div>
+</div>
 
-<div id="header">
-  <div id="topbar">
-    <div class="logo">// VOIDRUNNER</div>
-    <div id="page-title">CARD LIBRARY</div>
-    <div id="card-count">SHOWING <span id="count-shown">0</span> OF <span id="count-total">0</span></div>
-  </div>
-  <div id="filterbar">
-    <div class="filter-group">
-      <span class="filter-label">TYPE</span>
-      <button class="chip active" data-filter="type" data-value="all">ALL</button>
-      <button class="chip" data-filter="type" data-value="attack">ATTACK</button>
-      <button class="chip" data-filter="type" data-value="defend">DEFEND</button>
-      <button class="chip" data-filter="type" data-value="power">POWER</button>
-      <button class="chip" data-filter="type" data-value="special">SPECIAL</button>
-    </div>
-    <div class="filter-divider"></div>
-    <div class="filter-group">
-      <span class="filter-label">SOURCE</span>
-      <button class="chip active" data-filter="source" data-value="all">ALL</button>
-      <button class="chip" data-filter="source" data-value="starting">STARTING</button>
-      <button class="chip" data-filter="source" data-value="reward">REWARD</button>
-    </div>
-    <div class="filter-divider"></div>
-    <div class="filter-group">
-      <span class="filter-label">SORT</span>
-      <select class="sort-select" id="sort-select">
-        <option value="cost-asc">HEAT ↑</option>
-        <option value="cost-desc">HEAT ↓</option>
-        <option value="name">NAME</option>
-        <option value="type">TYPE</option>
-      </select>
-    </div>
-  </div>
+<div id="filterbar">
+  <span class="filter-label">TYPE</span>
+  <button class="chip on" data-group="type" data-v="all">ALL</button>
+  <button class="chip"    data-group="type" data-v="A">ATTACK</button>
+  <button class="chip"    data-group="type" data-v="D">DEFEND</button>
+  <button class="chip"    data-group="type" data-v="P">POWER</button>
+  <button class="chip"    data-group="type" data-v="S">SPECIAL</button>
+
+  <div class="divider"></div>
+  <span class="filter-label">RARITY</span>
+  <button class="chip on" data-group="rarity" data-v="all">ALL</button>
+  <button class="chip"    data-group="rarity" data-v="ST">STARTER</button>
+  <button class="chip"    data-group="rarity" data-v="C">COMMON</button>
+  <button class="chip"    data-group="rarity" data-v="R">RARE</button>
+  <button class="chip"    data-group="rarity" data-v="E">EPIC</button>
+  <button class="chip"    data-group="rarity" data-v="U">UNIQUE</button>
+  <button class="chip"    data-group="rarity" data-v="?">UNASSIGNED</button>
+
+  <div class="divider"></div>
+  <span class="filter-label">STATUS</span>
+  <button class="chip on" data-group="status" data-v="all">ALL</button>
+  <button class="chip"    data-group="status" data-v="active">ACTIVE</button>
+  <button class="chip"    data-group="status" data-v="unassigned">UNASSIGNED</button>
+  <button class="chip"    data-group="status" data-v="retired">RETIRED</button>
 </div>
 
 <div id="grid-wrap">
-  <div id="card-grid"></div>
+  <div id="grid"></div>
+  <div id="empty">NO CARDS MATCH</div>
 </div>
 
 <script>
-const STARTING_IDS = new Set(['basic_shot','heavy_shot','burst_fire','shield_pulse','hull_patch','deflector']);
+const CARDS = [{"name": "ANNIHILATOR", "type": "A", "type_name": "ATTACK", "rarity": "?", "rarity_name": "UNASSIGNED", "status": "unassigned", "cost": 6, "efficiency": 8.3, "output": "50 damage", "effect": "Maximum output. Deal 50 damage.", "notes": "Highest heat cost in the game. Uses nearly the full heatsink in one card. Efficiency is reasonable but not exceptional. The \"big finisher\" fantasy is undercut by Void Lance existing."}, {"name": "LANCE CANNON", "type": "A", "type_name": "ATTACK", "rarity": "?", "rarity_name": "UNASSIGNED", "status": "unassigned", "cost": 5, "efficiency": 7.6, "output": "38 damage", "effect": "Focused beam. Deal 38 damage.", "notes": "High-cost single hit. Outclassed by Void Lance (cost 5, 70 damage) in any run that reaches fight 5. Needs a reason to exist beyond raw output."}, {"name": "PLASMA BURST", "type": "A", "type_name": "ATTACK", "rarity": "?", "rarity_name": "UNASSIGNED", "status": "unassigned", "cost": 4, "efficiency": 7.0, "output": "28 damage", "effect": "Superheated bolt. Deal 28 damage.", "notes": "Straightforward mid-tier attack. Better than Heavy Shot at the same cost. No special properties."}, {"name": "RAIL SLUG", "type": "A", "type_name": "ATTACK", "rarity": "?", "rarity_name": "UNASSIGNED", "status": "unassigned", "cost": 3, "efficiency": 6.7, "output": "20 damage", "effect": "Magnetic round. Deal 20 damage.", "notes": "Solid early reward. Better efficiency than anything in the starting deck. Simple and clean."}, {"name": "SCATTER SHOT", "type": "A", "type_name": "ATTACK", "rarity": "?", "rarity_name": "UNASSIGNED", "status": "unassigned", "cost": 3, "efficiency": 8.0, "output": "24 damage (4 hits of 6)", "effect": "Spread fire. Deal 6 damage × 4 (24 total).", "notes": "Great efficiency for cost 3. Multi-hit design — same issue as Burst Fire: block neutralises the spread. Interesting if hit count ever matters mechanically."}, {"name": "VOID LANCE", "type": "A", "type_name": "ATTACK", "rarity": "?", "rarity_name": "UNASSIGNED", "status": "unassigned", "cost": 5, "efficiency": 14.0, "output": "70 damage (2 hits of 35)", "effect": "Dimensional spear. Deal 35 damage × 2 (70 total).", "notes": "Massive outlier. 14 dmg/heat is nearly double the next best attack (Scatter Shot, Morphic Echo at ~8). Breaks balance when combined with Morphic Echo (cost 0 double). Needs significant reduction or rework."}, {"name": "VOID PULSE", "type": "A", "type_name": "ATTACK", "rarity": "?", "rarity_name": "UNASSIGNED", "status": "unassigned", "cost": 2, "efficiency": 8.0, "output": "16 damage (2 hits of 8)", "effect": "Resonance burst. Deal 8 damage × 2 (16 total).", "notes": "Best efficiency of the low-cost attacks. Cheap, hits twice, pairs well with Morphic Echo. May be slightly undercosted."}, {"name": "BASIC SHOT", "type": "A", "type_name": "ATTACK", "rarity": "ST", "rarity_name": "STARTER", "status": "unassigned", "cost": 2, "efficiency": 6.0, "output": "12 damage", "effect": "Fire primary weapon. Deal 12 damage.", "notes": "The bread-and-butter attack. Reliable, predictable, low floor and low ceiling. ×3 copies means it shapes early turns heavily."}, {"name": "BURST FIRE", "type": "A", "type_name": "ATTACK", "rarity": "ST", "rarity_name": "STARTER", "status": "unassigned", "cost": 3, "efficiency": 5.0, "output": "15 damage (3 hits of 5)", "effect": "Three rapid shots. Deal 5 damage × 3 (15 total).", "notes": "Weakest efficiency of all attack cards. Multi-hit has no mechanical advantage currently — block absorbs all three hits equally. Only interesting if future mechanics interact with hit count."}, {"name": "HEAVY SHOT", "type": "A", "type_name": "ATTACK", "rarity": "ST", "rarity_name": "STARTER", "status": "unassigned", "cost": 4, "efficiency": 5.5, "output": "22 damage", "effect": "Overcharged fire. Deal 22 damage.", "notes": "Least efficient attack in the game by dmg/heat. Big single hit but costs half the heatsink. Competes poorly with reward cards at this cost."}, {"name": "EMERGENCY PATCH", "type": "D", "type_name": "DEFEND", "rarity": "?", "rarity_name": "UNASSIGNED", "status": "unassigned", "cost": 3, "efficiency": null, "output": "20 hull (permanent)", "effect": "Field repair. Restore 20 hull.", "notes": "Significant hull restoration. More than Hull Patch for the same cost. Situationally powerful — less useful when ahead, critical when behind."}, {"name": "FORCE BARRIER", "type": "D", "type_name": "DEFEND", "rarity": "?", "rarity_name": "UNASSIGNED", "status": "unassigned", "cost": 3, "efficiency": null, "output": "20 block + 10 shield", "effect": "Energy shield. Gain 20 block + restore 10 shield.", "notes": "Best value defend card at cost 3. Combines block (temporary, absorbs next hit) with shield (permanent). The dual output makes it unusually flexible. Strong pick."}, {"name": "FULL RESTORE", "type": "D", "type_name": "DEFEND", "rarity": "?", "rarity_name": "UNASSIGNED", "status": "unassigned", "cost": 5, "efficiency": null, "output": "full shield (up to 40) + 30 hull", "effect": "Emergency protocol. Restore full shield + 30 hull.", "notes": "The big defensive reset. Very strong if taken when low on health — potentially restoring 70+ total HP. But at cost 5 and requiring you to be in trouble to get maximum value, it's situational. Competes with Void Lance and Morphic Echo in the same pool."}, {"name": "HULL FORTRESS", "type": "D", "type_name": "DEFEND", "rarity": "?", "rarity_name": "UNASSIGNED", "status": "unassigned", "cost": 4, "efficiency": null, "output": "30 block", "effect": "Full lockdown. Gain 30 block.", "notes": "Large block value but block-only. Expensive relative to Force Barrier (cost 3, 20 block + 10 shield). Useful in specific situations but probably not the best pick at fight 4."}, {"name": "REACTIVE PLATING", "type": "D", "type_name": "DEFEND", "rarity": "?", "rarity_name": "UNASSIGNED", "status": "unassigned", "cost": 2, "efficiency": null, "output": "14 block", "effect": "Adaptive armor. Gain 14 block.", "notes": "Strictly better Deflector at the same cost. Replaces Deflector in any run. Question: if Deflector is in the starting deck, does Reactive Plating make it obsolete too fast?"}, {"name": "DEFLECTOR", "type": "D", "type_name": "DEFEND", "rarity": "ST", "rarity_name": "STARTER", "status": "unassigned", "cost": 2, "efficiency": null, "output": "10 block", "effect": "Raise barriers. Gain 10 block.", "notes": "Low-cost block. Block is temporary (resets each turn), so this is purely reactive. Useful early, scales poorly as enemy damage grows."}, {"name": "HULL PATCH", "type": "D", "type_name": "DEFEND", "rarity": "ST", "rarity_name": "STARTER", "status": "unassigned", "cost": 3, "efficiency": null, "output": "12 hull (permanent)", "effect": "Emergency repair. Restore 12 hull.", "notes": "Hull is the last line — restoring it is more valuable than shield at low health. Expensive relative to Shield Pulse for slightly less total value. The \"emergency\" framing suggests it should be held for critical moments."}, {"name": "SHIELD PULSE", "type": "D", "type_name": "DEFEND", "rarity": "ST", "rarity_name": "STARTER", "status": "unassigned", "cost": 2, "efficiency": null, "output": "15 shield (permanent until depleted)", "effect": "Restore 15 shield.", "notes": "Shield is permanent (carries between turns), making this more durable value than block. ×2 in starting deck signals it as the primary defensive tool early on."}, {"name": "TARGETING MATRIX", "type": "P", "type_name": "POWER", "rarity": "?", "rarity_name": "UNASSIGNED", "status": "unassigned", "cost": 3, "efficiency": null, "output": "+15 damage to all attacks this turn", "effect": "Lock targeting. Gain AIM +15 this turn — all damage dealt is increased by 15.", "notes": "The only power card in the game. Buff lasts one turn only. Scales with the number of attacks played — good with multi-hit cards or a heavy attack turn. Orphaned type: power has no identity yet because it's the only member."}, {"name": "MORPHIC ECHO", "type": "S", "type_name": "SPECIAL", "rarity": "?", "rarity_name": "UNASSIGNED", "status": "unassigned", "cost": 0, "efficiency": null, "output": "multiplier (×2 to all damage dealt this turn)", "effect": "Matter duplicate. Double all damage this turn. Cost: 0 heat.", "notes": "The most dangerous card in the game. Cost 0 means it's always free to play. Combined with Void Lance (70 base damage) it deals 140 damage in one turn — enough to one-shot every enemy except the final boss. The combo is too easy to assemble and too powerful. One of these two cards needs to change significantly."}, {"name": "MORPHIC STRIKE", "type": "S", "type_name": "SPECIAL", "rarity": "?", "rarity_name": "UNASSIGNED", "status": "unassigned", "cost": 4, "efficiency": 13.5, "output": "54 damage (3 hits of 18)", "effect": "Matter spike. Deal 18 damage × 3 (54 total).", "notes": "Second-best efficiency in the game (13.5 dmg/heat). Hits three times — each hit triggers separately, relevant if multi-hit ever matters. Functionally a very efficient attack with the \"special\" tag. Needs more special identity."}];
 
-const ALL_CARDS = [
-  {id:'basic_shot',       name:'BASIC SHOT',       type:'attack',  cost:2,  desc:'Fire primary weapon. Deal <em>12 damage</em>.'},
-  {id:'heavy_shot',       name:'HEAVY SHOT',        type:'attack',  cost:4,  desc:'Overcharged fire. Deal <em>22 damage</em>.'},
-  {id:'burst_fire',       name:'BURST FIRE',        type:'attack',  cost:3,  desc:'Three rapid shots. Deal <em>5 damage</em> three times.'},
-  {id:'shield_pulse',     name:'SHIELD PULSE',      type:'defend',  cost:2,  desc:'Restore <em>15 shield</em>.'},
-  {id:'hull_patch',       name:'HULL PATCH',        type:'defend',  cost:3,  desc:'Emergency repair. Restore <em>12 hull</em>.'},
-  {id:'deflector',        name:'DEFLECTOR',         type:'defend',  cost:2,  desc:'Raise barriers. Gain <em>10 block</em>.'},
-  {id:'rail_slug',        name:'RAIL SLUG',         type:'attack',  cost:3,  desc:'Magnetic round. Deal <em>20 damage</em>.'},
-  {id:'void_pulse',       name:'VOID PULSE',        type:'attack',  cost:2,  desc:'Resonance burst. Deal <em>8 damage</em> twice.'},
-  {id:'reactive_plating', name:'REACTIVE PLATING',  type:'defend',  cost:2,  desc:'Adaptive armor. Gain <em>14 block</em>.'},
-  {id:'plasma_burst',     name:'PLASMA BURST',      type:'attack',  cost:4,  desc:'Superheated bolt. Deal <em>28 damage</em>.'},
-  {id:'scatter_shot',     name:'SCATTER SHOT',      type:'attack',  cost:3,  desc:'Spread fire. Deal <em>6 damage</em> four times.'},
-  {id:'emergency_patch',  name:'EMERGENCY PATCH',   type:'defend',  cost:3,  desc:'Field repair. Restore <em>20 hull</em>.'},
-  {id:'lance_cannon',     name:'LANCE CANNON',      type:'attack',  cost:5,  desc:'Focused beam. Deal <em>38 damage</em>.'},
-  {id:'targeting_matrix', name:'TARGETING MATRIX',  type:'power',   cost:3,  desc:'Lock targeting. Gain <em>AIM+15</em> this turn.'},
-  {id:'force_barrier',    name:'FORCE BARRIER',     type:'defend',  cost:3,  desc:'Energy shield. Gain <em>20 block</em> + restore <em>10 shield</em>.'},
-  {id:'annihilator',      name:'ANNIHILATOR',       type:'attack',  cost:6,  desc:'Maximum output. Deal <em>50 damage</em>.'},
-  {id:'morphic_strike',   name:'MORPHIC STRIKE',    type:'special', cost:4,  desc:'Matter spike. Deal <em>18 damage</em> three times.'},
-  {id:'hull_fortress',    name:'HULL FORTRESS',     type:'defend',  cost:4,  desc:'Full lockdown. Gain <em>30 block</em>.'},
-  {id:'void_lance',       name:'VOID LANCE',        type:'attack',  cost:5,  desc:'Dimensional spear. Deal <em>35 damage</em> twice.'},
-  {id:'morphic_echo',     name:'MORPHIC ECHO',      type:'special', cost:0,  desc:'Matter duplicate. <em>Double all damage</em> this turn.'},
-  {id:'full_restore',     name:'FULL RESTORE',      type:'defend',  cost:5,  desc:'Emergency protocol. Full <em>shield</em> + restore <em>30 hull</em>.'},
-];
-
-const state = { type: 'all', source: 'all', sort: 'cost-asc' };
-
-function getCards() {
-  let cards = ALL_CARDS.filter(c => {
-    if (state.type !== 'all' && c.type !== state.type) return false;
-    if (state.source === 'starting' && !STARTING_IDS.has(c.id)) return false;
-    if (state.source === 'reward' && STARTING_IDS.has(c.id)) return false;
-    return true;
-  });
-  return cards.sort((a, b) => {
-    if (state.sort === 'cost-asc')  return a.cost - b.cost || a.name.localeCompare(b.name);
-    if (state.sort === 'cost-desc') return b.cost - a.cost || a.name.localeCompare(b.name);
-    if (state.sort === 'name')      return a.name.localeCompare(b.name);
-    if (state.sort === 'type')      return a.type.localeCompare(b.type) || a.cost - b.cost;
-    return 0;
-  });
-}
-
-function render() {
-  const cards = getCards();
-  const grid = document.getElementById('card-grid');
-  document.getElementById('count-shown').textContent = cards.length;
-  document.getElementById('count-total').textContent = ALL_CARDS.length;
-  grid.innerHTML = '';
-
-  if (!cards.length) {
-    const el = document.createElement('div');
-    el.className = 'empty-state';
-    el.textContent = '— NO CARDS MATCH —';
-    grid.appendChild(el);
-    return;
-  }
-
-  cards.forEach(card => {
-    const isStart = STARTING_IDS.has(card.id);
-    const el = document.createElement('div');
-    el.className = 'lib-card';
-    el.setAttribute('data-type', card.type);
-    el.innerHTML =
-      '<div class="card-type-row">' +
-        '<span class="card-type-label">' + card.type + '</span>' +
-        '<span class="source-badge ' + (isStart ? 'starting' : 'reward') + '">' + (isStart ? 'START' : 'REWARD') + '</span>' +
-      '</div>' +
-      '<div class="card-name">' + card.name + '</div>' +
-      '<div class="card-desc">' + card.desc + '</div>' +
-      '<div class="card-cost"><span class="cost-num">' + card.cost + '</span>&nbsp;HEAT</div>';
-    grid.appendChild(el);
-  });
-}
+const state = {type:'all', rarity:'all', status:'all'};
 
 document.querySelectorAll('.chip').forEach(btn => {
   btn.addEventListener('click', () => {
-    const key = btn.dataset.filter;
-    state[key] = btn.dataset.value;
-    document.querySelectorAll('.chip[data-filter="' + key + '"]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    const g = btn.dataset.group;
+    document.querySelectorAll(`.chip[data-group="${g}"]`).forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    state[g] = btn.dataset.v;
     render();
   });
 });
 
-document.getElementById('sort-select').addEventListener('change', e => {
-  state.sort = e.target.value;
-  render();
-});
+function render() {
+  const grid = document.getElementById('grid');
+  const filtered = CARDS.filter(c => {
+    if (state.type   !== 'all' && c.type   !== state.type)   return false;
+    if (state.rarity !== 'all' && c.rarity !== state.rarity) return false;
+    if (state.status !== 'all' && c.status !== state.status) return false;
+    return true;
+  });
 
-// Starfield
-(function() {
-  const sf = document.getElementById('starfield');
-  for (let i = 0; i < 180; i++) {
-    const s = document.createElement('div');
-    s.className = 'star';
-    const sz = Math.random() * 2 + 0.4;
-    s.style.cssText = 'width:' + sz + 'px;height:' + sz + 'px;left:' + (Math.random()*100) + '%;top:' + (Math.random()*100) + '%;opacity:' + (Math.random()*0.5+0.1) + ';';
-    if (Math.random() > 0.65) s.style.background = '#ffbbaa';
-    sf.appendChild(s);
-  }
-})();
+  document.getElementById('count-num').textContent = filtered.length;
+  document.getElementById('empty').style.display = filtered.length ? 'none' : 'block';
+
+  grid.innerHTML = filtered.map(c => `
+    <div class="card" data-type="${c.type}" data-status="${c.status}">
+      <div class="card-header">
+        <span class="card-type">${c.type_name}</span>
+        <span class="card-rarity rarity-${c.rarity}">${c.rarity_name}</span>
+      </div>
+      <div class="card-name">${c.name}</div>
+      <div class="card-effect">${c.effect || '—'}</div>
+      ${c.notes ? `<div class="card-notes">${c.notes}</div>` : ''}
+      <div class="card-footer">
+        <div>
+          ${c.cost != null ? `<span class="card-cost">${c.cost}</span><span class="card-cost-label"> HEAT</span>` : '<span class="card-cost-label">— HEAT</span>'}
+        </div>
+        <div class="card-output">${c.output || ''}</div>
+      </div>
+    </div>
+  `).join('');
+}
 
 render();
 </script>
