@@ -14,31 +14,42 @@
     --danger:#ff2840;--gold:#ffaa00;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;user-select:none;}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;height:100dvh;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;user-select:none;}
   body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:100;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);}
 
   #starfield{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
   .star{position:absolute;border-radius:50%;background:white;}
-
-  /* Ambient glow behind title */
   #glow{position:fixed;top:20%;left:50%;transform:translate(-50%,-50%);width:600px;height:300px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,200,255,0.04) 0%,transparent 70%);pointer-events:none;z-index:0;}
 
-  /* ── LAYOUT ── */
-  #screen{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:0;width:100%;max-width:480px;padding:0 32px;}
-
-  /* ── TITLE ── */
+  /* ── TITLE BLOCK (shared) ── */
   #title-block{text-align:center;margin-bottom:56px;}
   #title-eyebrow{font-size:8px;letter-spacing:6px;color:var(--text-dim);margin-bottom:16px;animation:fadeUp 1s ease both;}
   #title-main{font-family:'Orbitron',monospace;font-size:clamp(36px,8vw,58px);font-weight:900;letter-spacing:8px;color:var(--text-bright);text-shadow:0 0 40px rgba(0,200,255,0.25),0 0 80px rgba(0,200,255,0.1);line-height:1;animation:fadeUp 1s 0.1s ease both;}
   #title-sub{margin-top:14px;font-size:9px;letter-spacing:4px;color:var(--text-dim);animation:fadeUp 1s 0.2s ease both;}
 
-  /* ── MENU ── */
-  #menu{display:flex;flex-direction:column;width:100%;gap:2px;animation:fadeUp 1s 0.35s ease both;}
+  /* ── GATE SCREEN ── */
+  #gate{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;max-width:480px;padding:0 32px;}
+  #gate-form{display:flex;flex-direction:column;width:100%;gap:2px;animation:fadeUp 1s 0.3s ease both;}
+  #gate-label{font-size:8px;letter-spacing:4px;color:var(--text-dim);margin-bottom:10px;text-align:center;}
+  #gate-input{font-family:'Share Tech Mono',monospace;font-size:16px;letter-spacing:6px;text-align:center;text-transform:uppercase;padding:16px 20px;border:1px solid var(--border);background:var(--panel);color:var(--text-bright);outline:none;width:100%;-webkit-appearance:none;}
+  #gate-input:focus{border-color:var(--accent);box-shadow:0 0 20px rgba(0,200,255,0.08);}
+  #gate-input::placeholder{color:var(--text-dim);letter-spacing:4px;font-size:12px;}
+  #gate-btn{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:4px;padding:14px 20px;border:1px solid var(--accent-dim);border-top:none;background:transparent;color:var(--accent-dim);cursor:pointer;text-transform:uppercase;transition:all 0.2s;}
+  #gate-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,200,255,0.04);}
+  #gate-error{font-size:8px;letter-spacing:3px;color:var(--danger);text-align:center;margin-top:14px;opacity:0;transition:opacity 0.2s;}
+  #gate-error.show{opacity:1;}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+  .shake{animation:shake 0.4s ease;}
+
+  /* ── MAIN MENU ── */
+  #screen{position:relative;z-index:1;display:none;flex-direction:column;align-items:center;width:100%;max-width:480px;padding:0 32px;}
+  #screen.visible{display:flex;}
+  #menu{display:flex;flex-direction:column;width:100%;gap:2px;animation:fadeUp 0.6s ease both;}
   .menu-item{display:flex;align-items:center;gap:16px;padding:16px 20px;border:1px solid var(--border);background:transparent;cursor:pointer;transition:all 0.2s;text-decoration:none;color:inherit;font-family:'Share Tech Mono',monospace;}
   .menu-item:hover{background:rgba(0,200,255,0.04);border-color:var(--border-bright);}
   .menu-item:active{background:rgba(0,200,255,0.08);}
   .menu-item.disabled{opacity:0.3;cursor:default;pointer-events:none;}
-  .menu-item + .menu-item{border-top:none;}
+  .menu-item+.menu-item{border-top:none;}
   .menu-arrow{font-size:10px;color:var(--accent-dim);transition:all 0.2s;flex-shrink:0;}
   .menu-item:hover .menu-arrow{color:var(--accent);transform:translateX(4px);}
   .menu-body{flex:1;}
@@ -47,17 +58,15 @@
   .menu-item.disabled .menu-label{color:var(--text-dim);}
   .menu-desc{font-size:8px;letter-spacing:1px;color:var(--text-dim);margin-top:3px;}
 
-  /* ── FOOTER ── */
-  #footer{margin-top:48px;display:flex;align-items:center;gap:24px;font-size:8px;letter-spacing:2px;color:var(--text-dim);animation:fadeUp 1s 0.5s ease both;}
+  #footer{margin-top:48px;display:flex;align-items:center;gap:24px;font-size:8px;letter-spacing:2px;color:var(--text-dim);animation:fadeUp 0.6s 0.15s ease both;}
   #footer span{color:#2a4a3a;}
 
-  /* ── PREVIOUS VERSIONS ── */
-  #versions{margin-top:32px;width:100%;animation:fadeUp 1s 0.6s ease both;}
+  #versions{margin-top:32px;width:100%;animation:fadeUp 0.6s 0.25s ease both;}
   #versions-label{font-size:7px;letter-spacing:4px;color:var(--text-dim);margin-bottom:8px;text-align:center;}
   #versions-list{display:flex;flex-direction:column;gap:2px;}
   .version-link{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border:1px solid var(--border);text-decoration:none;color:var(--text-dim);font-size:9px;letter-spacing:2px;transition:all 0.15s;}
   .version-link:hover{border-color:var(--border-bright);color:var(--text);}
-  .version-link + .version-link{border-top:none;}
+  .version-link+.version-link{border-top:none;}
   #versions-empty{font-size:8px;letter-spacing:2px;color:var(--text-dim);opacity:0.4;text-align:center;padding:10px 0;}
 
   @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
@@ -68,14 +77,28 @@
 <div id="starfield"></div>
 <div id="glow"></div>
 
-<div id="screen">
-
+<!-- ── GATE ── -->
+<div id="gate">
   <div id="title-block">
     <div id="title-eyebrow">// PROTOTYPE v0.2</div>
     <div id="title-main">VOIDRUNNER</div>
     <div id="title-sub">THE GALAXY IS SILENT. RUN.</div>
   </div>
+  <div id="gate-form">
+    <div id="gate-label">ACCESS CODE REQUIRED</div>
+    <input id="gate-input" type="password" placeholder="············" autocomplete="off" autocorrect="off" spellcheck="false">
+    <button id="gate-btn" onclick="tryAuth()">AUTHENTICATE ▶</button>
+    <div id="gate-error">ACCESS DENIED</div>
+  </div>
+</div>
 
+<!-- ── MAIN MENU (revealed after auth) ── -->
+<div id="screen">
+  <div id="title-block">
+    <div id="title-eyebrow">// PROTOTYPE v0.2</div>
+    <div id="title-main">VOIDRUNNER</div>
+    <div id="title-sub">THE GALAXY IS SILENT. RUN.</div>
+  </div>
   <nav id="menu">
     <a class="menu-item" href="voidrunner_1.html">
       <div class="menu-body">
@@ -87,7 +110,7 @@
     <a class="menu-item" href="cards.html">
       <div class="menu-body">
         <div class="menu-label">CARD LIBRARY</div>
-        <div class="menu-desc">Browse all 21 cards</div>
+        <div class="menu-desc">Browse all cards</div>
       </div>
       <div class="menu-arrow">▶</div>
     </a>
@@ -99,11 +122,9 @@
       <div class="menu-arrow">▶</div>
     </div>
   </nav>
-
   <div id="footer">
     <span>MIHAI PETICA — 2026</span>
   </div>
-
   <div id="versions">
     <div id="versions-label">PREVIOUS VERSIONS</div>
     <div id="versions-list">
@@ -115,11 +136,42 @@
       <div id="versions-empty">— NONE YET —</div>
     </div>
   </div>
-
 </div>
 
 <script>
-// Title music — starts on first interaction
+const _K = 'ECHOES';
+const _SK = 'vr_access';
+
+function showMenu() {
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('screen').classList.add('visible');
+  _bootAudio();
+}
+
+function tryAuth() {
+  const val = document.getElementById('gate-input').value.trim().toUpperCase();
+  if (val === _K) {
+    localStorage.setItem(_SK, '1');
+    showMenu();
+  } else {
+    const form = document.getElementById('gate-form');
+    const err = document.getElementById('gate-error');
+    form.classList.remove('shake');
+    void form.offsetWidth;
+    form.classList.add('shake');
+    err.classList.add('show');
+    document.getElementById('gate-input').value = '';
+  }
+}
+
+document.getElementById('gate-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryAuth();
+});
+
+// Auto-unlock if already authenticated
+if (localStorage.getItem(_SK) === '1') showMenu();
+
+// Title music
 let _titleStarted = false;
 function _bootAudio() {
   if (_titleStarted) return;
@@ -140,7 +192,7 @@ document.addEventListener('pointerdown', _bootAudio, { once: true });
     const s = document.createElement('div');
     s.className = 'star';
     const sz = Math.random() * 2.2 + 0.3;
-    s.style.cssText = 'width:' + sz + 'px;height:' + sz + 'px;left:' + (Math.random()*100) + '%;top:' + (Math.random()*100) + '%;opacity:' + (Math.random()*0.6+0.05) + ';';
+    s.style.cssText = 'width:'+sz+'px;height:'+sz+'px;left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;opacity:'+(Math.random()*0.6+0.05)+';';
     if (Math.random() > 0.65) s.style.background = '#ffbbaa';
     sf.appendChild(s);
   }
