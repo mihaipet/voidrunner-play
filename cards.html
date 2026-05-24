@@ -72,7 +72,7 @@
   .rarity-U {border-color:var(--c-unique); color:var(--c-unique);}
   .rarity-\?{border-color:var(--text-dim); color:var(--text-dim);}
   .card-name{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;padding:6px 8px 3px;color:var(--text-bright);line-height:1.3;}
-  .card-effect{font-size:8px;padding:0 8px 6px;color:var(--text-dim);line-height:1.4;flex:1;}
+  .card-effect{font-size:8px;padding:0 8px 6px;color:var(--text);line-height:1.4;flex:1;}
   .card-footer{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-top:1px solid var(--border);}
   .card-cost{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:#ff6820;}
   .card-cost-label{font-size:7px;color:var(--text-dim);letter-spacing:1px;}
@@ -162,7 +162,7 @@ function render() {
         <div>
           ${c.cost != null ? `<span class="card-cost">${c.cost}</span><span class="card-cost-label"> HEAT</span>` : '<span class="card-cost-label">— HEAT</span>'}
         </div>
-        <div class="card-output">${c.output || ''}</div>
+        <div class="card-output">${c.type === 'A' && c.efficiency != null ? c.efficiency + ' DPH' : (c.output || '')}</div>
       </div>
     </div>
   `).join('');
