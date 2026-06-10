@@ -12,8 +12,66 @@
     color: #c8c8d0;
     font-family: 'Courier New', monospace;
     font-size: 15px;
-    padding: 32px;
+    padding: 72px 32px 32px;
   }
+
+  /* ─── FILTER BAR ──────────────────────────────────────────────── */
+
+  #filter-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: #090909;
+    border-bottom: 1px solid #222230;
+    padding: 10px 32px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .filter-sep {
+    width: 1px; height: 18px;
+    background: #222230;
+    flex-shrink: 0;
+  }
+
+  .filter-group { display: flex; align-items: center; gap: 5px; }
+
+  .filter-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #3a3a50;
+    margin-right: 3px;
+    white-space: nowrap;
+  }
+
+  .filter-btn {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    padding: 3px 9px;
+    border: 1px solid #242432;
+    background: none;
+    color: #555570;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    border-radius: 2px;
+    white-space: nowrap;
+    transition: border-color 0.1s, color 0.1s;
+  }
+
+  .filter-btn:hover { border-color: #404058; color: #8888aa; }
+
+  .filter-btn.active          { background: #16162a; border-color: #4848a0; color: #b0b0e0; }
+  .filter-btn[data-value="kinetic"].active { background: #160e04; border-color: #aa5522; color: #dd9955; }
+  .filter-btn[data-value="arc"].active     { background: #040a18; border-color: #2255aa; color: #5599dd; }
+  .filter-btn[data-value="plasma"].active  { background: #160404; border-color: #aa3333; color: #dd6666; }
+  .filter-btn[data-value="gamma"].active   { background: #04120a; border-color: #229944; color: #55cc88; }
+  .filter-btn[data-value="shield"].active  { background: #04101a; border-color: #226688; color: #55aacc; }
+
+  /* ─── PAGE ───────────────────────────────────────────────────── */
 
   h1 { color: #fff; font-size: 22px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
   .meta { color: #9090a0; font-size: 14px; margin-bottom: 40px; }
@@ -25,6 +83,8 @@
   }
 
   .grid { display: flex; flex-wrap: wrap; gap: 18px; }
+
+  /* ─── CARDS ──────────────────────────────────────────────────── */
 
   .card {
     width: 330px; background: #13131a; border: 1px solid #222;
@@ -71,6 +131,26 @@
 </head>
 <body>
 
+<div id="filter-bar">
+  <div class="filter-group">
+    <span class="filter-label">Show</span>
+    <button class="filter-btn active" data-filter="section" data-value="all">All</button>
+    <button class="filter-btn" data-filter="section" data-value="protocol">Protocols</button>
+    <button class="filter-btn" data-filter="section" data-value="routine">Routines</button>
+    <button class="filter-btn" data-filter="section" data-value="wip">WIP</button>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <span class="filter-label">Type</span>
+    <button class="filter-btn active" data-filter="damage" data-value="all">All</button>
+    <button class="filter-btn" data-filter="damage" data-value="kinetic">Kinetic</button>
+    <button class="filter-btn" data-filter="damage" data-value="arc">Arc</button>
+    <button class="filter-btn" data-filter="damage" data-value="plasma">Plasma</button>
+    <button class="filter-btn" data-filter="damage" data-value="gamma">Gamma</button>
+    <button class="filter-btn" data-filter="damage" data-value="shield">Shield</button>
+  </div>
+</div>
+
 <h1>Voidrunner — Card Viewer</h1>
 <div class="meta" id="meta-line">Loading...</div>
 
@@ -104,7 +184,6 @@ const RPS = {
   kinetic: { plasma: 1.00, gamma:  1.00, arc:    1.00 }
 };
 
-// Upgrade tracks: array of [pips, damage] pairs
 const CANNON_UPGRADES = [[1,26],[2,28],[3,30],[4,32],[5,35]];
 
 const KINETIC_CORE = {
@@ -136,30 +215,28 @@ function rpsRow(base, weaponType) {
 
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-function upgradeTrack(upgrades, weaponType) {
-  return upgrades.map(([pip, dmg]) =>
-    `<span>${pip}/5</span> ${dmg}`
-  ).join(' &nbsp;');
+function upgradeTrack(upgrades) {
+  return upgrades.map(([pip, dmg]) => `<span>${pip}/5</span> ${dmg}`).join(' &nbsp;');
 }
 
 function tags(...list) {
   return list.map(t => `<span class="tag ${t.cls}">${t.label}</span>`).join('');
 }
 
-function card(rarity, extra, content) {
-  return `<div class="card ${rarity}${extra}">${content}</div>`;
+function card(rarity, extra, content, opts = {}) {
+  const sec = opts.section || 'protocol';
+  const dmg = opts.damage || '';
+  return `<div class="card ${rarity}${extra}" data-section="${sec}" data-damage="${dmg}">${content}</div>`;
 }
 
-function wip(rarity, content) { return card(rarity, ' wip', content); }
+function wip(rarity, content, opts = {}) {
+  return card(rarity, ' wip', content, { section: 'wip', ...opts });
+}
 
 function divider() { return `<hr class="divider">`; }
 
 function row(label, value) {
   return `<div class="card-row"><span>${label}</span><span>${value}</span></div>`;
-}
-
-function na(label) {
-  return `<div class="card-row"><span>${label}</span><span class="card-na">n/a</span></div>`;
 }
 
 // ─── CARDS ───────────────────────────────────────────────────────────────────
@@ -185,7 +262,7 @@ const CARDS = {
         Shield down: <strong>${KINETIC_CORE.shieldDownDmg}</strong> hull dmg
       </div>
       <div class="card-upgrade"><span>5/5:</span> Penetration ${KINETIC_CORE.upgradePenetration}</div>
-    `),
+    `, { section: 'protocol', damage: 'kinetic' }),
 
     // ARC CANNON
     card('C', '', `
@@ -205,13 +282,13 @@ const CARDS = {
         ${rpsRow(CANNON_UPGRADES[0][1], 'arc')} <em>(base)</em><br>
         ${rpsRow(CANNON_UPGRADES[4][1], 'arc')} <em>(5/5)</em>
       </div>
-      <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES, 'arc')} &nbsp;<span>+ chains ×2 (25%)</span></div>
-    `),
+      <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)} &nbsp;<span>5/5: chains ×2 (25%)</span></div>
+    `, { section: 'protocol', damage: 'arc' }),
 
     // PLASMA CANNON
     (() => {
       const base = CANNON_UPGRADES[0][1];
-      const max = CANNON_UPGRADES[4][1];
+      const max  = CANNON_UPGRADES[4][1];
       const scorchRow = (dmg, pct) =>
         Object.keys(RPS.plasma).map(s =>
           `vs ${cap(s)}: <strong>${floor(rps(dmg,'plasma',s) * pct / 100)}</strong>`
@@ -234,8 +311,8 @@ const CARDS = {
           <strong>Scorch:</strong> 25% of damage dealt burns at start of next round, before anyone acts. Stacks per activation.<br>
           Scorch: ${scorchRow(base, 25)} <em>(base)</em>
         </div>
-        <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES, 'plasma')} &nbsp;<span>5/5: Scorch 25% → 50%</span> ${scorchRow(max, 50)}</div>
-      `);
+        <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)} &nbsp;<span>5/5: Scorch 25% → 50%</span> ${scorchRow(max, 50)}</div>
+      `, { section: 'protocol', damage: 'plasma' });
     })()
 
   ],
@@ -259,7 +336,7 @@ const CARDS = {
         Reactivate: restore <strong>${floor(MORPHIC_VEIL.deployHP * MORPHIC_VEIL.reactivatePct / 100)}</strong> HP (${MORPHIC_VEIL.reactivatePct}%)
       </div>
       <div class="card-upgrade"><span>5/5:</span> ${MORPHIC_VEIL.upgrade}</div>
-    `)
+    `, { section: 'protocol', damage: 'shield' })
 
   ],
 
@@ -267,8 +344,8 @@ const CARDS = {
 
     // SUPERCHARGE
     (() => {
-      const base = CANNON_UPGRADES[0][1];
-      const pct = [20,22,24,26,30];
+      const base   = CANNON_UPGRADES[0][1];
+      const pct    = [20,22,24,26,30];
       const selfDmg = [5,4,3,2,0];
       return card('C', '', `
         <div class="card-name">Supercharge</div>
@@ -291,12 +368,12 @@ const CARDS = {
         <div class="card-upgrade">${pct.map((p,i) =>
           `<span>T${i+1}</span> +${p}% / −${selfDmg[i]}% shield`
         ).join(' &nbsp;')}</div>
-      `);
+      `, { section: 'routine', damage: 'arc' });
     })(),
 
     // SHIELD DRAIN
     (() => {
-      const base = CANNON_UPGRADES[0][1];
+      const base  = CANNON_UPGRADES[0][1];
       const tiers = [25,30,35,40,50];
       return card('R', '', `
         <div class="card-name">Shield Drain</div>
@@ -319,12 +396,12 @@ const CARDS = {
         <div class="card-upgrade">${tiers.map((t,i) =>
           `<span>T${i+1}</span> ${t}%`
         ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> hull if hull damaged</div>
-      `);
+      `, { section: 'routine', damage: 'arc gamma' });
     })(),
 
     // OVERLOAD
     (() => {
-      const base = CANNON_UPGRADES[0][1];
+      const base  = CANNON_UPGRADES[0][1];
       const tiers = [
         { bonus: 75,  shieldCost: 10 },
         { bonus: 100, shieldCost: 15 },
@@ -354,7 +431,7 @@ const CARDS = {
         <div class="card-upgrade">${tiers.map((tier,i) =>
           `<span>T${i+1}</span> +${tier.bonus}% / −${tier.shieldCost}% shield`
         ).join(' &nbsp;')} &nbsp;<span>T3 perk:</span> if &lt;50% shield, cost halved · −1 heat</div>
-      `);
+      `, { section: 'routine', damage: 'arc plasma' });
     })()
 
   ],
@@ -384,13 +461,44 @@ const CARDS = {
           <em>Core swings (15/30) — Slug punches through (${up}/${SLUG.base})</em>
         </div>
         <div class="card-upgrade"><span>5/5:</span> ${SLUG.max} dmg + penetration ${SLUG.pen}% → ${SLUG.penMax}% (${upMax} up / ${SLUG.max} down)</div>
-      `);
+      `, { damage: 'kinetic' });
     })()
 
   ]
 };
 
-// ─── RENDER ──────────────────────────────────────────────────────────────────
+// ─── FILTER ───────────────────────────────────────────────────────────────────
+
+const activeFilters = { section: 'all', damage: 'all' };
+
+function applyFilters() {
+  const sf = activeFilters.section;
+  const df = activeFilters.damage;
+
+  document.querySelectorAll('.card').forEach(c => {
+    const secMatch = sf === 'all' || c.dataset.section === sf;
+    const dmgMatch = df === 'all' || (c.dataset.damage || '').split(' ').includes(df);
+    c.hidden = !(secMatch && dmgMatch);
+  });
+
+  ['protocols-weapon-section','protocols-shield-section','routines-section','wip-section'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = [...el.querySelectorAll('.card')].every(c => c.hidden);
+  });
+}
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  const ft  = btn.dataset.filter;
+  const val = btn.dataset.value;
+  document.querySelectorAll(`.filter-btn[data-filter="${ft}"]`).forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeFilters[ft] = val;
+  applyFilters();
+});
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
 
 function render() {
   let complete = 0, inProgress = 0;
@@ -405,6 +513,8 @@ function render() {
 
   document.getElementById('meta-line').innerHTML =
     `Last updated: 2026-06-10 &nbsp;·&nbsp; ${complete} cards complete &nbsp;·&nbsp; ${inProgress} in progress`;
+
+  applyFilters();
 }
 
 render();
