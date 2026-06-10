@@ -359,7 +359,35 @@ const CARDS = {
 
   ],
 
-  'wip': []
+  'wip': [
+
+    // KINETIC SLUG (proposal — decision points pending)
+    (() => {
+      const SLUG = { base: 24, max: 30, pen: 70, penMax: 85 };
+      const up    = floor(SLUG.base * SLUG.pen / 100);
+      const upMax = floor(SLUG.max * SLUG.penMax / 100);
+      return wip('C', `
+        <div class="card-name">Kinetic Slug</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-type', label:'Weapon'},
+          {cls:'tag-kinetic', label:'Kinetic'}
+        )}</div>
+        ${divider()}
+        ${row('Weapon type', 'Mass Accelerator')}
+        ${row('Heat cost', '2')}
+        ${row('Drop', 'Patrol Corvette (Ch1) · Assault Frigate (Ch2)')}
+        ${divider()}
+        <div class="card-effect">
+          <strong>${SLUG.base}→${SLUG.max}</strong> kinetic damage · <strong>${SLUG.pen}%</strong> penetration<br>
+          Shield up: <strong>${up}</strong> hull dmg &nbsp;·&nbsp; Shield down: <strong>${SLUG.base}</strong> hull dmg<br>
+          <em>Core swings (15/30) — Slug punches through (${up}/${SLUG.base})</em>
+        </div>
+        <div class="card-upgrade"><span>5/5:</span> ${SLUG.max} dmg + penetration ${SLUG.pen}% → ${SLUG.penMax}% (${upMax} up / ${SLUG.max} down)</div>
+      `);
+    })()
+
+  ]
 };
 
 // ─── RENDER ──────────────────────────────────────────────────────────────────
