@@ -342,7 +342,6 @@ const CARDS = {
     // GAMMA CANNON
     (() => {
       const max5 = CANNON_UPGRADES[4][1];
-      const halfLifePct = 25;
       return card('C', '', `
         <div class="card-name">Gamma Cannon</div>
         <div class="card-tags">${tags(
@@ -359,10 +358,7 @@ const CARDS = {
           ${rpsRow(max5, 'gamma')} <em>(5/5)</em>
         </div>
         <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)}</div>
-        ${perk5('Half Life', `Apply <strong>${halfLifePct}%</strong> residual radiation — halves each round, stacks per activation<br>
-          ${Object.keys(RPS.gamma).map(s =>
-            `vs ${cap(s)}: <strong>${floor(rps(max5,'gamma',s) * halfLifePct / 100)}</strong>`
-          ).join(' &nbsp;·&nbsp; ')} <em>(first tick at 5/5)</em>`)}
+        ${perk5('Attenuation', `Enemy attacks deal <strong>25%</strong> less damage this turn`)}
       `, { section: 'protocol', damage: 'gamma' });
     })(),
 
@@ -569,6 +565,28 @@ const CARDS = {
           `<span>T${i+1}</span> +${v}%`
         ).join(' &nbsp;')}</div>
       `, { section: 'routine', damage: 'kinetic' });
+    })(),
+
+    // HALF LIFE
+    (() => {
+      const track = [25,28,31,35,40];
+      return card('C', '', `
+        <div class="card-name">Half Life</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-gamma', label:'Gamma'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Gamma Cannon', heat: '2' })}
+        ${divider()}
+        <div class="card-effect">
+          This activation leaves <strong>${track[0]}%</strong> residual radiation — halves each round, stacks per activation
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> ${v}%`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', damage: 'gamma' });
     })()
 
   ],
