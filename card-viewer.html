@@ -462,7 +462,59 @@ const CARDS = {
         </div>
         <div class="card-upgrade"><span>5/5:</span> ${SLUG.max} dmg + penetration ${SLUG.pen}% → ${SLUG.penMax}% (${upMax} up / ${SLUG.max} down)</div>
       `, { damage: 'kinetic' });
-    })()
+    })(),
+
+    // HEAVY BORE (Mass Accelerator pool — effects to confirm)
+    wip('C', `
+      <div class="card-name">Heavy Bore</div>
+      <div class="card-tags">${tags(
+        {cls:'tag-C', label:'C'},
+        {cls:'tag-routine', label:'Routine'},
+        {cls:'tag-kinetic', label:'Kinetic'}
+      )}</div>
+      ${divider()}
+      ${row('Heat cost', '1')}
+      <div class="card-compat">Mass Accelerator</div>
+      ${divider()}
+      <div class="card-effect">
+        <strong>+10</strong> kinetic damage this activation
+      </div>
+    `, { damage: 'kinetic' }),
+
+    // BURST LOADER (Mass Accelerator pool — effects to confirm)
+    wip('C', `
+      <div class="card-name">Burst Loader</div>
+      <div class="card-tags">${tags(
+        {cls:'tag-C', label:'C'},
+        {cls:'tag-routine', label:'Routine'},
+        {cls:'tag-kinetic', label:'Kinetic'}
+      )}</div>
+      ${divider()}
+      ${row('Heat cost', '2')}
+      <div class="card-compat">Mass Accelerator</div>
+      ${divider()}
+      <div class="card-effect">
+        Fire twice — second shot at <strong>70%</strong> damage<br>
+        <em>Effective multiplier: ×1.7</em>
+      </div>
+    `, { damage: 'kinetic' }),
+
+    // ARMOR REND (Mass Accelerator pool — effects to confirm)
+    wip('R', `
+      <div class="card-name">Armor Rend</div>
+      <div class="card-tags">${tags(
+        {cls:'tag-R', label:'R'},
+        {cls:'tag-routine', label:'Routine'},
+        {cls:'tag-kinetic', label:'Kinetic'}
+      )}</div>
+      ${divider()}
+      ${row('Heat cost', '2')}
+      <div class="card-compat">Mass Accelerator</div>
+      ${divider()}
+      <div class="card-effect">
+        Target takes <strong>+20%</strong> hull damage for 1 round, all sources
+      </div>
+    `, { damage: 'kinetic' })
 
   ]
 };
