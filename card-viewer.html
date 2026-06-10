@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voidrunner — Card Viewer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d0d0f;
+    color: #c8c8d0;
+    font-family: 'Courier New', monospace;
+    font-size: 15px;
+    padding: 32px;
+  }
+
+  h1 { color: #fff; font-size: 22px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+  .meta { color: #9090a0; font-size: 14px; margin-bottom: 40px; }
+
+  .section-title {
+    color: #a0a0b0; font-size: 14px; text-transform: uppercase;
+    letter-spacing: 0.15em; margin: 40px 0 16px;
+    border-bottom: 1px solid #2a2a34; padding-bottom: 8px;
+  }
+
+  .grid { display: flex; flex-wrap: wrap; gap: 18px; }
+
+  .card {
+    width: 330px; background: #13131a; border: 1px solid #222;
+    border-top: 4px solid #444; padding: 20px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+
+  .card.ST  { border-top-color: #5a5a6e; }
+  .card.C   { border-top-color: #4a7c4a; }
+  .card.R   { border-top-color: #3a6aaa; }
+  .card.E   { border-top-color: #8a3aaa; }
+  .card.U   { border-top-color: #cc8800; }
+  .card.wip { border-style: dashed; border-top-style: dashed; opacity: 0.6; }
+
+  .card-name { color: #fff; font-size: 19px; font-weight: bold; letter-spacing: 0.05em; }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+
+  .tag { font-size: 11px; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .tag-type    { background: #1e1e2e; color: #a0a0c0; }
+  .tag-ST      { background: #2a2a3a; color: #aaaacc; }
+  .tag-C       { background: #1a2e1a; color: #88cc88; }
+  .tag-R       { background: #1a2040; color: #6699dd; }
+  .tag-E       { background: #2a1a3a; color: #bb77dd; }
+  .tag-U       { background: #2e2000; color: #ddaa22; }
+  .tag-kinetic { background: #2e1e10; color: #dd9955; }
+  .tag-arc     { background: #101e2e; color: #5599dd; }
+  .tag-plasma  { background: #2e1010; color: #dd6666; }
+  .tag-gamma   { background: #102e10; color: #55cc88; }
+  .tag-shield  { background: #101e2e; color: #55aacc; }
+  .tag-routine { background: #1e1e10; color: #cccc55; }
+
+  hr.divider { border: none; border-top: 1px solid #1e1e22; }
+
+  .card-row { display: flex; justify-content: space-between; color: #9090a0; font-size: 13px; }
+  .card-row span:last-child { color: #d0d0d8; text-align: right; }
+  .card-effect { color: #c0c0c8; font-size: 13px; line-height: 1.6; }
+  .card-effect strong { color: #ffffff; }
+  .card-upgrade { color: #9090a8; font-size: 12px; line-height: 1.5; border-left: 2px solid #2a2a3a; padding-left: 10px; }
+  .card-upgrade span { color: #7070a0; }
+  .card-conditions { color: #dd7777; font-size: 12px; font-style: italic; }
+  .card-compat { color: #6a8fa8; font-size: 12px; }
+  .card-na { color: #444455; font-style: italic; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h1>Voidrunner — Card Viewer</h1>
+<div class="meta" id="meta-line">Loading...</div>
+
+<div id="protocols-weapon-section">
+  <div class="section-title">Protocols — Weapon</div>
+  <div class="grid" id="protocols-weapon"></div>
+</div>
+
+<div id="protocols-shield-section">
+  <div class="section-title">Protocols — Shield</div>
+  <div class="grid" id="protocols-shield"></div>
+</div>
+
+<div id="routines-section">
+  <div class="section-title">Routines</div>
+  <div class="grid" id="routines"></div>
+</div>
+
+<div id="wip-section">
+  <div class="section-title">In Progress</div>
+  <div class="grid" id="wip"></div>
+</div>
+
+<script>
+// ─── SINGLE SOURCE OF TRUTH ──────────────────────────────────────────────────
+
+const RPS = {
+  arc:     { plasma: 1.25, gamma: 1.00, arc:    0.75 },
+  plasma:  { gamma:  1.25, arc:   1.00, plasma: 0.75 },
+  gamma:   { arc:    1.25, plasma: 1.00, gamma:  0.75 },
+  kinetic: { plasma: 1.00, gamma:  1.00, arc:    1.00 }
+};
+
+// Upgrade tracks: array of [pips, damage] pairs
+const CANNON_UPGRADES = [[1,26],[2,28],[3,30],[4,32],[5,35]];
+
+const KINETIC_CORE = {
+  shieldUpDmg:   15,
+  shieldDownDmg: 30,
+  upgradePenetration: '50% → 65% (shield up: 20 dmg)'
+};
+
+const MORPHIC_VEIL = {
+  deployHP: 150,
+  reactivatePct: 10,
+  heatPrep: 1,
+  heatReactivate: 1,
+  upgrade: 'Deploy +200 HP · Reactivate +40 HP (20%) · 0 heat'
+};
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+const floor = Math.floor;
+
+function rps(base, weaponType, shieldType) {
+  return floor(base * RPS[weaponType][shieldType]);
+}
+
+function rpsRow(base, weaponType) {
+  const shields = Object.keys(RPS[weaponType]);
+  return shields.map(s => `vs ${cap(s)}: <strong>${rps(base, weaponType, s)}</strong>`).join(' &nbsp;·&nbsp; ');
+}
+
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function upgradeTrack(upgrades, weaponType) {
+  return upgrades.map(([pip, dmg]) =>
+    `<span>${pip}/5</span> ${dmg}`
+  ).join(' &nbsp;');
+}
+
+function tags(...list) {
+  return list.map(t => `<span class="tag ${t.cls}">${t.label}</span>`).join('');
+}
+
+function card(rarity, extra, content) {
+  return `<div class="card ${rarity}${extra}">${content}</div>`;
+}
+
+function wip(rarity, content) { return card(rarity, ' wip', content); }
+
+function divider() { return `<hr class="divider">`; }
+
+function row(label, value) {
+  return `<div class="card-row"><span>${label}</span><span>${value}</span></div>`;
+}
+
+function na(label) {
+  return `<div class="card-row"><span>${label}</span><span class="card-na">n/a</span></div>`;
+}
+
+// ─── CARDS ───────────────────────────────────────────────────────────────────
+
+const CARDS = {
+  'protocols-weapon': [
+
+    // KINETIC CORE
+    card('ST', '', `
+      <div class="card-name">Kinetic Core</div>
+      <div class="card-tags">${tags(
+        {cls:'tag-ST', label:'ST'},
+        {cls:'tag-type', label:'Weapon'},
+        {cls:'tag-kinetic', label:'Kinetic'}
+      )}</div>
+      ${divider()}
+      ${row('Weapon type', 'Mass Accelerator')}
+      ${row('Heat cost', '2')}
+      ${row('Drop', 'Starter')}
+      ${divider()}
+      <div class="card-effect">
+        Shield up: <strong>${KINETIC_CORE.shieldUpDmg}</strong> hull dmg<br>
+        Shield down: <strong>${KINETIC_CORE.shieldDownDmg}</strong> hull dmg
+      </div>
+      <div class="card-upgrade"><span>5/5:</span> Penetration ${KINETIC_CORE.upgradePenetration}</div>
+    `),
+
+    // ARC CANNON
+    card('C', '', `
+      <div class="card-name">Arc Cannon</div>
+      <div class="card-tags">${tags(
+        {cls:'tag-C', label:'C'},
+        {cls:'tag-type', label:'Weapon'},
+        {cls:'tag-arc', label:'Arc'}
+      )}</div>
+      ${divider()}
+      ${row('Weapon type', 'Cannon')}
+      ${row('Heat cost', '2')}
+      ${row('Drop', 'Scavenger Probe')}
+      ${divider()}
+      <div class="card-effect">
+        <strong>${CANNON_UPGRADES[0][1]}→${CANNON_UPGRADES[4][1]}</strong> arc damage<br>
+        ${rpsRow(CANNON_UPGRADES[0][1], 'arc')} <em>(base)</em><br>
+        ${rpsRow(CANNON_UPGRADES[4][1], 'arc')} <em>(5/5)</em>
+      </div>
+      <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES, 'arc')} &nbsp;<span>+ chains ×2 (25%)</span></div>
+    `),
+
+    // PLASMA CANNON
+    (() => {
+      const base = CANNON_UPGRADES[0][1];
+      const max = CANNON_UPGRADES[4][1];
+      const scorchRow = (dmg, pct) =>
+        Object.keys(RPS.plasma).map(s =>
+          `vs ${cap(s)}: <strong>${floor(rps(dmg,'plasma',s) * pct / 100)}</strong>`
+        ).join(' &nbsp;·&nbsp; ');
+      return card('C', '', `
+        <div class="card-name">Plasma Cannon</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-type', label:'Weapon'},
+          {cls:'tag-plasma', label:'Plasma'}
+        )}</div>
+        ${divider()}
+        ${row('Weapon type', 'Cannon')}
+        ${row('Heat cost', '2')}
+        ${row('Drop', 'Interceptor (Ch 1–2)')}
+        ${divider()}
+        <div class="card-effect">
+          <strong>${base}→${max}</strong> plasma damage<br>
+          ${rpsRow(base, 'plasma')} <em>(base)</em><br>
+          <strong>Scorch:</strong> 25% of damage dealt burns at start of next round, before anyone acts. Stacks per activation.<br>
+          Scorch: ${scorchRow(base, 25)} <em>(base)</em>
+        </div>
+        <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES, 'plasma')} &nbsp;<span>5/5: Scorch 25% → 50%</span> ${scorchRow(max, 50)}</div>
+      `);
+    })()
+
+  ],
+
+  'protocols-shield': [
+
+    // MORPHIC VEIL
+    card('ST', '', `
+      <div class="card-name">Morphic Veil</div>
+      <div class="card-tags">${tags(
+        {cls:'tag-ST', label:'ST'},
+        {cls:'tag-shield', label:'Shield'}
+      )}</div>
+      ${divider()}
+      ${row('Heat (prep)', MORPHIC_VEIL.heatPrep)}
+      ${row('Heat (reactivate)', MORPHIC_VEIL.heatReactivate)}
+      ${row('Drop', 'Starter')}
+      ${divider()}
+      <div class="card-effect">
+        Deploy: <strong>+${MORPHIC_VEIL.deployHP}</strong> shield HP<br>
+        Reactivate: restore <strong>${floor(MORPHIC_VEIL.deployHP * MORPHIC_VEIL.reactivatePct / 100)}</strong> HP (${MORPHIC_VEIL.reactivatePct}%)
+      </div>
+      <div class="card-upgrade"><span>5/5:</span> ${MORPHIC_VEIL.upgrade}</div>
+    `)
+
+  ],
+
+  'routines': [
+
+    // SUPERCHARGE
+    (() => {
+      const base = CANNON_UPGRADES[0][1];
+      const pct = [20,22,24,26,30];
+      const selfDmg = [5,4,3,2,0];
+      return card('C', '', `
+        <div class="card-name">Supercharge</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-arc', label:'Arc'}
+        )}</div>
+        ${divider()}
+        ${row('Heat cost', '1')}
+        <div class="card-compat">Arc Cannon</div>
+        ${divider()}
+        <div class="card-effect">
+          <strong>+${pct[0]}%</strong> damage this activation<br>
+          ${['plasma','gamma','arc'].map(s =>
+            `vs ${cap(s)}: <strong>${floor(rps(base,'arc',s) * (1 + pct[0]/100))}</strong>`
+          ).join(' &nbsp;·&nbsp; ')}
+        </div>
+        <div class="card-conditions">⚠ ${selfDmg[0]}% current shield HP self-damage</div>
+        <div class="card-upgrade">${pct.map((p,i) =>
+          `<span>T${i+1}</span> +${p}% / −${selfDmg[i]}% shield`
+        ).join(' &nbsp;')}</div>
+      `);
+    })(),
+
+    // SHIELD DRAIN
+    (() => {
+      const base = CANNON_UPGRADES[0][1];
+      const tiers = [25,30,35,40,50];
+      return card('R', '', `
+        <div class="card-name">Shield Drain</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-arc', label:'Arc'},
+          {cls:'tag-gamma', label:'Gamma'}
+        )}</div>
+        ${divider()}
+        ${row('Heat cost', '3')}
+        <div class="card-compat">Arc Cannon · Gamma Cannon</div>
+        ${divider()}
+        <div class="card-effect">
+          <strong>${tiers[0]}%</strong> of damage dealt → shield repair<br>
+          ${['plasma','gamma','arc'].map(s =>
+            `vs ${cap(s)}: <strong>+${floor(rps(base,'arc',s) * tiers[0]/100)}</strong>`
+          ).join(' &nbsp;·&nbsp; ')}
+        </div>
+        <div class="card-upgrade">${tiers.map((t,i) =>
+          `<span>T${i+1}</span> ${t}%`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> hull if hull damaged</div>
+      `);
+    })(),
+
+    // OVERLOAD
+    (() => {
+      const base = CANNON_UPGRADES[0][1];
+      const tiers = [
+        { bonus: 75,  shieldCost: 10 },
+        { bonus: 100, shieldCost: 15 },
+        { bonus: 150, shieldCost: 20 }
+      ];
+      const t = tiers[0];
+      return card('E', '', `
+        <div class="card-name">Overload</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-E', label:'E'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-arc', label:'Arc'},
+          {cls:'tag-plasma', label:'Plasma'}
+        )}</div>
+        ${divider()}
+        ${row('Heat cost', '4')}
+        ${row('Drop', 'Chapter 3')}
+        <div class="card-compat">Arc Cannon · Plasma Cannon</div>
+        <div class="card-conditions">⚠ Cannot play at 0 shield HP</div>
+        ${divider()}
+        <div class="card-effect">
+          Drain <strong>${t.shieldCost}%</strong> current shield → <strong>+${t.bonus}%</strong> damage<br>
+          ${['plasma','gamma','arc'].map(s =>
+            `vs ${cap(s)}: <strong>${floor(rps(base,'arc',s) * (1 + t.bonus/100))}</strong>`
+          ).join(' &nbsp;·&nbsp; ')}
+        </div>
+        <div class="card-upgrade">${tiers.map((tier,i) =>
+          `<span>T${i+1}</span> +${tier.bonus}% / −${tier.shieldCost}% shield`
+        ).join(' &nbsp;')} &nbsp;<span>T3 perk:</span> if &lt;50% shield, cost halved · −1 heat</div>
+      `);
+    })()
+
+  ],
+
+  'wip': []
+};
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+
+function render() {
+  let complete = 0, inProgress = 0;
+
+  for (const [sectionId, cardList] of Object.entries(CARDS)) {
+    const container = document.getElementById(sectionId);
+    if (!container) continue;
+    container.innerHTML = cardList.join('');
+    if (sectionId === 'wip') inProgress += cardList.length;
+    else complete += cardList.length;
+  }
+
+  document.getElementById('meta-line').innerHTML =
+    `Last updated: 2026-06-10 &nbsp;·&nbsp; ${complete} cards complete &nbsp;·&nbsp; ${inProgress} in progress`;
+}
+
+render();
+</script>
+</body>
+</html>
