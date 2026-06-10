@@ -127,6 +127,8 @@
   .card-conditions { color: #dd7777; font-size: 12px; font-style: italic; }
   .card-compat { color: #6a8fa8; font-size: 12px; }
   .card-na { color: #444455; font-style: italic; font-size: 12px; }
+  .card-5perk { border: 1px solid #252535; border-left: 3px solid #5555a0; padding: 8px 10px; background: #0e0e18; }
+  .perk5-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #6060a0; margin-bottom: 4px; }
 </style>
 </head>
 <body>
@@ -254,6 +256,10 @@ function metaRows({ weaponType, compat, heat, drop, conditions } = {}) {
   return html;
 }
 
+function perk5(label, content) {
+  return `<div class="card-5perk"><div class="perk5-label">5/5 — ${label}</div><div class="card-effect" style="margin-top:4px">${content}</div></div>`;
+}
+
 // ─── CARDS ───────────────────────────────────────────────────────────────────
 
 const CARDS = {
@@ -278,23 +284,31 @@ const CARDS = {
     `, { section: 'protocol', damage: 'kinetic' }),
 
     // ARC CANNON
-    card('C', '', `
-      <div class="card-name">Arc Cannon</div>
-      <div class="card-tags">${tags(
-        {cls:'tag-C', label:'C'},
-        {cls:'tag-type', label:'Weapon'},
-        {cls:'tag-arc', label:'Arc'}
-      )}</div>
-      ${divider()}
-      ${metaRows({ weaponType: 'Cannon', heat: '2', drop: 'Scavenger Probe (Ch1)' })}
-      ${divider()}
-      <div class="card-effect">
-        <strong>${CANNON_UPGRADES[0][1]}→${CANNON_UPGRADES[4][1]}</strong> arc damage<br>
-        ${rpsRow(CANNON_UPGRADES[0][1], 'arc')} <em>(base)</em><br>
-        ${rpsRow(CANNON_UPGRADES[4][1], 'arc')} <em>(5/5)</em>
-      </div>
-      <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)} &nbsp;<span>5/5: chains ×2 (25%)</span></div>
-    `, { section: 'protocol', damage: 'arc' }),
+    (() => {
+      const max5 = CANNON_UPGRADES[4][1];
+      const chainPct = 25;
+      return card('C', '', `
+        <div class="card-name">Arc Cannon</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-type', label:'Weapon'},
+          {cls:'tag-arc', label:'Arc'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ weaponType: 'Cannon', heat: '2', drop: 'Scavenger Probe (Ch1)' })}
+        ${divider()}
+        <div class="card-effect">
+          <strong>${CANNON_UPGRADES[0][1]}→${max5}</strong> arc damage<br>
+          ${rpsRow(CANNON_UPGRADES[0][1], 'arc')} <em>(base)</em><br>
+          ${rpsRow(max5, 'arc')} <em>(5/5)</em>
+        </div>
+        <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)}</div>
+        ${perk5('Arc Chain', `Two chain arcs, each <strong>${chainPct}%</strong> of activation damage<br>
+          ${Object.keys(RPS.arc).map(s =>
+            `vs ${cap(s)}: +<strong>${floor(rps(max5,'arc',s) * chainPct * 2 / 100)}</strong>`
+          ).join(' &nbsp;·&nbsp; ')} <em>(both chains)</em>`)}
+      `, { section: 'protocol', damage: 'arc' });
+    })(),
 
     // PLASMA CANNON
     (() => {
@@ -317,11 +331,39 @@ const CARDS = {
         <div class="card-effect">
           <strong>${base}→${max}</strong> plasma damage<br>
           ${rpsRow(base, 'plasma')} <em>(base)</em><br>
-          <strong>Scorch:</strong> 25% of damage dealt burns at start of next round, before anyone acts. Stacks per activation.<br>
-          Scorch: ${scorchRow(base, 25)} <em>(base)</em>
+          ${rpsRow(max, 'plasma')} <em>(5/5)</em>
         </div>
-        <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)} &nbsp;<span>5/5: Scorch 25% → 50%</span> ${scorchRow(max, 50)}</div>
+        <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)}</div>
+        ${perk5('Scorch', `<strong>50%</strong> of damage dealt burns at round start, before anyone acts. Stacks per activation.<br>
+          ${scorchRow(max, 50)} <em>(5/5)</em>`)}
       `, { section: 'protocol', damage: 'plasma' });
+    })(),
+
+    // GAMMA CANNON
+    (() => {
+      const max5 = CANNON_UPGRADES[4][1];
+      const halfLifePct = 25;
+      return card('C', '', `
+        <div class="card-name">Gamma Cannon</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-type', label:'Weapon'},
+          {cls:'tag-gamma', label:'Gamma'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ weaponType: 'Cannon', heat: '2', drop: 'Gamma Stalker (Ch2) · Keeper P1' })}
+        ${divider()}
+        <div class="card-effect">
+          <strong>${CANNON_UPGRADES[0][1]}→${max5}</strong> gamma damage<br>
+          ${rpsRow(CANNON_UPGRADES[0][1], 'gamma')} <em>(base)</em><br>
+          ${rpsRow(max5, 'gamma')} <em>(5/5)</em>
+        </div>
+        <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)}</div>
+        ${perk5('Half Life', `Apply <strong>${halfLifePct}%</strong> residual radiation — halves each round, stacks per activation<br>
+          ${Object.keys(RPS.gamma).map(s =>
+            `vs ${cap(s)}: <strong>${floor(rps(max5,'gamma',s) * halfLifePct / 100)}</strong>`
+          ).join(' &nbsp;·&nbsp; ')} <em>(first tick at 5/5)</em>`)}
+      `, { section: 'protocol', damage: 'gamma' });
     })(),
 
     // KINETIC SLUG
