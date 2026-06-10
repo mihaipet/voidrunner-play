@@ -313,6 +313,34 @@ const CARDS = {
         </div>
         <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)} &nbsp;<span>5/5: Scorch 25% → 50%</span> ${scorchRow(max, 50)}</div>
       `, { section: 'protocol', damage: 'plasma' });
+    })(),
+
+    // KINETIC SLUG
+    (() => {
+      const SLUG_TRK = [[1,24],[2,25],[3,27],[4,28],[5,30]];
+      const pen      = 65, penMax = 85;
+      const penOf    = (pip) => pip < 5 ? pen : penMax;
+      const up       = (dmg, p) => floor(dmg * p / 100);
+      return card('C', '', `
+        <div class="card-name">Kinetic Slug</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-type', label:'Weapon'},
+          {cls:'tag-kinetic', label:'Kinetic'}
+        )}</div>
+        ${divider()}
+        ${row('Weapon type', 'Mass Accelerator')}
+        ${row('Heat cost', '2')}
+        ${row('Drop', 'Patrol Corvette (Ch1) · Assault Frigate (Ch2)')}
+        ${divider()}
+        <div class="card-effect">
+          <strong>${SLUG_TRK[0][1]}→${SLUG_TRK[4][1]}</strong> kinetic damage · <strong>${pen}%</strong> penetration<br>
+          Shield up: <strong>${up(SLUG_TRK[0][1], pen)}</strong> hull dmg &nbsp;·&nbsp; Shield down: <strong>${SLUG_TRK[0][1]}</strong> hull dmg
+        </div>
+        <div class="card-upgrade">${SLUG_TRK.map(([pip,dmg]) =>
+          `<span>${pip}/5</span> ${up(dmg, penOf(pip))}/${dmg}`
+        ).join(' &nbsp;')} &nbsp;<span>(5/5: pen ${penMax}%)</span></div>
+      `, { section: 'protocol', damage: 'kinetic' });
     })()
 
   ],
@@ -432,91 +460,81 @@ const CARDS = {
           `<span>T${i+1}</span> +${tier.bonus}% / −${tier.shieldCost}% shield`
         ).join(' &nbsp;')} &nbsp;<span>T3 perk:</span> if &lt;50% shield, cost halved · −1 heat</div>
       `, { section: 'routine', damage: 'arc plasma' });
+    })(),
+
+    // HEAVY BORE
+    (() => {
+      const track = [10,11,13,15,18];
+      return card('C', '', `
+        <div class="card-name">Heavy Bore</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-kinetic', label:'Kinetic'}
+        )}</div>
+        ${divider()}
+        ${row('Heat cost', '1')}
+        <div class="card-compat">Mass Accelerator</div>
+        ${divider()}
+        <div class="card-effect">
+          <strong>+${track[0]}</strong> kinetic damage this activation
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> +${v}`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', damage: 'kinetic' });
+    })(),
+
+    // BURST LOADER
+    (() => {
+      const track = [50,55,60,65,75];
+      return card('C', '', `
+        <div class="card-name">Burst Loader</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-kinetic', label:'Kinetic'}
+        )}</div>
+        ${divider()}
+        ${row('Heat cost', '2')}
+        <div class="card-compat">Mass Accelerator</div>
+        ${divider()}
+        <div class="card-effect">
+          Fire twice — second shot at <strong>${track[0]}%</strong> damage<br>
+          <em>×${(1 + track[0]/100).toFixed(2)} effective</em>
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> ${v}% ×${(1 + v/100).toFixed(2)}`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', damage: 'kinetic' });
+    })(),
+
+    // ARMOR REND
+    (() => {
+      const track = [10,12,14,17,20];
+      return card('R', '', `
+        <div class="card-name">Armor Rend</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-kinetic', label:'Kinetic'}
+        )}</div>
+        ${divider()}
+        ${row('Heat cost', '2')}
+        <div class="card-compat">Mass Accelerator</div>
+        ${divider()}
+        <div class="card-effect">
+          Target takes <strong>+${track[0]}%</strong> hull damage for 1 round, all sources
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> +${v}%`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', damage: 'kinetic' });
     })()
 
   ],
 
-  'wip': [
-
-    // KINETIC SLUG (proposal — decision points pending)
-    (() => {
-      const SLUG = { base: 24, max: 30, pen: 70, penMax: 85 };
-      const up    = floor(SLUG.base * SLUG.pen / 100);
-      const upMax = floor(SLUG.max * SLUG.penMax / 100);
-      return wip('C', `
-        <div class="card-name">Kinetic Slug</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-type', label:'Weapon'},
-          {cls:'tag-kinetic', label:'Kinetic'}
-        )}</div>
-        ${divider()}
-        ${row('Weapon type', 'Mass Accelerator')}
-        ${row('Heat cost', '2')}
-        ${row('Drop', 'Patrol Corvette (Ch1) · Assault Frigate (Ch2)')}
-        ${divider()}
-        <div class="card-effect">
-          <strong>${SLUG.base}→${SLUG.max}</strong> kinetic damage · <strong>${SLUG.pen}%</strong> penetration<br>
-          Shield up: <strong>${up}</strong> hull dmg &nbsp;·&nbsp; Shield down: <strong>${SLUG.base}</strong> hull dmg<br>
-          <em>Core swings (15/30) — Slug punches through (${up}/${SLUG.base})</em>
-        </div>
-        <div class="card-upgrade"><span>5/5:</span> ${SLUG.max} dmg + penetration ${SLUG.pen}% → ${SLUG.penMax}% (${upMax} up / ${SLUG.max} down)</div>
-      `, { damage: 'kinetic' });
-    })(),
-
-    // HEAVY BORE (Mass Accelerator pool — effects to confirm)
-    wip('C', `
-      <div class="card-name">Heavy Bore</div>
-      <div class="card-tags">${tags(
-        {cls:'tag-C', label:'C'},
-        {cls:'tag-routine', label:'Routine'},
-        {cls:'tag-kinetic', label:'Kinetic'}
-      )}</div>
-      ${divider()}
-      ${row('Heat cost', '1')}
-      <div class="card-compat">Mass Accelerator</div>
-      ${divider()}
-      <div class="card-effect">
-        <strong>+10</strong> kinetic damage this activation
-      </div>
-    `, { damage: 'kinetic' }),
-
-    // BURST LOADER (Mass Accelerator pool — effects to confirm)
-    wip('C', `
-      <div class="card-name">Burst Loader</div>
-      <div class="card-tags">${tags(
-        {cls:'tag-C', label:'C'},
-        {cls:'tag-routine', label:'Routine'},
-        {cls:'tag-kinetic', label:'Kinetic'}
-      )}</div>
-      ${divider()}
-      ${row('Heat cost', '2')}
-      <div class="card-compat">Mass Accelerator</div>
-      ${divider()}
-      <div class="card-effect">
-        Fire twice — second shot at <strong>70%</strong> damage<br>
-        <em>Effective multiplier: ×1.7</em>
-      </div>
-    `, { damage: 'kinetic' }),
-
-    // ARMOR REND (Mass Accelerator pool — effects to confirm)
-    wip('R', `
-      <div class="card-name">Armor Rend</div>
-      <div class="card-tags">${tags(
-        {cls:'tag-R', label:'R'},
-        {cls:'tag-routine', label:'Routine'},
-        {cls:'tag-kinetic', label:'Kinetic'}
-      )}</div>
-      ${divider()}
-      ${row('Heat cost', '2')}
-      <div class="card-compat">Mass Accelerator</div>
-      ${divider()}
-      <div class="card-effect">
-        Target takes <strong>+20%</strong> hull damage for 1 round, all sources
-      </div>
-    `, { damage: 'kinetic' })
-
-  ]
+  'wip': []
 };
 
 // ─── FILTER ───────────────────────────────────────────────────────────────────
@@ -564,7 +582,7 @@ function render() {
   }
 
   document.getElementById('meta-line').innerHTML =
-    `Last updated: 2026-06-10 &nbsp;·&nbsp; ${complete} cards complete &nbsp;·&nbsp; ${inProgress} in progress`;
+    `Last updated: 2026-06-10 &nbsp;·&nbsp; ${complete} cards`;
 
   applyFilters();
 }
