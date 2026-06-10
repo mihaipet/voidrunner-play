@@ -202,6 +202,13 @@ const MORPHIC_VEIL = {
   upgrade: 'Deploy +200 HP · Reactivate +40 HP (20%) · 0 heat'
 };
 
+const SHIELD_COMMON = {
+  hpAdd:  [0, 5, 10, 15, 25],   // cumulative HP added per tier (T1=+0)
+  react:  [10, 11, 12, 13, 15]  // reactivation % per tier
+};
+
+const PLAYER_HULL = 140;
+
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
 const floor = Math.floor;
@@ -407,7 +414,80 @@ const CARDS = {
         Reactivate: restore <strong>${floor(MORPHIC_VEIL.deployHP * MORPHIC_VEIL.reactivatePct / 100)}</strong> HP (${MORPHIC_VEIL.reactivatePct}%)
       </div>
       <div class="card-upgrade"><span>5/5:</span> ${MORPHIC_VEIL.upgrade}</div>
-    `, { section: 'protocol', damage: 'shield' })
+    `, { section: 'protocol', damage: 'shield' }),
+
+    // ARC SHIELD
+    (() => {
+      const base = 105;
+      return card('C', '', `
+        <div class="card-name">Arc Shield</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-shield', label:'Shield'},
+          {cls:'tag-arc', label:'Arc'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ heat: '1 (prep) · 2 (reactivate)', drop: 'Scavenger Probe (Ch1)' })}
+        ${divider()}
+        <div class="card-effect">
+          Deploy: <strong>${base}</strong> HP &nbsp;·&nbsp;
+          Reactivate: <strong>${floor(base * SHIELD_COMMON.react[0] / 100)}</strong> HP (${SHIELD_COMMON.react[0]}%)<br>
+          <strong>On activation:</strong> all weapons this turn +<strong>25%</strong> damage
+        </div>
+        <div class="card-upgrade">${SHIELD_COMMON.hpAdd.map((add, i) =>
+          `<span>T${i+1}</span> ${base + add} HP · ${SHIELD_COMMON.react[i]}%`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'protocol', damage: 'arc shield' });
+    })(),
+
+    // PLASMA SHIELD
+    (() => {
+      const base = 120;
+      return card('C', '', `
+        <div class="card-name">Plasma Shield</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-shield', label:'Shield'},
+          {cls:'tag-plasma', label:'Plasma'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ heat: '1 (prep) · 2 (reactivate)', drop: 'Patrol Corvette (Ch1)' })}
+        ${divider()}
+        <div class="card-effect">
+          Deploy: <strong>${base}</strong> HP &nbsp;·&nbsp;
+          Reactivate: <strong>${floor(base * SHIELD_COMMON.react[0] / 100)}</strong> HP (${SHIELD_COMMON.react[0]}%)<br>
+          <strong>On activation:</strong> all weapons cost <strong>−1 heat</strong> this round
+        </div>
+        <div class="card-upgrade">${SHIELD_COMMON.hpAdd.map((add, i) =>
+          `<span>T${i+1}</span> ${base + add} HP · ${SHIELD_COMMON.react[i]}%`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'protocol', damage: 'plasma shield' });
+    })(),
+
+    // GAMMA SHIELD
+    (() => {
+      const base = 135;
+      const hullRestore = floor(PLAYER_HULL * 0.05);
+      return card('C', '', `
+        <div class="card-name">Gamma Shield</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-shield', label:'Shield'},
+          {cls:'tag-gamma', label:'Gamma'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ heat: '1 (prep) · 2 (reactivate)', drop: 'TBD' })}
+        ${divider()}
+        <div class="card-effect">
+          Deploy: <strong>${base}</strong> HP &nbsp;·&nbsp;
+          Reactivate: <strong>${floor(base * SHIELD_COMMON.react[0] / 100)}</strong> HP (${SHIELD_COMMON.react[0]}%)<br>
+          <strong>On activation:</strong> next round restore <strong>${floor(base * 0.15)}</strong> shield + <strong>${hullRestore}</strong> hull HP
+        </div>
+        <div class="card-upgrade">${SHIELD_COMMON.hpAdd.map((add, i) =>
+          `<span>T${i+1}</span> ${base + add} HP · ${SHIELD_COMMON.react[i]}%`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'protocol', damage: 'gamma shield' });
+    })()
 
   ],
 
