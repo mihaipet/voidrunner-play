@@ -667,6 +667,99 @@ const CARDS = {
           `<span>T${i+1}</span> ${v}%`
         ).join(' &nbsp;')}</div>
       `, { section: 'routine', damage: 'gamma' });
+    })(),
+
+    // IGNITE
+    (() => {
+      const track = [8,9,10,12,15];
+      return card('C', '', `
+        <div class="card-name">Ignite</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-plasma', label:'Plasma'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Plasma Cannon', heat: '2' })}
+        ${divider()}
+        <div class="card-effect">
+          Apply DoT — <strong>${track[0]}</strong> damage at round start for 2 rounds, stacks independently
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> ${v}×2`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', damage: 'plasma' });
+    })(),
+
+    // THERMAL LANCE
+    (() => {
+      const base  = CANNON_UPGRADES[0][1];
+      const bleed = [15,17,19,22,25];
+      return card('R', '', `
+        <div class="card-name">Thermal Lance</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-plasma', label:'Plasma'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Plasma Cannon', heat: '3' })}
+        ${divider()}
+        <div class="card-effect">
+          <strong>${bleed[0]}%</strong> of shield damage dealt bleeds through to enemy hull<br>
+          ${Object.keys(RPS.plasma).map(s =>
+            `vs ${cap(s)}: +<strong>${floor(rps(base,'plasma',s) * bleed[0]/100)}</strong> hull`
+          ).join(' &nbsp;·&nbsp; ')} <em>(base cannon)</em><br>
+          <em>DoT active: bleedthrough doubled</em>
+        </div>
+        <div class="card-upgrade">${bleed.map((v,i) =>
+          `<span>T${i+1}</span> ${v}% / ${v*2}%`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', damage: 'plasma' });
+    })(),
+
+    // SUPERHEATED
+    (() => {
+      const reflect = [10,15,25,35,50];
+      return card('R', '', `
+        <div class="card-name">Superheated</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-plasma', label:'Plasma'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Plasma Cannon', heat: '3 (2 at T5)' })}
+        ${divider()}
+        <div class="card-effect">
+          <strong>${reflect[0]}%</strong> of all incoming damage this round is reflected to the attacker — shield first, then hull
+        </div>
+        <div class="card-upgrade">${reflect.map((v,i) =>
+          `<span>T${i+1}</span> ${v}%${i===4?' −1 heat':''}`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', damage: 'plasma' });
+    })(),
+
+    // MELTDOWN
+    (() => {
+      const tiers = [50,75,100];
+      return card('E', '', `
+        <div class="card-name">Meltdown</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-E', label:'E'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-plasma', label:'Plasma'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Plasma Cannon', heat: '1' })}
+        ${divider()}
+        <div class="card-effect">
+          <strong>${tiers[0]}%</strong> of damage dealt permanently reduces enemy max shield HP
+        </div>
+        <div class="card-upgrade">${tiers.map((v,i) =>
+          `<span>T${i+1}</span> ${v}%`
+        ).join(' &nbsp;')} &nbsp;<span>T3 perk:</span> TBD</div>
+      `, { section: 'routine', damage: 'plasma' });
     })()
 
   ],
