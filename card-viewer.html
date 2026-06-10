@@ -239,6 +239,21 @@ function row(label, value) {
   return `<div class="card-row"><span>${label}</span><span>${value}</span></div>`;
 }
 
+// Unified meta block — all cards show all four fields; missing values show —
+function metaRows({ weaponType, compat, heat, drop, conditions } = {}) {
+  let html = [
+    row('Weapon type',     weaponType || '—'),
+    row('Compatible with', compat     || '—'),
+    row('Heat cost',       heat       || '—'),
+    row('Drop',            drop       || 'TBD'),
+  ].join('');
+  if (conditions) {
+    const list = Array.isArray(conditions) ? conditions : [conditions];
+    list.forEach(c => { html += `<div class="card-conditions">⚠ ${c}</div>`; });
+  }
+  return html;
+}
+
 // ─── CARDS ───────────────────────────────────────────────────────────────────
 
 const CARDS = {
@@ -253,9 +268,7 @@ const CARDS = {
         {cls:'tag-kinetic', label:'Kinetic'}
       )}</div>
       ${divider()}
-      ${row('Weapon type', 'Mass Accelerator')}
-      ${row('Heat cost', '2')}
-      ${row('Drop', 'Starter')}
+      ${metaRows({ weaponType: 'Mass Accelerator', heat: '2', drop: 'Starter' })}
       ${divider()}
       <div class="card-effect">
         Shield up: <strong>${KINETIC_CORE.shieldUpDmg}</strong> hull dmg<br>
@@ -273,9 +286,7 @@ const CARDS = {
         {cls:'tag-arc', label:'Arc'}
       )}</div>
       ${divider()}
-      ${row('Weapon type', 'Cannon')}
-      ${row('Heat cost', '2')}
-      ${row('Drop', 'Scavenger Probe')}
+      ${metaRows({ weaponType: 'Cannon', heat: '2', drop: 'Scavenger Probe (Ch1)' })}
       ${divider()}
       <div class="card-effect">
         <strong>${CANNON_UPGRADES[0][1]}→${CANNON_UPGRADES[4][1]}</strong> arc damage<br>
@@ -301,9 +312,7 @@ const CARDS = {
           {cls:'tag-plasma', label:'Plasma'}
         )}</div>
         ${divider()}
-        ${row('Weapon type', 'Cannon')}
-        ${row('Heat cost', '2')}
-        ${row('Drop', 'Interceptor (Ch 1–2)')}
+        ${metaRows({ weaponType: 'Cannon', heat: '2', drop: 'Interceptor (Ch 1–2)' })}
         ${divider()}
         <div class="card-effect">
           <strong>${base}→${max}</strong> plasma damage<br>
@@ -329,9 +338,7 @@ const CARDS = {
           {cls:'tag-kinetic', label:'Kinetic'}
         )}</div>
         ${divider()}
-        ${row('Weapon type', 'Mass Accelerator')}
-        ${row('Heat cost', '2')}
-        ${row('Drop', 'Patrol Corvette (Ch1) · Assault Frigate (Ch2)')}
+        ${metaRows({ weaponType: 'Mass Accelerator', heat: '2', drop: 'Patrol Corvette (Ch1) · Assault Frigate (Ch2)' })}
         ${divider()}
         <div class="card-effect">
           <strong>${SLUG_TRK[0][1]}→${SLUG_TRK[4][1]}</strong> kinetic damage · <strong>${pen}%</strong> penetration<br>
@@ -355,9 +362,7 @@ const CARDS = {
         {cls:'tag-shield', label:'Shield'}
       )}</div>
       ${divider()}
-      ${row('Heat (prep)', MORPHIC_VEIL.heatPrep)}
-      ${row('Heat (reactivate)', MORPHIC_VEIL.heatReactivate)}
-      ${row('Drop', 'Starter')}
+      ${metaRows({ heat: `${MORPHIC_VEIL.heatPrep} (prep) · ${MORPHIC_VEIL.heatReactivate} (reactivate)`, drop: 'Starter' })}
       ${divider()}
       <div class="card-effect">
         Deploy: <strong>+${MORPHIC_VEIL.deployHP}</strong> shield HP<br>
@@ -383,8 +388,7 @@ const CARDS = {
           {cls:'tag-arc', label:'Arc'}
         )}</div>
         ${divider()}
-        ${row('Heat cost', '1')}
-        <div class="card-compat">Arc Cannon</div>
+        ${metaRows({ compat: 'Arc Cannon', heat: '1' })}
         ${divider()}
         <div class="card-effect">
           <strong>+${pct[0]}%</strong> damage this activation<br>
@@ -412,8 +416,7 @@ const CARDS = {
           {cls:'tag-gamma', label:'Gamma'}
         )}</div>
         ${divider()}
-        ${row('Heat cost', '3')}
-        <div class="card-compat">Arc Cannon · Gamma Cannon</div>
+        ${metaRows({ compat: 'Arc Cannon · Gamma Cannon', heat: '3' })}
         ${divider()}
         <div class="card-effect">
           <strong>${tiers[0]}%</strong> of damage dealt → shield repair<br>
@@ -445,10 +448,7 @@ const CARDS = {
           {cls:'tag-plasma', label:'Plasma'}
         )}</div>
         ${divider()}
-        ${row('Heat cost', '4')}
-        ${row('Drop', 'Chapter 3')}
-        <div class="card-compat">Arc Cannon · Plasma Cannon</div>
-        <div class="card-conditions">⚠ Cannot play at 0 shield HP</div>
+        ${metaRows({ compat: 'Arc Cannon · Plasma Cannon', heat: '4', drop: 'Chapter 3', conditions: 'Cannot play at 0 shield HP' })}
         ${divider()}
         <div class="card-effect">
           Drain <strong>${t.shieldCost}%</strong> current shield → <strong>+${t.bonus}%</strong> damage<br>
@@ -473,8 +473,7 @@ const CARDS = {
           {cls:'tag-kinetic', label:'Kinetic'}
         )}</div>
         ${divider()}
-        ${row('Heat cost', '1')}
-        <div class="card-compat">Mass Accelerator</div>
+        ${metaRows({ compat: 'Mass Accelerator', heat: '1' })}
         ${divider()}
         <div class="card-effect">
           <strong>+${track[0]}</strong> kinetic damage this activation
@@ -496,8 +495,7 @@ const CARDS = {
           {cls:'tag-kinetic', label:'Kinetic'}
         )}</div>
         ${divider()}
-        ${row('Heat cost', '2')}
-        <div class="card-compat">Mass Accelerator</div>
+        ${metaRows({ compat: 'Mass Accelerator', heat: '2' })}
         ${divider()}
         <div class="card-effect">
           Fire twice — second shot at <strong>${track[0]}%</strong> damage<br>
@@ -520,8 +518,7 @@ const CARDS = {
           {cls:'tag-kinetic', label:'Kinetic'}
         )}</div>
         ${divider()}
-        ${row('Heat cost', '2')}
-        <div class="card-compat">Mass Accelerator</div>
+        ${metaRows({ compat: 'Mass Accelerator', heat: '2' })}
         ${divider()}
         <div class="card-effect">
           Target takes <strong>+${track[0]}%</strong> hull damage for 1 round, all sources
