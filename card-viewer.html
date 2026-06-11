@@ -1030,25 +1030,95 @@ const CARDS = {
       `, { section: 'routine', type: 'shield', element: 'gamma' });
     })(),
 
-    // PHASE SHIFT
+    // BACKDRAFT
     (() => {
-      const track = [25,22,19,16,12];
+      const track = [4,5,6,8,10];
       return card('R', '', `
-        <div class="card-name">Phase Shift</div>
+        <div class="card-name">Backdraft</div>
         <div class="card-tags">${tags(
           {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-plasma', label:'Plasma'},
+          {cls:'tag-shield', label:'Shield'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Plasma Shield', heat: '2' })}
+        ${divider()}
+        <div class="card-effect">
+          When the Plasma Shield is hit this round, the attacker takes <strong>Scorch ${track[0]}</strong> (Plasma DoT) — absorb the blow, set them on fire.
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> Scorch ${v}`
+        ).join(' &nbsp;')} &nbsp;<span>T5:</span> on every hit this round</div>
+      `, { section: 'routine', type: 'shield', element: 'plasma' });
+    })(),
+
+    // ABLATIVE LAYER
+    (() => {
+      const track = [15,18,21,25,30];
+      return card('C', '', `
+        <div class="card-name">Ablative Layer</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-plasma', label:'Plasma'},
+          {cls:'tag-shield', label:'Shield'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Plasma Shield', heat: '1' })}
+        ${divider()}
+        <div class="card-effect">
+          The superheated outer layer ablates the strike. Incoming damage to the Plasma Shield reduced <strong>${track[0]}%</strong> this round.
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> ${v}%`
+        ).join(' &nbsp;')} &nbsp;<span>T5:</span> Scorch the attacker for 5</div>
+      `, { section: 'routine', type: 'shield', element: 'plasma' });
+    })(),
+
+    // PRESSURE VALVE
+    (() => {
+      const track = ['Vent 2','Vent 3','Vent 4','Vent 5','Vent 6, weapons −1 heat'];
+      return card('C', '', `
+        <div class="card-name">Pressure Valve</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-plasma', label:'Plasma'},
+          {cls:'tag-shield', label:'Shield'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Plasma Shield', heat: '0' })}
+        ${divider()}
+        <div class="card-effect">
+          On Plasma Shield activation, <strong>vent 2 heat</strong> — the barrier dumps the Core's heat, turning defense into an attack enabler.
+        </div>
+        <div class="card-upgrade">${track.map((fx,i) =>
+          `<span>T${i+1}</span> ${fx}`
+        ).join(' &nbsp;')}</div>
+        <div class="card-na">⚠ Balance watch — possible reactivate→vent loop; kept for playtest.</div>
+      `, { section: 'routine', type: 'shield', element: 'plasma' });
+    })(),
+
+    // PHASE SHIFT
+    (() => {
+      const track = [20,16,12];
+      return card('E', '', `
+        <div class="card-name">Phase Shift</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-E', label:'E'},
           {cls:'tag-routine', label:'Routine'},
           {cls:'tag-shield', label:'Shield'}
         )}</div>
         ${divider()}
-        ${metaRows({ compat: 'All shield protocols', heat: '2' })}
+        ${metaRows({ compat: 'All shield protocols', heat: '4' })}
         ${divider()}
         <div class="card-effect">
-          Reactive. Next incoming attack this round is negated entirely if it exceeds the trigger threshold. Collapses after triggering. Hits at or below threshold pass through.
+          Reactive hard counter. Next incoming attack this round is <strong>negated entirely</strong> if it exceeds the threshold. At 4 heat it eats half your round — you trade offense to erase a telegraphed buffed hit. Small hits pass through.
         </div>
         <div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> >${v} dmg`
-        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> deal 15 dmg back to attacker on trigger</div>
+        ).join(' &nbsp;')} &nbsp;<span>T3:</span> +deal 15 dmg back to attacker on trigger</div>
       `, { section: 'routine', type: 'shield', element: '' });
     })(),
 
