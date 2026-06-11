@@ -206,6 +206,11 @@
   <div class="grid" id="protocols-shield"></div>
 </div>
 
+<div id="protocols-system-section">
+  <div class="section-title">Protocols — System</div>
+  <div class="grid" id="protocols-system"></div>
+</div>
+
 <div id="routines-section">
   <div class="section-title">Routines</div>
   <div class="grid" id="routines"></div>
@@ -548,6 +553,39 @@ const CARDS = {
           `<span>T${i+1}</span> ${base + add} HP · ${SHIELD_COMMON.react[i]}%`
         ).join(' &nbsp;')}</div>
       `, { section: 'protocol', type: 'shield', element: 'gamma' });
+    })()
+
+  ],
+
+  'protocols-system': [
+
+    // RECONFIGURE
+    (() => {
+      const ladder = [
+        { draw: 'Draw 2',            heat: 2 },
+        { draw: 'Draw 2',            heat: 1 },
+        { draw: 'Draw 3',            heat: 1 },
+        { draw: 'Draw 3',            heat: 0 },
+        { draw: 'Draw 3 + scry 2',   heat: 0 },
+      ];
+      return card('ST', '', `
+        <div class="card-name">Reconfigure</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-ST', label:'ST'},
+          {cls:'tag-type', label:'System'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ heat: `${ladder[0].heat} (drops with upgrade)`, drop: 'Starter' })}
+        ${divider()}
+        <div class="card-effect">
+          The Core reconfigures its decoder to pull more routines from the deck. <strong>${ladder[0].draw}</strong>.<br>
+          <span style="color:#7a7a90">Starter System protocol — trade heat + an activation for card advantage. Teaches the deck as a resource.</span>
+        </div>
+        <div class="card-upgrade">${ladder.map((t,i) =>
+          `<span>${i+1}/5</span> ${t.draw} · ${t.heat}h`
+        ).join(' &nbsp;')}</div>
+        <div class="card-na">Effect-card upgrade: interleaves efficiency (heat ↓) + magnitude (draw ↑) — no dead tiers.</div>
+      `, { section: 'protocol', type: 'system', element: '' });
     })()
 
   ],
@@ -1114,7 +1152,7 @@ function applyFilters() {
     c.hidden = !(secMatch && typeMatch && elemMatch && rarityMatch && searchMatch);
   });
 
-  ['protocols-weapon-section','protocols-shield-section','routines-section','wip-section'].forEach(id => {
+  ['protocols-weapon-section','protocols-shield-section','protocols-system-section','routines-section','wip-section'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.hidden = [...el.querySelectorAll('.card')].every(c => c.hidden);
   });
