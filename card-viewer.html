@@ -6,6 +6,7 @@
 <title>Voidrunner — Card Viewer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  [hidden] { display: none !important; }
 
   body {
     background: #0d0d0f;
@@ -760,6 +761,164 @@ const CARDS = {
           `<span>T${i+1}</span> ${v}%`
         ).join(' &nbsp;')} &nbsp;<span>T3 perk:</span> TBD</div>
       `, { section: 'routine', damage: 'plasma' });
+    })(),
+
+    // IRRADIATE
+    (() => {
+      const track = [6,7,8,9,10];
+      return card('R', '', `
+        <div class="card-name">Irradiate</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-gamma', label:'Gamma'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Gamma Cannon', heat: '3' })}
+        ${divider()}
+        <div class="card-effect">
+          Apply fixed gamma burn — <strong>${track[0]}</strong> dmg/round for 3 rounds. Stacks independently.
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> ${v}×3`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> ticks also deal 10% hull</div>
+      `, { section: 'routine', damage: 'gamma' });
+    })(),
+
+    // DESTABILIZE
+    (() => {
+      const track = [10,15,20,25,30];
+      return card('R', '', `
+        <div class="card-name">Destabilize</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-gamma', label:'Gamma'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Gamma Cannon', heat: '3' })}
+        ${divider()}
+        <div class="card-effect">
+          Next attack against enemy this round deals <strong>+${track[0]}%</strong> damage. Single trigger.
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> +${v}%`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> triggers twice</div>
+      `, { section: 'routine', damage: 'gamma' });
+    })(),
+
+    // GAMMA REBOUND
+    (() => {
+      const track = [30,35,40,45,50];
+      return card('R', '', `
+        <div class="card-name">Gamma Rebound</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-gamma', label:'Gamma'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Gamma Cannon', heat: '3 (2 at T5)', conditions: 'Requires active DoT on enemy' })}
+        ${divider()}
+        <div class="card-effect">
+          Convert <strong>${track[0]}%</strong> of total remaining DoT to immediate damage.
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> ${v}%${i===4?' −1 heat':''}`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', damage: 'gamma' });
+    })(),
+
+    // ARC BARRIER
+    (() => {
+      const track = [15,18,21,24,30];
+      return card('C', '', `
+        <div class="card-name">Arc Barrier</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-arc', label:'Arc'},
+          {cls:'tag-shield', label:'Shield'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Arc Shield', heat: '1' })}
+        ${divider()}
+        <div class="card-effect">
+          Incoming damage to Arc Shield reduced by <strong>${track[0]}%</strong> this round.
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> ${v}%`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> extends to hull</div>
+      `, { section: 'routine', damage: 'arc shield' });
+    })(),
+
+    // SURGE CONVERSION
+    (() => {
+      const track = [20,25,30,35,45];
+      return card('R', '', `
+        <div class="card-name">Surge Conversion</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-arc', label:'Arc'},
+          {cls:'tag-shield', label:'Shield'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Arc Shield', heat: '2' })}
+        ${divider()}
+        <div class="card-effect">
+          <strong>${track[0]}%</strong> of damage dealt to Arc Shield this round → bonus on next weapon activation.
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> ${v}%`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> triggers twice</div>
+      `, { section: 'routine', damage: 'arc shield' });
+    })(),
+
+    // THORNS
+    (() => {
+      const track = [30,33,36,40,45];
+      return card('C', '', `
+        <div class="card-name">Thorns</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-arc', label:'Arc'},
+          {cls:'tag-shield', label:'Shield'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Arc Shield', heat: '1' })}
+        ${divider()}
+        <div class="card-effect">
+          <strong>${track[0]}%</strong> of damage dealt to Arc Shield this round reflected to enemy shield.
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> ${v}%`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> overflows to hull at 0 shield</div>
+      `, { section: 'routine', damage: 'arc shield' });
+    })(),
+
+    // DIMENSIONAL SINK
+    (() => {
+      const track = [20,24,28,33,40];
+      return card('C', '', `
+        <div class="card-name">Dimensional Sink</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-gamma', label:'Gamma'},
+          {cls:'tag-shield', label:'Shield'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Gamma Shield', heat: '1' })}
+        ${divider()}
+        <div class="card-effect">
+          <strong>${track[0]}%</strong> of damage dealt to Gamma Shield → HP restored next round, split shield + hull equally.
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> ${v}%`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> restored immediately</div>
+      `, { section: 'routine', damage: 'gamma shield' });
     })()
 
   ],
@@ -812,7 +971,7 @@ function render() {
   }
 
   document.getElementById('meta-line').innerHTML =
-    `Last updated: 2026-06-10 &nbsp;·&nbsp; ${complete} cards`;
+    `Last updated: 2026-06-11 &nbsp;·&nbsp; ${complete} cards`;
 
   applyFilters();
 }
