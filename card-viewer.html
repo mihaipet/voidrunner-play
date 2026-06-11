@@ -71,6 +71,11 @@
   .filter-btn[data-value="plasma"].active  { background: #160404; border-color: #aa3333; color: #dd6666; }
   .filter-btn[data-value="gamma"].active   { background: #04120a; border-color: #229944; color: #55cc88; }
   .filter-btn[data-value="shield"].active  { background: #04101a; border-color: #226688; color: #55aacc; }
+  .filter-btn[data-value="ST"].active      { background: #14141e; border-color: #5a5a6e; color: #aaaacc; }
+  .filter-btn[data-value="C"].active       { background: #040a18; border-color: #3a6aaa; color: #6699dd; }
+  .filter-btn[data-value="R"].active       { background: #04120a; border-color: #4a7c4a; color: #88cc88; }
+  .filter-btn[data-value="E"].active       { background: #16041a; border-color: #8a3aaa; color: #bb77dd; }
+  .filter-btn[data-value="U"].active       { background: #1a1000; border-color: #cc8800; color: #ddaa22; }
 
   /* ─── PAGE ───────────────────────────────────────────────────── */
 
@@ -94,8 +99,8 @@
   }
 
   .card.ST  { border-top-color: #5a5a6e; }
-  .card.C   { border-top-color: #4a7c4a; }
-  .card.R   { border-top-color: #3a6aaa; }
+  .card.C   { border-top-color: #3a6aaa; }
+  .card.R   { border-top-color: #4a7c4a; }
   .card.E   { border-top-color: #8a3aaa; }
   .card.U   { border-top-color: #cc8800; }
   .card.wip { border-style: dashed; border-top-style: dashed; opacity: 0.6; }
@@ -106,8 +111,8 @@
   .tag { font-size: 11px; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; letter-spacing: 0.08em; }
   .tag-type    { background: #1e1e2e; color: #a0a0c0; }
   .tag-ST      { background: #2a2a3a; color: #aaaacc; }
-  .tag-C       { background: #1a2e1a; color: #88cc88; }
-  .tag-R       { background: #1a2040; color: #6699dd; }
+  .tag-C       { background: #1a2040; color: #6699dd; }
+  .tag-R       { background: #1a2e1a; color: #88cc88; }
   .tag-E       { background: #2a1a3a; color: #bb77dd; }
   .tag-U       { background: #2e2000; color: #ddaa22; }
   .tag-kinetic { background: #2e1e10; color: #dd9955; }
@@ -130,6 +135,19 @@
   .card-na { color: #444455; font-style: italic; font-size: 12px; }
   .card-5perk { border: 1px solid #252535; border-left: 3px solid #5555a0; padding: 8px 10px; background: #0e0e18; }
   .perk5-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #6060a0; margin-bottom: 4px; }
+
+  #search-box {
+    background: transparent;
+    border: 1px solid #333344;
+    color: #c8c8d0;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    padding: 4px 10px;
+    outline: none;
+    width: 180px;
+  }
+  #search-box:focus { border-color: #5555a0; }
+  #search-box::placeholder { color: #444455; }
 </style>
 </head>
 <body>
@@ -145,13 +163,34 @@
   <div class="filter-sep"></div>
   <div class="filter-group">
     <span class="filter-label">Type</span>
-    <button class="filter-btn active" data-filter="damage" data-value="all">All</button>
-    <button class="filter-btn" data-filter="damage" data-value="kinetic">Kinetic</button>
-    <button class="filter-btn" data-filter="damage" data-value="arc">Arc</button>
-    <button class="filter-btn" data-filter="damage" data-value="plasma">Plasma</button>
-    <button class="filter-btn" data-filter="damage" data-value="gamma">Gamma</button>
-    <button class="filter-btn" data-filter="damage" data-value="shield">Shield</button>
+    <button class="filter-btn active" data-filter="type" data-value="all">All</button>
+    <button class="filter-btn" data-filter="type" data-value="weapon">Weapon</button>
+    <button class="filter-btn" data-filter="type" data-value="shield">Shield</button>
+    <button class="filter-btn" data-filter="type" data-value="system">System</button>
   </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <span class="filter-label">Element</span>
+    <button class="filter-btn active" data-filter="element" data-value="all">All</button>
+    <button class="filter-btn" data-filter="element" data-value="kinetic">Kinetic</button>
+    <button class="filter-btn" data-filter="element" data-value="arc">Arc</button>
+    <button class="filter-btn" data-filter="element" data-value="plasma">Plasma</button>
+    <button class="filter-btn" data-filter="element" data-value="gamma">Gamma</button>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <span class="filter-label">Rarity</span>
+    <button class="filter-btn active" data-filter="rarity" data-value="all">All</button>
+    <button class="filter-btn" data-filter="rarity" data-value="ST">ST</button>
+    <button class="filter-btn" data-filter="rarity" data-value="C">C</button>
+    <button class="filter-btn" data-filter="rarity" data-value="R">R</button>
+    <button class="filter-btn" data-filter="rarity" data-value="E">E</button>
+    <button class="filter-btn" data-filter="rarity" data-value="U">U</button>
+  </div>
+  <div class="filter-sep"></div>
+  <input id="search-box" type="text" placeholder="Search cards…" autocomplete="off">
+  <button id="clear-filters" class="filter-btn">Clear filters</button>
 </div>
 
 <h1>Voidrunner — Card Viewer</h1>
@@ -234,9 +273,10 @@ function tags(...list) {
 }
 
 function card(rarity, extra, content, opts = {}) {
-  const sec = opts.section || 'protocol';
-  const dmg = opts.damage || '';
-  return `<div class="card ${rarity}${extra}" data-section="${sec}" data-damage="${dmg}">${content}</div>`;
+  const sec  = opts.section || 'protocol';
+  const type = opts.type    || '';
+  const elem = opts.element || '';
+  return `<div class="card ${rarity}${extra}" data-section="${sec}" data-type="${type}" data-element="${elem}" data-rarity="${rarity}">${content}</div>`;
 }
 
 function wip(rarity, content, opts = {}) {
@@ -250,13 +290,14 @@ function row(label, value) {
 }
 
 // Unified meta block — all cards show all four fields; missing values show —
+// Renders only the fields a card actually passes — no blank/placeholder rows.
+// Weapon protocols pass weaponType/heat/drop; shields pass heat/drop; routines pass compat/heat.
 function metaRows({ weaponType, compat, heat, drop, conditions } = {}) {
-  let html = [
-    row('Weapon type',     weaponType || '—'),
-    row('Compatible with', compat     || '—'),
-    row('Heat cost',       heat       || '—'),
-    row('Drop',            drop       || 'TBD'),
-  ].join('');
+  let html = '';
+  if (weaponType) html += row('Weapon type',     weaponType);
+  if (compat)     html += row('Compatible with', compat);
+  if (heat)       html += row('Heat cost',       heat);
+  if (drop)       html += row('Drop',            drop);
   if (conditions) {
     const list = Array.isArray(conditions) ? conditions : [conditions];
     list.forEach(c => { html += `<div class="card-conditions">⚠ ${c}</div>`; });
@@ -289,7 +330,7 @@ const CARDS = {
         Shield down: <strong>${KINETIC_CORE.shieldDownDmg}</strong> hull dmg
       </div>
       <div class="card-upgrade"><span>5/5:</span> Penetration ${KINETIC_CORE.upgradePenetration}</div>
-    `, { section: 'protocol', damage: 'kinetic' }),
+    `, { section: 'protocol', type: 'weapon', element: 'kinetic' }),
 
     // ARC CANNON
     (() => {
@@ -315,7 +356,7 @@ const CARDS = {
           ${Object.keys(RPS.arc).map(s =>
             `vs ${cap(s)}: +<strong>${floor(rps(max5,'arc',s) * chainPct * 2 / 100)}</strong>`
           ).join(' &nbsp;·&nbsp; ')} <em>(both chains)</em>`)}
-      `, { section: 'protocol', damage: 'arc' });
+      `, { section: 'protocol', type: 'weapon', element: 'arc' });
     })(),
 
     // PLASMA CANNON
@@ -344,7 +385,7 @@ const CARDS = {
         <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)}</div>
         ${perk5('Scorch', `<strong>50%</strong> of damage dealt burns at round start, before anyone acts. Stacks per activation.<br>
           ${scorchRow(max, 50)} <em>(5/5)</em>`)}
-      `, { section: 'protocol', damage: 'plasma' });
+      `, { section: 'protocol', type: 'weapon', element: 'plasma' });
     })(),
 
     // GAMMA CANNON
@@ -367,7 +408,7 @@ const CARDS = {
         </div>
         <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)}</div>
         ${perk5('Scatter Field', `Enemy attacks deal <strong>25%</strong> less damage this turn`)}
-      `, { section: 'protocol', damage: 'gamma' });
+      `, { section: 'protocol', type: 'weapon', element: 'gamma' });
     })(),
 
     // KINETIC SLUG
@@ -393,8 +434,27 @@ const CARDS = {
         <div class="card-upgrade">${SLUG_TRK.map(([pip,dmg]) =>
           `<span>${pip}/5</span> ${up(dmg, penOf(pip))}/${dmg}`
         ).join(' &nbsp;')} &nbsp;<span>(5/5: pen ${penMax}%)</span></div>
-      `, { section: 'protocol', damage: 'kinetic' });
-    })()
+      `, { section: 'protocol', type: 'weapon', element: 'kinetic' });
+    })(),
+
+    // MOONLIT PHASE BLADE
+    card('U', '', `
+      <div class="card-name">Moonlit Phase Blade</div>
+      <div class="card-tags">${tags(
+        {cls:'tag-U', label:'U'},
+        {cls:'tag-type', label:'Weapon'},
+        {cls:'tag-arc', label:'Arc'},
+        {cls:'tag-plasma', label:'Plasma'},
+        {cls:'tag-gamma', label:'Gamma'}
+      )}</div>
+      ${divider()}
+      ${metaRows({ weaponType: 'Phase Blade', heat: 'TBD', drop: 'Sentient Guardian (rare)', conditions: 'No upgrades · Compatible with Moonfall only' })}
+      ${divider()}
+      <div class="card-effect">
+        Fires a beam of phase energy. Deals damage at <strong>125%</strong> vs any energy shield — triple damage type always finds the counter.
+      </div>
+      <div class="card-na">Base damage TBD — fight sequence session pending.</div>
+    `, { section: 'protocol', type: 'weapon', element: 'arc plasma gamma' })
 
   ],
 
@@ -415,7 +475,7 @@ const CARDS = {
         Reactivate: restore <strong>${floor(MORPHIC_VEIL.deployHP * MORPHIC_VEIL.reactivatePct / 100)}</strong> HP (${MORPHIC_VEIL.reactivatePct}%)
       </div>
       <div class="card-upgrade"><span>5/5:</span> ${MORPHIC_VEIL.upgrade}</div>
-    `, { section: 'protocol', damage: 'shield' }),
+    `, { section: 'protocol', type: 'shield', element: '' }),
 
     // ARC SHIELD
     (() => {
@@ -438,7 +498,7 @@ const CARDS = {
         <div class="card-upgrade">${SHIELD_COMMON.hpAdd.map((add, i) =>
           `<span>T${i+1}</span> ${base + add} HP · ${SHIELD_COMMON.react[i]}%`
         ).join(' &nbsp;')}</div>
-      `, { section: 'protocol', damage: 'arc shield' });
+      `, { section: 'protocol', type: 'shield', element: 'arc' });
     })(),
 
     // PLASMA SHIELD
@@ -462,7 +522,7 @@ const CARDS = {
         <div class="card-upgrade">${SHIELD_COMMON.hpAdd.map((add, i) =>
           `<span>T${i+1}</span> ${base + add} HP · ${SHIELD_COMMON.react[i]}%`
         ).join(' &nbsp;')}</div>
-      `, { section: 'protocol', damage: 'plasma shield' });
+      `, { section: 'protocol', type: 'shield', element: 'plasma' });
     })(),
 
     // GAMMA SHIELD
@@ -487,7 +547,7 @@ const CARDS = {
         <div class="card-upgrade">${SHIELD_COMMON.hpAdd.map((add, i) =>
           `<span>T${i+1}</span> ${base + add} HP · ${SHIELD_COMMON.react[i]}%`
         ).join(' &nbsp;')}</div>
-      `, { section: 'protocol', damage: 'gamma shield' });
+      `, { section: 'protocol', type: 'shield', element: 'gamma' });
     })()
 
   ],
@@ -519,7 +579,7 @@ const CARDS = {
         <div class="card-upgrade">${pct.map((p,i) =>
           `<span>T${i+1}</span> +${p}% / −${selfDmg[i]}% shield`
         ).join(' &nbsp;')}</div>
-      `, { section: 'routine', damage: 'arc' });
+      `, { section: 'routine', type: 'weapon', element: 'arc' });
     })(),
 
     // SHIELD DRAIN
@@ -546,7 +606,7 @@ const CARDS = {
         <div class="card-upgrade">${tiers.map((t,i) =>
           `<span>T${i+1}</span> ${t}%`
         ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> hull if hull damaged</div>
-      `, { section: 'routine', damage: 'arc gamma' });
+      `, { section: 'routine', type: 'weapon', element: 'arc gamma' });
     })(),
 
     // OVERLOAD
@@ -578,7 +638,30 @@ const CARDS = {
         <div class="card-upgrade">${tiers.map((tier,i) =>
           `<span>T${i+1}</span> +${tier.bonus}% / −${tier.shieldCost}% shield`
         ).join(' &nbsp;')} &nbsp;<span>T3 perk:</span> if &lt;50% shield, cost halved · −1 heat</div>
-      `, { section: 'routine', damage: 'arc plasma' });
+      `, { section: 'routine', type: 'weapon', element: 'arc plasma' });
+    })(),
+
+    // COMPROMISE
+    (() => {
+      const track = [50,60,70,85,100];
+      return card('R', '', `
+        <div class="card-name">Compromise</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-plasma', label:'Plasma'},
+          {cls:'tag-gamma', label:'Gamma'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Plasma Cannon · Gamma Cannon', heat: '2' })}
+        ${divider()}
+        <div class="card-effect">
+          Enemy shield reactivation reduced by <strong>${track[0]}%</strong> for the rest of this round.
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> −${v}%`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> reactivation restores 0 HP</div>
+      `, { section: 'routine', type: 'weapon', element: 'plasma gamma' });
     })(),
 
     // HEAVY BORE
@@ -600,7 +683,7 @@ const CARDS = {
         <div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> +${v}`
         ).join(' &nbsp;')}</div>
-      `, { section: 'routine', damage: 'kinetic' });
+      `, { section: 'routine', type: 'weapon', element: 'kinetic' });
     })(),
 
     // BURST LOADER
@@ -623,7 +706,7 @@ const CARDS = {
         <div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}% ×${(1 + v/100).toFixed(2)}`
         ).join(' &nbsp;')}</div>
-      `, { section: 'routine', damage: 'kinetic' });
+      `, { section: 'routine', type: 'weapon', element: 'kinetic' });
     })(),
 
     // ARMOR REND
@@ -645,7 +728,7 @@ const CARDS = {
         <div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> +${v}%`
         ).join(' &nbsp;')}</div>
-      `, { section: 'routine', damage: 'kinetic' });
+      `, { section: 'routine', type: 'weapon', element: 'kinetic' });
     })(),
 
     // HALF LIFE
@@ -667,7 +750,7 @@ const CARDS = {
         <div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}%`
         ).join(' &nbsp;')}</div>
-      `, { section: 'routine', damage: 'gamma' });
+      `, { section: 'routine', type: 'weapon', element: 'gamma' });
     })(),
 
     // IGNITE
@@ -689,7 +772,7 @@ const CARDS = {
         <div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}×2`
         ).join(' &nbsp;')}</div>
-      `, { section: 'routine', damage: 'plasma' });
+      `, { section: 'routine', type: 'weapon', element: 'plasma' });
     })(),
 
     // THERMAL LANCE
@@ -716,7 +799,7 @@ const CARDS = {
         <div class="card-upgrade">${bleed.map((v,i) =>
           `<span>T${i+1}</span> ${v}% / ${v*2}%`
         ).join(' &nbsp;')}</div>
-      `, { section: 'routine', damage: 'plasma' });
+      `, { section: 'routine', type: 'weapon', element: 'plasma' });
     })(),
 
     // SUPERHEATED
@@ -738,7 +821,7 @@ const CARDS = {
         <div class="card-upgrade">${reflect.map((v,i) =>
           `<span>T${i+1}</span> ${v}%${i===4?' −1 heat':''}`
         ).join(' &nbsp;')}</div>
-      `, { section: 'routine', damage: 'plasma' });
+      `, { section: 'routine', type: 'weapon', element: 'plasma' });
     })(),
 
     // MELTDOWN
@@ -760,7 +843,7 @@ const CARDS = {
         <div class="card-upgrade">${tiers.map((v,i) =>
           `<span>T${i+1}</span> ${v}%`
         ).join(' &nbsp;')} &nbsp;<span>T3 perk:</span> TBD</div>
-      `, { section: 'routine', damage: 'plasma' });
+      `, { section: 'routine', type: 'weapon', element: 'plasma' });
     })(),
 
     // IRRADIATE
@@ -782,7 +865,7 @@ const CARDS = {
         <div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}×3`
         ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> ticks also deal 10% hull</div>
-      `, { section: 'routine', damage: 'gamma' });
+      `, { section: 'routine', type: 'weapon', element: 'gamma' });
     })(),
 
     // DESTABILIZE
@@ -804,7 +887,7 @@ const CARDS = {
         <div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> +${v}%`
         ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> triggers twice</div>
-      `, { section: 'routine', damage: 'gamma' });
+      `, { section: 'routine', type: 'weapon', element: 'gamma' });
     })(),
 
     // GAMMA REBOUND
@@ -826,7 +909,7 @@ const CARDS = {
         <div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}%${i===4?' −1 heat':''}`
         ).join(' &nbsp;')}</div>
-      `, { section: 'routine', damage: 'gamma' });
+      `, { section: 'routine', type: 'weapon', element: 'gamma' });
     })(),
 
     // ARC BARRIER
@@ -849,7 +932,7 @@ const CARDS = {
         <div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}%`
         ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> extends to hull</div>
-      `, { section: 'routine', damage: 'arc shield' });
+      `, { section: 'routine', type: 'shield', element: 'arc' });
     })(),
 
     // SURGE CONVERSION
@@ -872,7 +955,7 @@ const CARDS = {
         <div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}%`
         ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> triggers twice</div>
-      `, { section: 'routine', damage: 'arc shield' });
+      `, { section: 'routine', type: 'shield', element: 'arc' });
     })(),
 
     // THORNS
@@ -895,7 +978,7 @@ const CARDS = {
         <div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}%`
         ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> overflows to hull at 0 shield</div>
-      `, { section: 'routine', damage: 'arc shield' });
+      `, { section: 'routine', type: 'shield', element: 'arc' });
     })(),
 
     // DIMENSIONAL SINK
@@ -918,8 +1001,91 @@ const CARDS = {
         <div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}%`
         ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> restored immediately</div>
-      `, { section: 'routine', damage: 'gamma shield' });
-    })()
+      `, { section: 'routine', type: 'shield', element: 'gamma' });
+    })(),
+
+    // PHASE SHIFT
+    (() => {
+      const track = [25,22,19,16,12];
+      return card('R', '', `
+        <div class="card-name">Phase Shift</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-shield', label:'Shield'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'All shield protocols', heat: '2' })}
+        ${divider()}
+        <div class="card-effect">
+          Reactive. Next incoming attack this round is negated entirely if it exceeds the trigger threshold. Collapses after triggering. Hits at or below threshold pass through.
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> >${v} dmg`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> deal 15 dmg back to attacker on trigger</div>
+      `, { section: 'routine', type: 'shield', element: '' });
+    })(),
+
+    // FOCUS FIRE
+    (() => {
+      const track = [12,15,18,22,28];
+      return card('C', '', `
+        <div class="card-name">Focus Fire</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-routine', label:'Routine'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'All weapon protocols', heat: '1' })}
+        ${divider()}
+        <div class="card-effect">
+          This activation deals <strong>+${track[0]}%</strong> damage, all weapon types.
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> +${v}%`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> −1 heat on this activation</div>
+      `, { section: 'routine', type: 'weapon', element: '' });
+    })(),
+
+    // CALIBRATE
+    (() => {
+      const track = [1,1,1,1,2];
+      return card('C', '', `
+        <div class="card-name">Calibrate</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-routine', label:'Routine'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'All weapon protocols', heat: '0' })}
+        ${divider()}
+        <div class="card-effect">
+          Your next weapon activation this round costs <strong>−${track[0]} heat</strong>.
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> −${v} heat`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', type: 'weapon', element: '' });
+    })(),
+
+    // MOONFALL
+    card('U', '', `
+      <div class="card-name">Moonfall</div>
+      <div class="card-tags">${tags(
+        {cls:'tag-U', label:'U'},
+        {cls:'tag-routine', label:'Routine'},
+        {cls:'tag-arc', label:'Arc'},
+        {cls:'tag-plasma', label:'Plasma'},
+        {cls:'tag-gamma', label:'Gamma'}
+      )}</div>
+      ${divider()}
+      ${metaRows({ compat: 'Moonlit Phase Blade only', heat: 'TBD' })}
+      ${divider()}
+      <div class="card-effect">
+        At the start of your next round, 7 satellite drones each fire once — 7 hits at [TBD] dmg each, shield → hull order, 125% vs any energy shield. Then applies <strong>Scorch</strong> (Plasma DoT) and <strong>Radiation</strong> (Gamma DoT). Both stack with existing instances.
+      </div>
+      <div class="card-na">Damage values TBD — fight sequence session pending.</div>
+    `, { section: 'routine', type: 'weapon', element: 'arc plasma gamma' })
 
   ],
 
@@ -928,16 +1094,24 @@ const CARDS = {
 
 // ─── FILTER ───────────────────────────────────────────────────────────────────
 
-const activeFilters = { section: 'all', damage: 'all' };
+const activeFilters = { section: 'all', type: 'all', element: 'all', rarity: 'all', search: '' };
 
 function applyFilters() {
   const sf = activeFilters.section;
-  const df = activeFilters.damage;
+  const tf = activeFilters.type;
+  const ef = activeFilters.element;
+  const rf = activeFilters.rarity;
+  const q  = activeFilters.search.toLowerCase();
 
   document.querySelectorAll('.card').forEach(c => {
-    const secMatch = sf === 'all' || c.dataset.section === sf;
-    const dmgMatch = df === 'all' || (c.dataset.damage || '').split(' ').includes(df);
-    c.hidden = !(secMatch && dmgMatch);
+    const secMatch    = sf === 'all' || c.dataset.section === sf;
+    const typeMatch   = tf === 'all' || c.dataset.type === tf;
+    const elemMatch   = ef === 'all' || (c.dataset.element || '').split(' ').includes(ef);
+    const rarityMatch = rf === 'all' || c.dataset.rarity === rf;
+    const name        = (c.querySelector('.card-name')?.textContent || '').toLowerCase();
+    const effect      = (c.querySelector('.card-effect')?.textContent || '').toLowerCase();
+    const searchMatch = q === '' || name.includes(q) || effect.includes(q);
+    c.hidden = !(secMatch && typeMatch && elemMatch && rarityMatch && searchMatch);
   });
 
   ['protocols-weapon-section','protocols-shield-section','routines-section','wip-section'].forEach(id => {
@@ -948,12 +1122,28 @@ function applyFilters() {
 
 document.addEventListener('click', e => {
   const btn = e.target.closest('.filter-btn');
-  if (!btn) return;
+  if (!btn || !btn.dataset.filter) return;   // skip non-group buttons (e.g. Clear filters)
   const ft  = btn.dataset.filter;
   const val = btn.dataset.value;
   document.querySelectorAll(`.filter-btn[data-filter="${ft}"]`).forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   activeFilters[ft] = val;
+  applyFilters();
+});
+
+document.getElementById('search-box').addEventListener('input', e => {
+  activeFilters.search = e.target.value;
+  applyFilters();
+});
+
+document.getElementById('clear-filters').addEventListener('click', () => {
+  activeFilters.section = activeFilters.type = activeFilters.element = activeFilters.rarity = 'all';
+  activeFilters.search = '';
+  document.getElementById('search-box').value = '';
+  // reset every group's active state to its "All" button
+  document.querySelectorAll('.filter-btn[data-filter]').forEach(b =>
+    b.classList.toggle('active', b.dataset.value === 'all')
+  );
   applyFilters();
 });
 
