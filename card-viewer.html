@@ -13,38 +13,59 @@
     color: #c8c8d0;
     font-family: 'Courier New', monospace;
     font-size: 15px;
-    padding: 72px 32px 32px;
+    padding: 32px 36px 36px 262px;
+    transition: padding-left 0.15s;
   }
+  body.nav-collapsed { padding-left: 76px; }
 
   /* ─── FILTER BAR ──────────────────────────────────────────────── */
 
-  #filter-bar {
+  #sidebar {
     position: fixed;
-    top: 0; left: 0; right: 0;
+    top: 0; left: 0; bottom: 0;
+    width: 230px;
     z-index: 100;
     background: #090909;
-    border-bottom: 1px solid #222230;
-    padding: 10px 32px;
+    border-right: 1px solid #222230;
+    padding: 14px 14px 24px;
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    flex-direction: column;
     gap: 14px;
+    overflow-y: auto;
+    transition: width 0.15s, padding 0.15s;
   }
+  body.nav-collapsed #sidebar { width: 48px; padding: 14px 9px; overflow: hidden; }
+  body.nav-collapsed #sidebar .nav-body,
+  body.nav-collapsed #sidebar .nav-title { display: none; }
+
+  #nav-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .nav-title { font-size: 12px; letter-spacing: 0.18em; color: #fff; white-space: nowrap; }
+  #nav-toggle {
+    font-family: 'Courier New', monospace; font-size: 16px; line-height: 1;
+    width: 28px; height: 28px; flex-shrink: 0;
+    border: 1px solid #242432; background: none; color: #8888aa;
+    cursor: pointer; border-radius: 3px;
+  }
+  #nav-toggle:hover { border-color: #404058; color: #b0b0e0; }
+
+  .nav-body { display: flex; flex-direction: column; gap: 14px; }
+  .nav-search { display: flex; flex-direction: column; gap: 8px; }
 
   .filter-sep {
-    width: 1px; height: 18px;
+    width: 100%; height: 1px;
     background: #222230;
     flex-shrink: 0;
   }
 
-  .filter-group { display: flex; align-items: center; gap: 5px; }
+  .filter-group { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
 
   .filter-label {
+    width: 100%;
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.12em;
     color: #3a3a50;
-    margin-right: 3px;
+    margin: 0 0 2px;
     white-space: nowrap;
   }
 
@@ -133,6 +154,54 @@
   .card-conditions { color: #dd7777; font-size: 12px; font-style: italic; }
   .card-compat { color: #6a8fa8; font-size: 12px; }
   .card-na { color: #444455; font-style: italic; font-size: 12px; }
+
+  /* ─── ENEMY CARDS ────────────────────────────────────────────────── */
+
+  .ecard {
+    width: 340px; background: #0d0e12; border: 1px solid #2a2d35;
+    border-top: 4px solid #4a4d58; border-radius: 6px; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .ecard.standard { border-top-color: #4a6a8a; }
+  .ecard.boss     { border-top-color: #b0445a; }
+  .ecard.rare     { border-top-color: #cc8800; }
+  .ecard.wip      { border-style: dashed; opacity: 0.72; }
+
+  .ecard-sec { padding: 11px 14px; border-bottom: 1px solid #1f2128; }
+  .ecard-sec:last-child { border-bottom: none; }
+  .ecard-head { display: flex; align-items: flex-start; gap: 12px; background: #101218; }
+  .ecard-tag  { font-size: 11px; letter-spacing: 0.25em; color: #ff2840; }
+  .ecard.boss .ecard-tag { color: #ff5b8a; }
+  .ecard.rare .ecard-tag { color: #ddaa22; }
+  .ecard-name { color: #fff; font-size: 17px; font-weight: bold; letter-spacing: 0.08em; margin-top: 2px; }
+  .ecard-meta { font-size: 11px; letter-spacing: 0.05em; color: #6b6f78; margin-top: 3px; }
+
+  .erow { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .elbl { font-size: 11px; letter-spacing: 0.18em; color: #6b6f78; text-transform: uppercase; }
+  .ebar { height: 9px; background: #1b1d24; border: 1px solid #2a2d35; border-radius: 2px; overflow: hidden; }
+  .ebar > div { height: 100%; }
+  .echip {
+    font-size: 11px; letter-spacing: 0.06em; padding: 3px 7px;
+    border: 1px solid #2a2d35; border-radius: 3px; color: #9aa0ab; white-space: nowrap;
+  }
+  .echip.atk { border-color: #5a0010; color: #ff5b6e; }
+  .e-ok   { color: #3b6d11; }
+  .e-warn { color: #ba7517; }
+  .e-val  { font-size: 11px; color: #c8ccd4; }
+  .e-arc    { color: #26c6da; }
+  .e-plasma { color: #ff7a3c; }
+  .e-gamma  { color: #a855f7; }
+  .e-dim    { color: #6b6f78; }
+
+  /* view + filter-group visibility */
+  .fg-cards { display: contents; }
+  .fg-enemies { display: none; }
+  body.view-enemies .fg-cards { display: none; }
+  body.view-enemies .fg-enemies { display: contents; }
+  .filter-btn[data-filter="view"].active { background: #1a0a0e; border-color: #aa3050; color: #ff7a90; }
+  .filter-btn[data-value="standard"].active { background: #0a1420; border-color: #4a6a8a; color: #7fa8d0; }
+  .filter-btn[data-value="boss"].active     { background: #1a0a10; border-color: #b0445a; color: #ff7a90; }
+  .filter-btn[data-value="rare"].active     { background: #1a1000; border-color: #cc8800; color: #ddaa22; }
   .card-5perk { border: 1px solid #252535; border-left: 3px solid #5555a0; padding: 8px 10px; background: #0e0e18; }
   .perk5-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #6060a0; margin-bottom: 4px; }
 
@@ -142,57 +211,96 @@
     color: #c8c8d0;
     font-family: 'Courier New', monospace;
     font-size: 13px;
-    padding: 4px 10px;
+    padding: 5px 10px;
     outline: none;
-    width: 180px;
+    width: 100%;
   }
+  #clear-filters { width: 100%; }
   #search-box:focus { border-color: #5555a0; }
   #search-box::placeholder { color: #444455; }
 </style>
 </head>
 <body>
 
-<div id="filter-bar">
-  <div class="filter-group">
-    <span class="filter-label">Show</span>
-    <button class="filter-btn active" data-filter="section" data-value="all">All</button>
-    <button class="filter-btn" data-filter="section" data-value="protocol">Protocols</button>
-    <button class="filter-btn" data-filter="section" data-value="routine">Routines</button>
-    <button class="filter-btn" data-filter="section" data-value="wip">WIP</button>
+<div id="sidebar">
+  <div id="nav-header">
+    <span class="nav-title">VOIDRUNNER</span>
+    <button id="nav-toggle" aria-label="Collapse sidebar" title="Collapse / expand">‹</button>
   </div>
-  <div class="filter-sep"></div>
-  <div class="filter-group">
-    <span class="filter-label">Type</span>
-    <button class="filter-btn active" data-filter="type" data-value="all">All</button>
-    <button class="filter-btn" data-filter="type" data-value="weapon">Weapon</button>
-    <button class="filter-btn" data-filter="type" data-value="shield">Shield</button>
-    <button class="filter-btn" data-filter="type" data-value="system">System</button>
-  </div>
-  <div class="filter-sep"></div>
-  <div class="filter-group">
-    <span class="filter-label">Element</span>
-    <button class="filter-btn active" data-filter="element" data-value="all">All</button>
-    <button class="filter-btn" data-filter="element" data-value="kinetic">Kinetic</button>
-    <button class="filter-btn" data-filter="element" data-value="arc">Arc</button>
-    <button class="filter-btn" data-filter="element" data-value="plasma">Plasma</button>
-    <button class="filter-btn" data-filter="element" data-value="gamma">Gamma</button>
-  </div>
-  <div class="filter-sep"></div>
-  <div class="filter-sep"></div>
-  <div class="filter-group">
-    <span class="filter-label">Rarity</span>
-    <button class="filter-btn active" data-filter="rarity" data-value="all">All</button>
-    <button class="filter-btn" data-filter="rarity" data-value="ST">ST</button>
-    <button class="filter-btn" data-filter="rarity" data-value="C">C</button>
-    <button class="filter-btn" data-filter="rarity" data-value="R">R</button>
-    <button class="filter-btn" data-filter="rarity" data-value="E">E</button>
-    <button class="filter-btn" data-filter="rarity" data-value="U">U</button>
-  </div>
-  <div class="filter-sep"></div>
-  <input id="search-box" type="text" placeholder="Search cards…" autocomplete="off">
-  <button id="clear-filters" class="filter-btn">Clear filters</button>
-</div>
 
+  <div class="nav-body">
+  <div class="filter-group">
+    <span class="filter-label">View</span>
+    <button class="filter-btn active" data-filter="view" data-value="cards">Cards</button>
+    <button class="filter-btn" data-filter="view" data-value="enemies">Enemies</button>
+  </div>
+  <div class="filter-sep"></div>
+
+  <div class="nav-search">
+    <input id="search-box" type="text" placeholder="Search…" autocomplete="off">
+    <button id="clear-filters" class="filter-btn">Clear filters</button>
+  </div>
+  <div class="filter-sep"></div>
+
+  <span class="fg-cards">
+    <div class="filter-group">
+      <span class="filter-label">Show</span>
+      <button class="filter-btn active" data-filter="section" data-value="all">All</button>
+      <button class="filter-btn" data-filter="section" data-value="protocol">Protocols</button>
+      <button class="filter-btn" data-filter="section" data-value="routine">Routines</button>
+      <button class="filter-btn" data-filter="section" data-value="wip">WIP</button>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
+      <span class="filter-label">Type</span>
+      <button class="filter-btn active" data-filter="type" data-value="all">All</button>
+      <button class="filter-btn" data-filter="type" data-value="weapon">Weapon</button>
+      <button class="filter-btn" data-filter="type" data-value="shield">Shield</button>
+      <button class="filter-btn" data-filter="type" data-value="system">System</button>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
+      <span class="filter-label">Element</span>
+      <button class="filter-btn active" data-filter="element" data-value="all">All</button>
+      <button class="filter-btn" data-filter="element" data-value="kinetic">Kinetic</button>
+      <button class="filter-btn" data-filter="element" data-value="arc">Arc</button>
+      <button class="filter-btn" data-filter="element" data-value="plasma">Plasma</button>
+      <button class="filter-btn" data-filter="element" data-value="gamma">Gamma</button>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
+      <span class="filter-label">Rarity</span>
+      <button class="filter-btn active" data-filter="rarity" data-value="all">All</button>
+      <button class="filter-btn" data-filter="rarity" data-value="ST">ST</button>
+      <button class="filter-btn" data-filter="rarity" data-value="C">C</button>
+      <button class="filter-btn" data-filter="rarity" data-value="R">R</button>
+      <button class="filter-btn" data-filter="rarity" data-value="E">E</button>
+      <button class="filter-btn" data-filter="rarity" data-value="U">U</button>
+    </div>
+  </span>
+
+  <span class="fg-enemies">
+    <div class="filter-group">
+      <span class="filter-label">Class</span>
+      <button class="filter-btn active" data-filter="eclass" data-value="all">All</button>
+      <button class="filter-btn" data-filter="eclass" data-value="standard">Standard</button>
+      <button class="filter-btn" data-filter="eclass" data-value="boss">Boss</button>
+      <button class="filter-btn" data-filter="eclass" data-value="rare">Rare</button>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
+      <span class="filter-label">Chapter</span>
+      <button class="filter-btn active" data-filter="echapter" data-value="all">All</button>
+      <button class="filter-btn" data-filter="echapter" data-value="1">1</button>
+      <button class="filter-btn" data-filter="echapter" data-value="2">2</button>
+      <button class="filter-btn" data-filter="echapter" data-value="3">3</button>
+    </div>
+  </span>
+
+  </div><!-- /nav-body -->
+</div><!-- /sidebar -->
+
+<div id="cards-page">
 <h1>Voidrunner — Card Viewer</h1>
 <div class="meta" id="meta-line">Loading...</div>
 
@@ -220,6 +328,27 @@
   <div class="section-title">In Progress</div>
   <div class="grid" id="wip"></div>
 </div>
+</div><!-- /cards-page -->
+
+<div id="enemies-page" hidden>
+  <h1>Voidrunner — Enemies</h1>
+  <div class="meta" id="emeta-line">Loading…</div>
+
+  <div id="enemies-standard-section">
+    <div class="section-title">Standard Enemies</div>
+    <div class="grid" id="enemies-standard"></div>
+  </div>
+
+  <div id="enemies-boss-section">
+    <div class="section-title">Bosses</div>
+    <div class="grid" id="enemies-boss"></div>
+  </div>
+
+  <div id="enemies-rare-section">
+    <div class="section-title">Rare Encounters</div>
+    <div class="grid" id="enemies-rare"></div>
+  </div>
+</div><!-- /enemies-page -->
 
 <script>
 // ─── SINGLE SOURCE OF TRUTH ──────────────────────────────────────────────────
@@ -287,6 +416,128 @@ function card(rarity, extra, content, opts = {}) {
 function wip(rarity, content, opts = {}) {
   return card(rarity, ' wip', content, { section: 'wip', ...opts });
 }
+
+// ─── ENEMY CARDS ─────────────────────────────────────────────────────────────
+
+function ecChip(s) { return `<span class="echip ${s.atk ? 'atk' : ''}">${s.label}</span>`; }
+
+function rpsLine(t) {
+  const rel = { arc:['arc','gamma','plasma'], plasma:['plasma','arc','gamma'], gamma:['gamma','plasma','arc'] }[t];
+  if (!rel) return '';
+  const cl = { arc:'e-arc', plasma:'e-plasma', gamma:'e-gamma' };
+  const [res, weak, neu] = rel;
+  return `resists <span class="${cl[res]}">${res}</span> &nbsp;·&nbsp; weak to <span class="${cl[weak]}">${weak}</span> &nbsp;·&nbsp; neutral <span class="${cl[neu]}">${neu}</span>`;
+}
+
+function loadRow(label, slot) {
+  const flag = slot.ok ? '<span class="e-ok">✓</span>' : `<span class="e-warn">⚠ ${slot.note || 'needs design'}</span>`;
+  const routines = slot.routines ? `<span class="e-dim"> + ${slot.routines}</span>` : '';
+  return `<div class="erow"><span class="elbl">${label}</span><span class="e-val" style="text-align:right">${slot.protocol}${routines} ${flag}</span></div>`;
+}
+
+function enemyCard(e) {
+  const chap = String(e.chapter || '').replace(/[–-]/g, ' ');
+  const sColor = { arc:'#1d9ec4', plasma:'#ff7a3c', gamma:'#a855f7' }[e.shieldType] || '#4a4d58';
+  const sCl    = { arc:'e-arc', plasma:'e-plasma', gamma:'e-gamma' }[e.shieldType] || '';
+  const tag    = e.cls === 'boss' ? '◆ BOSS' : e.cls === 'rare' ? '◆ RARE' : '◆ HOSTILE';
+
+  const head = `<div class="ecard-sec ecard-head"><div style="flex:1;min-width:0;">
+      <div class="ecard-tag">${tag}</div>
+      <div class="ecard-name">${e.name}</div>
+      <div class="ecard-meta">${[e.type, e.fight ? 'FIGHT ' + e.fight : 'CH.' + e.chapter, e.tier ? 'TIER: ' + e.tier : ''].filter(Boolean).join(' · ')}</div>
+    </div></div>`;
+
+  const stype = e.shieldType ? `<div class="ecard-sec">
+      <div class="erow" style="margin-bottom:5px;"><span class="elbl">Shield type</span>
+        <span class="e-val ${sCl}" style="text-transform:uppercase;border:1px solid #2a2d35;border-radius:3px;padding:2px 7px;">${e.shieldType}</span></div>
+      <div style="font-size:11px;color:#6b6f78;">${rpsLine(e.shieldType)}</div></div>` : '';
+
+  const bar = (lbl, val, color) => `<div><div class="erow" style="margin-bottom:4px;"><span class="elbl">${lbl}</span><span class="e-val">${val} / ${val}</span></div><div class="ebar"><div style="width:100%;background:${color};"></div></div></div>`;
+  const hp = (e.shield != null || e.hull != null) ? `<div class="ecard-sec" style="display:flex;flex-direction:column;gap:8px;">
+      ${e.shield != null ? bar('Shield', e.shield, sColor) : ''}
+      ${e.hull   != null ? bar('Hull',   e.hull,  '#ff2840') : ''}
+      <div style="font-size:11px;color:#4f535c;text-align:right;">${(e.shield || 0) + (e.hull || 0)} total · placeholder</div></div>` : '';
+
+  const intent = e.intent ? `<div class="ecard-sec">
+      <div class="elbl" style="margin-bottom:7px;">Intent${e.intentTitle ? ' — ' + e.intentTitle : ''}</div>
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">${e.intent.map(ecChip).join('<span class="e-dim">→</span>')}</div>
+      ${e.intentNote ? `<div style="font-size:11px;color:#6b6f78;margin-top:7px;">${e.intentNote}</div>` : ''}</div>` : '';
+
+  const phases = e.phases ? `<div class="ecard-sec"><div class="elbl" style="margin-bottom:6px;">Phases</div>
+      <div style="font-size:12px;color:#9aa0ab;line-height:1.6;">${e.phases}</div></div>` : '';
+
+  const load = (e.weapon || e.shield_p) ? `<div class="ecard-sec" style="display:flex;flex-direction:column;gap:8px;">
+      <div class="elbl">Loadout</div>
+      ${e.weapon ? loadRow('Weapon', e.weapon) : ''}
+      ${e.shield_p ? loadRow('Shield', e.shield_p) : ''}</div>` : '';
+
+  const drops = e.drops ? `<div class="ecard-sec" style="background:#0a0b0e;">
+      <div class="elbl" style="margin-bottom:6px;">Drops on scan</div>
+      <div style="font-size:11px;color:#9aa0ab;line-height:1.7;">${e.drops.map(d => '▸ ' + d).join('<br>')}</div></div>` : '';
+
+  return `<div class="ecard ${e.cls}${e.wip ? ' wip' : ''}" data-eclass="${e.cls}" data-echapter="${chap}">${head}${stype}${hp}${intent}${phases}${load}${drops}</div>`;
+}
+
+const ENEMIES = {
+  'enemies-standard': [
+    enemyCard({ cls:'standard', name:'SCAVENGER PROBE', type:'Drone', chapter:'1', tier:'Light',
+      shieldType:'arc', shield:20, hull:55, intentTitle:'fixed rotation',
+      intent:[{atk:1,label:'⚔ Arc Cannon'},{label:'⛒ Barrier'},{atk:1,label:'⚔ Arc Cannon'}],
+      intentNote:'below 25 hull → drops barrier, attacks every turn',
+      weapon:{protocol:'Arc Cannon', routines:'Supercharge', ok:true},
+      shield_p:{protocol:'Particle Barrier', routines:'Reinforced', ok:false, note:'protocol + routine unbuilt'},
+      drops:['Arc Cannon <span class="e-dim">protocol</span> + Supercharge (C)','Particle Barrier <span class="e-dim">protocol</span> + Reinforced (C)'] }),
+    enemyCard({ cls:'standard', name:'PATROL CORVETTE', type:'Ship', chapter:'1', tier:'Standard',
+      shieldType:'plasma', shield:35, hull:55, intentTitle:'defend then pressure',
+      intent:[{label:'⛒ Morphic Shield'},{atk:1,label:'⚔ Kinetic Slug'},{atk:1,label:'⚔ Kinetic Slug'}],
+      intentNote:'reactivates Morphic Shield when shield < 15',
+      weapon:{protocol:'Kinetic Slug', routines:'Heavy Bore, Burst Loader', ok:true},
+      shield_p:{protocol:'Morphic Shield', routines:'Hardened Matrix', ok:false, note:'protocol + routine unbuilt'},
+      drops:['Kinetic Slug + Heavy Bore (C), Burst Loader (C)','Morphic Shield + Hardened Matrix (C)'] }),
+    enemyCard({ cls:'standard', name:'INTERCEPTOR', type:'Ship', chapter:'1–2', tier:'Standard',
+      shieldType:'plasma', shield:40, hull:70, intentTitle:'patient, reactive',
+      intent:[{atk:1,label:'⚔ Plasma Cannon'},{label:'⟁ Phase Shift'}],
+      intentNote:'Phase Shift on incoming > 25 (telegraphed) · Superheated when your shield < 25%',
+      weapon:{protocol:'Plasma Cannon', routines:'Superheated', ok:true},
+      shield_p:{protocol:'Phase Shift', routines:'Phase Echo', ok:false, note:'now a routine; needs a shield protocol'},
+      drops:['Plasma Cannon + Superheated (R)','Phase Shift + Phase Echo (R) — needs rework'] }),
+    enemyCard({ cls:'standard', name:'ASSAULT FRIGATE', type:'Ship', chapter:'2', tier:'Standard+',
+      shieldType:'gamma', shield:50, hull:80, intentTitle:'attrition',
+      intent:[{atk:1,label:'⚔ Kinetic Slug'},{label:'✚ Nanobot Repair'}],
+      intentNote:'repairs when shield hits 0 · Armor Rend from turn 4',
+      weapon:{protocol:'Kinetic Slug', routines:'Armor Rend, Burst Loader', ok:true},
+      shield_p:{protocol:'Nanobot Repair', routines:'Hull Nanobots, Rapid Deploy', ok:false, note:'reclassified to routine; needs a shield protocol'},
+      drops:['Kinetic Slug + Armor Rend (R), Burst Loader (C)','Nanobot Repair + Hull Nanobots (R), Rapid Deploy (C) — needs rework'] }),
+    enemyCard({ cls:'standard', name:'GAMMA STALKER', type:'Ship', chapter:'2', tier:'Elite', wip:true,
+      shieldType:'gamma', shield:55, hull:95, intentTitle:'reactive, punishing',
+      intent:[{atk:1,label:'⚔ Gamma Cannon'},{label:'⟁ Phase Shift'}],
+      intentNote:'Phase Shift on incoming > 20 (no telegraph) · last stand below 40 hull',
+      weapon:{protocol:'Gamma Cannon', routines:'Overload, Shield Drain', ok:false, note:'Overload is Arc+Plasma Epic; intent text says Arc Cannon'},
+      shield_p:{protocol:'Phase Shift', routines:'Phase Echo, Dimensional Anchor', ok:false, note:'now a routine; orphaned pool'},
+      drops:['Gamma Cannon + Overload (R), Shield Drain (C) — clash','Phase Shift + Phase Echo, Dimensional Anchor — needs rework'] }),
+  ],
+  'enemies-boss': [
+    enemyCard({ cls:'boss', name:'THE INHERITOR', type:'Boss', fight:5, chapter:'1', tier:'Boss', hull:240,
+      phases:'2 phases · corrupted predecessor, mirror fight. P2 (hull ≤ 80) drops Phase Shift.',
+      weapon:{protocol:'Kinetic Slug (enhanced)', routines:'Armor Rend', ok:true},
+      shield_p:{protocol:'Phase Shift (enhanced)', routines:'Phase Echo, Dimensional Anchor, Sustained Phase', ok:false, note:'now a routine; orphaned pool'} }),
+    enemyCard({ cls:'boss', name:'THE CONGREGATION', type:'Boss', fight:10, chapter:'2', tier:'Boss', hull:300,
+      phases:'3 phases · cathedral, repair loop, dual weapons. Devotion Surge every 4th turn.',
+      weapon:{protocol:'Arc Cannon (enhanced)', routines:'Overload, Shield Drain, Supercharge', ok:false, note:'Overload is Epic, not R'},
+      shield_p:{protocol:'Nanobot Repair (enhanced)', routines:'Hull Nanobots, Rapid Deploy, Overclock', ok:false, note:'reclassified to routine'} }),
+    enemyCard({ cls:'boss', name:'THE KEEPER', type:'Boss', fight:15, chapter:'3', tier:'Final', hull:450,
+      phases:'3 phases · final boss, intent goes dark in P3. Everything at once.',
+      weapon:{protocol:'Gamma Cannon (P1) / Arc Cannon (P2)', routines:'Overload, Shield Drain', ok:false, note:'rarity + compat issues'},
+      shield_p:{protocol:'Phase Shift (enhanced)', routines:'all prior defensive routines', ok:false, note:'now a routine'} }),
+  ],
+  'enemies-rare': [
+    enemyCard({ cls:'rare', name:'SENTIENT GUARDIAN', type:'Rare · First Echo', tier:'Rare', wip:true,
+      phases:'Brain in a vessel · 7 satellite drones · chooses when to appear. Fight sequence pending.',
+      weapon:{protocol:'TBD', ok:false, note:'design pending'},
+      shield_p:{protocol:'TBD', ok:false, note:'design pending'},
+      drops:['Moonlit Phase Blade (U) + Moonfall (U)'] }),
+  ],
+};
 
 function divider() { return `<hr class="divider">`; }
 
@@ -757,6 +1008,34 @@ const CARDS = {
       `, { section: 'routine', type: 'weapon', element: 'kinetic' });
     })(),
 
+    // TRANSDUCE
+    (() => {
+      const ladder = [
+        { fx: '100%',              heat: 2 },
+        { fx: '100%',              heat: 1 },
+        { fx: '+10%',              heat: 1 },
+        { fx: '+20%',              heat: 1 },
+        { fx: '+30% + RPS floor',  heat: 1 },
+      ];
+      return card('R', '', `
+        <div class="card-name">Transduce</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-kinetic', label:'Kinetic'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Mass Accelerator', heat: `${ladder[0].heat} (drops with upgrade)` })}
+        ${divider()}
+        <div class="card-effect">
+          <strong>The bridge.</strong> Transduce this kinetic shot into a chosen energy type — it hits the shield at full RPS instead of bypassing to hull. Overrides the Kinetic Rule for this activation.
+        </div>
+        <div class="card-upgrade">${ladder.map((t,i) =>
+          `<span>T${i+1}</span> ${t.fx} · ${t.heat}h`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', type: 'weapon', element: 'kinetic' });
+    })(),
+
     // HALF LIFE
     (() => {
       const track = [25,28,31,35,40];
@@ -1030,6 +1309,58 @@ const CARDS = {
       `, { section: 'routine', type: 'shield', element: 'gamma' });
     })(),
 
+    // HALF-LIFE FIELD
+    (() => {
+      const track = [18,21,24,28,34];
+      return card('C', '', `
+        <div class="card-name">Half-Life Field</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-gamma', label:'Gamma'},
+          {cls:'tag-shield', label:'Shield'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Gamma Shield', heat: '1' })}
+        ${divider()}
+        <div class="card-effect">
+          Restore <strong>${track[0]} shield HP</strong> next round, then halves each round after — gamma's decaying residual, pointed inward. Stacks with itself.
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> ${v} HP`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', type: 'shield', element: 'gamma' });
+    })(),
+
+    // ENTROPY WELL
+    (() => {
+      const ladder = [
+        { fx: '25%', heat: 2 },
+        { fx: '30%', heat: 2 },
+        { fx: '35%', heat: 2 },
+        { fx: '35%', heat: 1 },
+        { fx: '50%', heat: 1 },
+      ];
+      return card('R', '', `
+        <div class="card-name">Entropy Well</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-gamma', label:'Gamma'},
+          {cls:'tag-shield', label:'Shield'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'Gamma Shield', heat: `${ladder[0].heat} (drops with upgrade)` })}
+        ${divider()}
+        <div class="card-effect">
+          <strong>Once per fight.</strong> The first time your shield is depleted, it auto-reactivates at <strong>${ladder[0].fx}</strong> of max instead of breaking.
+        </div>
+        <div class="card-upgrade">${ladder.map((t,i) =>
+          `<span>T${i+1}</span> ${t.fx} · ${t.heat}h`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', type: 'shield', element: 'gamma' });
+    })(),
+
     // BACKDRAFT
     (() => {
       const track = [4,5,6,8,10];
@@ -1122,6 +1453,84 @@ const CARDS = {
       `, { section: 'routine', type: 'shield', element: '' });
     })(),
 
+    // DEFLECT
+    (() => {
+      const track = [25,30,35,42,50];
+      return card('C', '', `
+        <div class="card-name">Deflect</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-shield', label:'Shield'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'All shield protocols', heat: '2' })}
+        ${divider()}
+        <div class="card-effect">
+          Reactive. Reduce the next incoming hit this round by <strong>${track[0]}%</strong> — the no-threshold cousin of Phase Shift.
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> ${v}%`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', type: 'shield', element: '' });
+    })(),
+
+    // RATTLE
+    (() => {
+      const ladder = [
+        { fx: '−20%',        heat: 2 },
+        { fx: '−25%',        heat: 2 },
+        { fx: '−30%',        heat: 2 },
+        { fx: '−30%',        heat: 1 },
+        { fx: '−40% ×2 hits', heat: 1 },
+      ];
+      return card('R', '', `
+        <div class="card-name">Rattle</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-shield', label:'Shield'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'All shield protocols', heat: `${ladder[0].heat} (drops with upgrade)` })}
+        ${divider()}
+        <div class="card-effect">
+          Proactive debuff. The enemy's next attack deals <strong>${ladder[0].fx}</strong> damage — mitigate at the source before it lands.
+        </div>
+        <div class="card-upgrade">${ladder.map((t,i) =>
+          `<span>T${i+1}</span> ${t.fx} · ${t.heat}h`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> covers two attacks</div>
+      `, { section: 'routine', type: 'shield', element: '' });
+    })(),
+
+    // CLEANSE
+    (() => {
+      const ladder = [
+        { fx: 'Remove 1 random',          heat: 2 },
+        { fx: 'Remove 1 random',          heat: 1 },
+        { fx: 'Remove all',               heat: 1 },
+        { fx: 'Remove all +50% → shield', heat: 1 },
+        { fx: 'Remove all +100% → shield', heat: 1 },
+      ];
+      return card('R', '', `
+        <div class="card-name">Cleanse</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'},
+          {cls:'tag-shield', label:'Shield'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'All shield protocols', heat: `${ladder[0].heat} (drops with upgrade)` })}
+        ${divider()}
+        <div class="card-effect">
+          <strong>Remove a random DoT/debuff</strong> on your ship — the universal answer to Scorch & residual radiation. High tiers remove all and convert the cleansed damage into shield HP.
+        </div>
+        <div class="card-upgrade">${ladder.map((t,i) =>
+          `<span>T${i+1}</span> ${t.fx} · ${t.heat}h`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', type: 'shield', element: '' });
+    })(),
+
     // FOCUS FIRE
     (() => {
       const track = [12,15,18,22,28];
@@ -1160,6 +1569,81 @@ const CARDS = {
         </div>
         <div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> −${v} heat`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', type: 'weapon', element: '' });
+    })(),
+
+    // CALCULATED
+    (() => {
+      const ladder = [
+        { fx: '100% flat', heat: 2 },
+        { fx: '105% flat', heat: 2 },
+        { fx: '110% flat', heat: 2 },
+        { fx: '110% flat', heat: 1 },
+        { fx: '120% flat', heat: 1 },
+      ];
+      return card('R', '', `
+        <div class="card-name">Calculated</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'All weapon protocols', heat: `${ladder[0].heat} (drops with upgrade)` })}
+        ${divider()}
+        <div class="card-effect">
+          RPS multiplier <strong>ignored entirely</strong> — this activation deals a flat <strong>100%</strong> regardless of shield type. Rescues bad matchups; don't play it on a favorable one.
+        </div>
+        <div class="card-upgrade">${ladder.map((t,i) =>
+          `<span>T${i+1}</span> ${t.fx} · ${t.heat}h`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', type: 'weapon', element: '' });
+    })(),
+
+    // FLANKING
+    (() => {
+      const track = [20,24,28,34,40];
+      return card('C', '', `
+        <div class="card-name">Flanking</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-C', label:'C'},
+          {cls:'tag-routine', label:'Routine'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'All weapon protocols', heat: '1' })}
+        ${divider()}
+        <div class="card-effect">
+          <strong>${track[0]}%</strong> of this activation's damage bypasses the shield and hits hull directly; the rest resolves normally.
+        </div>
+        <div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> ${v}%`
+        ).join(' &nbsp;')}</div>
+      `, { section: 'routine', type: 'weapon', element: '' });
+    })(),
+
+    // SUPPRESS
+    (() => {
+      const ladder = [
+        { fx: 'Block this round',          heat: 2 },
+        { fx: 'Block this round',          heat: 1 },
+        { fx: 'Block; −50% next round',    heat: 1 },
+        { fx: 'Block this + next round',   heat: 1 },
+        { fx: 'Block 2 rds +10% strip',    heat: 1 },
+      ];
+      return card('R', '', `
+        <div class="card-name">Suppress</div>
+        <div class="card-tags">${tags(
+          {cls:'tag-R', label:'R'},
+          {cls:'tag-routine', label:'Routine'}
+        )}</div>
+        ${divider()}
+        ${metaRows({ compat: 'All weapon protocols', heat: `${ladder[0].heat} (drops with upgrade)` })}
+        ${divider()}
+        <div class="card-effect">
+          The enemy <strong>cannot reactivate its shield</strong> this round — pure tempo, no damage of its own.
+        </div>
+        <div class="card-upgrade">${ladder.map((t,i) =>
+          `<span>T${i+1}</span> ${t.fx} · ${t.heat}h`
         ).join(' &nbsp;')}</div>
       `, { section: 'routine', type: 'weapon', element: '' });
     })(),
@@ -1274,15 +1758,18 @@ const CARDS = {
 
 // ─── FILTER ───────────────────────────────────────────────────────────────────
 
-const activeFilters = { section: 'all', type: 'all', element: 'all', rarity: 'all', search: '' };
+const activeFilters = { view: 'cards', section: 'all', type: 'all', element: 'all', rarity: 'all', eclass: 'all', echapter: 'all', search: '' };
 
 function applyFilters() {
-  const sf = activeFilters.section;
-  const tf = activeFilters.type;
-  const ef = activeFilters.element;
-  const rf = activeFilters.rarity;
-  const q  = activeFilters.search.toLowerCase();
+  const q = activeFilters.search.toLowerCase();
 
+  // view switch
+  document.body.classList.toggle('view-enemies', activeFilters.view === 'enemies');
+  document.getElementById('cards-page').hidden   = activeFilters.view !== 'cards';
+  document.getElementById('enemies-page').hidden = activeFilters.view !== 'enemies';
+
+  // cards
+  const sf = activeFilters.section, tf = activeFilters.type, ef = activeFilters.element, rf = activeFilters.rarity;
   document.querySelectorAll('.card').forEach(c => {
     const secMatch    = sf === 'all' || c.dataset.section === sf;
     const typeMatch   = tf === 'all' || c.dataset.type === tf;
@@ -1293,10 +1780,32 @@ function applyFilters() {
     const searchMatch = q === '' || name.includes(q) || effect.includes(q);
     c.hidden = !(secMatch && typeMatch && elemMatch && rarityMatch && searchMatch);
   });
-
   ['protocols-weapon-section','protocols-shield-section','protocols-system-section','routines-section','wip-section'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.hidden = [...el.querySelectorAll('.card')].every(c => c.hidden);
+  });
+
+  // filtered count on the cards meta line
+  const metaEl = document.getElementById('meta-line');
+  if (metaEl && metaEl.dataset.base) {
+    const allCards = document.querySelectorAll('.card');
+    const visible  = [...allCards].filter(c => !c.hidden).length;
+    metaEl.innerHTML = metaEl.dataset.base + (visible !== allCards.length
+      ? ` &nbsp;·&nbsp; <span style="color:#8a8ad0;">Filtered results — ${visible} cards</span>` : '');
+  }
+
+  // enemies
+  const cf = activeFilters.eclass, chf = activeFilters.echapter;
+  document.querySelectorAll('.ecard').forEach(c => {
+    const clsMatch = cf === 'all' || c.dataset.eclass === cf;
+    const chMatch  = chf === 'all' || (c.dataset.echapter || '').split(' ').includes(chf);
+    const name     = (c.querySelector('.ecard-name')?.textContent || '').toLowerCase();
+    const searchMatch = q === '' || name.includes(q);
+    c.hidden = !(clsMatch && chMatch && searchMatch);
+  });
+  ['enemies-standard-section','enemies-boss-section','enemies-rare-section'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = [...el.querySelectorAll('.ecard')].every(c => c.hidden);
   });
 }
 
@@ -1318,13 +1827,21 @@ document.getElementById('search-box').addEventListener('input', e => {
 
 document.getElementById('clear-filters').addEventListener('click', () => {
   activeFilters.section = activeFilters.type = activeFilters.element = activeFilters.rarity = 'all';
+  activeFilters.eclass = activeFilters.echapter = 'all';
   activeFilters.search = '';
   document.getElementById('search-box').value = '';
-  // reset every group's active state to its "All" button
-  document.querySelectorAll('.filter-btn[data-filter]').forEach(b =>
+  // reset every group's active state to its "All" button (leave the View toggle as-is)
+  document.querySelectorAll('.filter-btn[data-filter]:not([data-filter="view"])').forEach(b =>
     b.classList.toggle('active', b.dataset.value === 'all')
   );
   applyFilters();
+});
+
+// ─── SIDEBAR COLLAPSE ─────────────────────────────────────────────────────────
+
+document.getElementById('nav-toggle').addEventListener('click', () => {
+  const collapsed = document.body.classList.toggle('nav-collapsed');
+  document.getElementById('nav-toggle').textContent = collapsed ? '›' : '‹';
 });
 
 // ─── RENDER ───────────────────────────────────────────────────────────────────
@@ -1340,8 +1857,19 @@ function render() {
     else complete += cardList.length;
   }
 
-  document.getElementById('meta-line').innerHTML =
-    `Last updated: 2026-06-11 &nbsp;·&nbsp; ${complete} cards`;
+  const metaEl = document.getElementById('meta-line');
+  metaEl.dataset.base = `Last updated: 2026-06-13 &nbsp;·&nbsp; ${complete} cards`;
+  metaEl.innerHTML = metaEl.dataset.base;
+
+  let enemyCount = 0;
+  for (const [sectionId, list] of Object.entries(ENEMIES)) {
+    const container = document.getElementById(sectionId);
+    if (!container) continue;
+    container.innerHTML = list.join('');
+    enemyCount += list.length;
+  }
+  document.getElementById('emeta-line').innerHTML =
+    `${enemyCount} entries &nbsp;·&nbsp; loadouts under revision — amber flags mark what's not yet designed`;
 
   applyFilters();
 }
