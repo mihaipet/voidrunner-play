@@ -117,7 +117,17 @@
     width: 330px; background: #13131a; border: 1px solid #222;
     border-top: 4px solid #444; padding: 20px;
     display: flex; flex-direction: column; gap: 10px;
+    position: relative;
   }
+
+  .pool-chip {
+    position: absolute; top: 0; right: 12px;
+    font-size: 10px; padding: 3px 8px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    background: #14311c; color: #7ddf8a; border: 1px solid #2e5c38; border-top: none;
+  }
+  .pool-chip.out { background: #331616; color: #d97b7b; border-color: #5c2e2e; }
+  .card[data-pool="out"] { opacity: 0.55; }
 
   .card.ST  { border-top-color: #5a5a6e; }
   .card.C   { border-top-color: #3a6aaa; }
@@ -149,6 +159,8 @@
   .card-row span:last-child { color: #d0d0d8; text-align: right; }
   .card-effect { color: #c0c0c8; font-size: 13px; line-height: 1.6; }
   .card-effect strong { color: #ffffff; }
+  .card-damage { color: #b8b8c4; font-size: 12px; line-height: 1.6; }
+  .card-damage strong { color: #ffffff; }
   .card-upgrade { color: #9090a8; font-size: 12px; line-height: 1.5; border-left: 2px solid #2a2a3a; padding-left: 10px; }
   .card-upgrade span { color: #7070a0; }
   .card-conditions { color: #dd7777; font-size: 12px; font-style: italic; }
@@ -188,9 +200,9 @@
   .e-ok   { color: #3b6d11; }
   .e-warn { color: #ba7517; }
   .e-val  { font-size: 11px; color: #c8ccd4; }
-  .e-arc    { color: #26c6da; }
-  .e-plasma { color: #ff7a3c; }
-  .e-gamma  { color: #a855f7; }
+  .e-arc    { color: #2FB7E8; }
+  .e-plasma { color: #FF6B35; }
+  .e-gamma  { color: #A3E635; }
   .e-dim    { color: #6b6f78; }
 
   /* view + filter-group visibility */
@@ -243,6 +255,22 @@
   <div class="filter-sep"></div>
 
   <span class="fg-cards">
+    <div class="filter-group">
+      <span class="filter-label">Pool</span>
+      <button class="filter-btn active" data-filter="pool" data-value="all">All</button>
+      <button class="filter-btn" data-filter="pool" data-value="game">In Game</button>
+      <button class="filter-btn" data-filter="pool" data-value="unassigned">Unassigned</button>
+      <button class="filter-btn" data-filter="pool" data-value="out">Out</button>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
+      <span class="filter-label">Sort</span>
+      <button class="filter-btn active" data-filter="sort" data-value="default">Default</button>
+      <button class="filter-btn" data-filter="sort" data-value="rarity">Rarity</button>
+      <button class="filter-btn" data-filter="sort" data-value="heat">Heat</button>
+      <button class="filter-btn" data-filter="sort" data-value="az">A–Z</button>
+    </div>
+    <div class="filter-sep"></div>
     <div class="filter-group">
       <span class="filter-label">Show</span>
       <button class="filter-btn active" data-filter="section" data-value="all">All</button>
@@ -362,18 +390,20 @@ const RPS = {
 
 const CANNON_UPGRADES = [[1,26],[2,28],[3,30],[4,32],[5,35]];
 
+// Re-ruled 2026-07-25 (card rework session, new HP scale): KC 10/20, 5/5 ignores shields;
+// Veil deploy 50, flat restore ladder, 5/5 = free deploy. Source: design files + game-pool.md.
 const KINETIC_CORE = {
-  shieldUpDmg:   15,
-  shieldDownDmg: 30,
-  upgradePenetration: '50% → 65% (shield up: 20 dmg)'
+  shieldUpDmg:   10,
+  shieldDownDmg: 20,
+  upgradePenetration: 'Ignores shields entirely — <strong>20</strong> hull dmg regardless of shield state (100% penetration)'
 };
 
 const MORPHIC_VEIL = {
-  deployHP: 150,
-  reactivatePct: 10,
+  deployHP: 50,
+  restoreByPip: [5, 10, 15, 20, 20],
   heatPrep: 1,
   heatReactivate: 1,
-  upgrade: 'Deploy +200 HP · Reactivate +40 HP (20%) · 0 heat'
+  upgrade: 'Initial deploy costs 0 — rounds start at 0 heat instead of 1: <strong>+1 usable heat every round</strong>'
 };
 
 const SHIELD_COMMON = {
@@ -410,7 +440,12 @@ function card(rarity, extra, content, opts = {}) {
   const sec  = opts.section || 'protocol';
   const type = opts.type    || '';
   const elem = opts.element || '';
-  return `<div class="card ${rarity}${extra}" data-section="${sec}" data-type="${type}" data-element="${elem}" data-rarity="${rarity}">${content}</div>`;
+  // Card-rework session (2026-07-25): every card starts UNASSIGNED; cards enter the
+  // game pool one by one as Mihai rules them in. Source of truth: design/cards/game-pool.md.
+  const pool = opts.pool    || 'unassigned';
+  const chip = pool === 'game' ? '<span class="pool-chip">In Game</span>'
+             : pool === 'out'  ? '<span class="pool-chip out">Out</span>' : '';
+  return `<div class="card ${rarity}${extra}" data-section="${sec}" data-type="${type}" data-element="${elem}" data-rarity="${rarity}" data-pool="${pool}">${chip}${content}</div>`;
 }
 
 function wip(rarity, content, opts = {}) {
@@ -437,7 +472,7 @@ function loadRow(label, slot) {
 
 function enemyCard(e) {
   const chap = String(e.chapter || '').replace(/[–-]/g, ' ');
-  const sColor = { arc:'#1d9ec4', plasma:'#ff7a3c', gamma:'#a855f7' }[e.shieldType] || '#4a4d58';
+  const sColor = { arc:'#2FB7E8', plasma:'#FF6B35', gamma:'#A3E635' }[e.shieldType] || '#4a4d58';
   const sCl    = { arc:'e-arc', plasma:'e-plasma', gamma:'e-gamma' }[e.shieldType] || '';
   const tag    = e.cls === 'boss' ? '◆ BOSS' : e.cls === 'rare' ? '◆ RARE' : '◆ HOSTILE';
 
@@ -480,34 +515,62 @@ function enemyCard(e) {
 
 const ENEMIES = {
   'enemies-standard': [
-    enemyCard({ cls:'standard', name:'SCAVENGER PROBE', type:'Drone', chapter:'1', tier:'Light',
-      shieldType:'arc', shield:20, hull:55, intentTitle:'fixed rotation',
-      intent:[{atk:1,label:'⚔ Arc Cannon'},{label:'⛒ Barrier'},{atk:1,label:'⚔ Arc Cannon'}],
-      intentNote:'below 25 hull → drops barrier, attacks every turn',
-      weapon:{protocol:'Arc Cannon', routines:'Supercharge', ok:true},
-      shield_p:{protocol:'Particle Barrier', routines:'Reinforced', ok:false, note:'protocol + routine unbuilt'},
-      drops:['Arc Cannon <span class="e-dim">protocol</span> + Supercharge (C)','Particle Barrier <span class="e-dim">protocol</span> + Reinforced (C)'] }),
-    enemyCard({ cls:'standard', name:'PATROL CORVETTE', type:'Ship', chapter:'1', tier:'Standard',
-      shieldType:'plasma', shield:35, hull:55, intentTitle:'defend then pressure',
-      intent:[{label:'⛒ Morphic Shield'},{atk:1,label:'⚔ Kinetic Slug'},{atk:1,label:'⚔ Kinetic Slug'}],
-      intentNote:'reactivates Morphic Shield when shield < 15',
-      weapon:{protocol:'Kinetic Slug', routines:'Heavy Bore, Burst Loader', ok:true},
-      shield_p:{protocol:'Morphic Shield', routines:'Hardened Matrix', ok:false, note:'protocol + routine unbuilt'},
-      drops:['Kinetic Slug + Heavy Bore (C), Burst Loader (C)','Morphic Shield + Hardened Matrix (C)'] }),
-    enemyCard({ cls:'standard', name:'INTERCEPTOR', type:'Ship', chapter:'1–2', tier:'Standard',
-      shieldType:'plasma', shield:40, hull:70, intentTitle:'patient, reactive',
-      intent:[{atk:1,label:'⚔ Plasma Cannon'},{label:'⟁ Phase Shift'}],
-      intentNote:'Phase Shift on incoming > 25 (telegraphed) · Superheated when your shield < 25%',
-      weapon:{protocol:'Plasma Cannon', routines:'Superheated', ok:true},
-      shield_p:{protocol:'Phase Shift', routines:'Phase Echo', ok:false, note:'now a routine; needs a shield protocol'},
-      drops:['Plasma Cannon + Superheated (R)','Phase Shift + Phase Echo (R) — needs rework'] }),
-    enemyCard({ cls:'standard', name:'ASSAULT FRIGATE', type:'Ship', chapter:'2', tier:'Standard+',
-      shieldType:'gamma', shield:50, hull:80, intentTitle:'attrition',
-      intent:[{atk:1,label:'⚔ Kinetic Slug'},{label:'✚ Nanobot Repair'}],
-      intentNote:'repairs when shield hits 0 · Armor Rend from turn 4',
-      weapon:{protocol:'Kinetic Slug', routines:'Armor Rend, Burst Loader', ok:true},
-      shield_p:{protocol:'Nanobot Repair', routines:'Hull Nanobots, Rapid Deploy', ok:false, note:'reclassified to routine; needs a shield protocol'},
-      drops:['Kinetic Slug + Armor Rend (R), Burst Loader (C)','Nanobot Repair + Hull Nanobots (R), Rapid Deploy (C) — needs rework'] }),
+    enemyCard({ cls:'standard', name:'SCAVENGER PROBE', type:'Drone', chapter:'1', tier:'T1 · Teacher (on-ramp) · fight 1, scripted',
+      shieldType:'arc', shield:20, hull:55, intentTitle:'strict two-beat',
+      intent:[{atk:1,label:'⚔ Arc Emitter'},{label:'⌕ Salvage Scan'}],
+      intentNote:'shield unstrippable at fight 1 (the lesson — kinetic halved all fight) · Scan = harmless window · DoD 2026-07-11',
+      weapon:{protocol:'light arc emitter (expression)', ok:true},
+      shield_p:{protocol:'small self-shield, never recharged', ok:true},
+      drops:['decoupled · scripted exception: fight-1 reward guarantees an energy weapon protocol (type → curve review)'] }),
+    enemyCard({ cls:'standard', name:'PATROL CORVETTE', type:'Ship', chapter:'1', tier:'T1 · Gentle Wall',
+      shieldType:'gamma', shield:60, hull:45, intentTitle:'walls up, then steady',
+      intent:[{label:'⛒ Reinforce (t1)'},{atk:1,label:'⚔ Kinetic Slug'},{atk:1,label:'⚔ Heavy Slug (every 3rd)'}],
+      intentNote:'no regeneration — the fortress only comes down · type moved plasma → gamma (completes the T1 triangle) · DoD 2026-07-11',
+      weapon:{protocol:'twin kinetic slug-throwers (expression)', ok:true},
+      shield_p:{protocol:'large gamma shield + one-time Reinforce', ok:true},
+      drops:['fully decoupled'] }),
+    enemyCard({ cls:'standard', name:'INTERCEPTOR', type:'Ship', chapter:'1', tier:'T1 · Teacher (intent literacy)',
+      shieldType:'plasma', shield:40, hull:70, intentTitle:'fixed rotation',
+      intent:[{atk:1,label:'⚔ Plasma Lance'},{atk:1,label:'⚔ Plasma Lance'},{label:'⟁ Phase Guard'}],
+      intentNote:'Guard negates first hit ≥ threshold (shown resolved) — fixed rotation, never reactive · DoD 2026-07-11',
+      weapon:{protocol:'light plasma lance (expression)', ok:true},
+      shield_p:{protocol:'Phase Guard (every 3rd round)', ok:true},
+      drops:['fully decoupled'] }),
+    enemyCard({ cls:'standard', name:'RAIDER SKIFF', type:'Ship', chapter:'1', tier:'T1 · Gentle Aggressor',
+      shieldType:'none', shield:15, hull:60, intentTitle:'the visible ramp',
+      intent:[{label:'▲ Spin Up (t1)'},{atk:1,label:'⚔ Autocannons (+X/round)'}],
+      intentNote:'output climbs every round, shown as a visible status — fight length is a price you choose · typeless shield (first no-type) · DoD 2026-07-11',
+      weapon:{protocol:'overloaded twin autocannons (expression)', ok:true},
+      shield_p:{protocol:'thin typeless shield (glass profile)', ok:true},
+      drops:['fully decoupled'] }),
+    enemyCard({ cls:'standard', name:'THERMAL HARRIER', type:'Ship', chapter:'2', tier:'T2 · Heat-Disruptor (on-ramp)',
+      shieldType:'arc', shield:50, hull:80, intentTitle:'fixed rotation',
+      intent:[{atk:1,label:'⚔ Lance (low)'},{atk:1,label:'⚔ Lance (low)'},{label:'♨ Thermal Lance'}],
+      intentNote:'Thermal Lance: next round you start at +3 heat (projected budget shown) — the attack is aimed at your plan · DoD 2026-07-11',
+      weapon:{protocol:'gimballed thermal lance (expression)', ok:true},
+      shield_p:{protocol:'arc shield', ok:true},
+      drops:['fully decoupled'] }),
+    enemyCard({ cls:'standard', name:'FOUNDRY FRIGATE', type:'Ship', chapter:'2', tier:'T2 · Sustainer',
+      shieldType:'gamma', shield:50, hull:80, intentTitle:'windowed repair',
+      intent:[{atk:1,label:'⚔ Kinetic Slug'},{label:'✚ Nanite Repair (reserves: 3)'}],
+      intentNote:'shield break → next intent announces repair (+20 shield +10 hull) — burst the window or grind the visible reserves dry · renamed from Assault Frigate · DoD 2026-07-11',
+      weapon:{protocol:'kinetic slug batteries (expression)', ok:true},
+      shield_p:{protocol:'gamma shield + Nanite Repair ×3 (finite, counted)', ok:true},
+      drops:['fully decoupled'] }),
+    enemyCard({ cls:'standard', name:'PATROL CORVETTE MK II', type:'Ship', chapter:'2', tier:'T2 · Compound Wall · first variant (base: Corvette)',
+      shieldType:'plasma', shield:65, hull:50, intentTitle:'walls up + charged lattice',
+      intent:[{label:'⛒ Reinforce (t1)'},{atk:1,label:'⚔ Kinetic Slug'},{atk:1,label:'⚔ Heavy Slug (every 3rd)'}],
+      intentNote:'standing status: Charged Lattice — discharges 15 (arc) when its shield breaks; schedule the break · shield refit Gamma → Plasma (read the icon, not the silhouette) · DoD 2026-07-11',
+      weapon:{protocol:'twin kinetic slug-throwers (base, unchanged)', ok:true},
+      shield_p:{protocol:'plasma shield + Charged Lattice (one discharge)', ok:true},
+      drops:['fully decoupled'] }),
+    enemyCard({ cls:'standard', name:'PLATED MARAUDER', type:'Ship', chapter:'2', tier:'T2 · Aggressor+',
+      shieldType:'none', hull:120, intentTitle:'heavy rhythm',
+      intent:[{atk:1,label:'⚔ Overcharge (light)'},{atk:1,label:'⚔ ALPHA STRIKE'}],
+      intentNote:'Ablative Plating: max 12 damage per hit (standing status) — alpha is the wrong shape; first shieldless hull · DoD 2026-07-11',
+      weapon:{protocol:'mass-driver ram (expression)', ok:true},
+      shield_p:{protocol:'none — plated hull (per-hit cap)', ok:true},
+      drops:['fully decoupled'] }),
     enemyCard({ cls:'standard', name:'GAMMA STALKER', type:'Ship', chapter:'2', tier:'Elite', wip:true,
       shieldType:'gamma', shield:55, hull:95, intentTitle:'reactive, punishing',
       intent:[{atk:1,label:'⚔ Gamma Cannon'},{label:'⟁ Phase Shift'}],
@@ -517,10 +580,12 @@ const ENEMIES = {
       drops:['Gamma Cannon + Overload (R), Shield Drain (C) — clash','Phase Shift + Phase Echo, Dimensional Anchor — needs rework'] }),
   ],
   'enemies-boss': [
-    enemyCard({ cls:'boss', name:'THE INHERITOR', type:'Boss', fight:5, chapter:'1', tier:'Boss', hull:240,
-      phases:'2 phases · corrupted predecessor, mirror fight. P2 (hull ≤ 80) drops Phase Shift.',
-      weapon:{protocol:'Kinetic Slug (enhanced)', routines:'Armor Rend', ok:true},
-      shield_p:{protocol:'Phase Shift (enhanced)', routines:'Phase Echo, Dimensional Anchor, Sustained Phase', ok:false, note:'now a routine; orphaned pool'} }),
+    enemyCard({ cls:'boss', name:'THE INHERITOR', type:'Boss', fight:5, chapter:'1', tier:'Ch1 capstone — the exam',
+      shieldType:'gamma', shield:80, hull:160,
+      phases:'P1 Patient Machine: gamma wall, fixed rotation (slug · slug · heavy beat · Phase Guard) → one turn of STILLNESS → P2 Void Memory: defense stops, output ramps +3/round (visible). Zero new mechanics — chapter vocabulary at scale. Re-cut to DoD 2026-07-11.',
+      weapon:{protocol:'enhanced kinetic batteries (expression)', ok:true},
+      shield_p:{protocol:'large gamma shield + Phase Guard on cadence (P1 only)', ok:true},
+      drops:['boss exception: choice — its enhanced kinetic weapon protocol (R+) or its gamma shield protocol (R); routines = its own set, resolved at library pass'] }),
     enemyCard({ cls:'boss', name:'THE CONGREGATION', type:'Boss', fight:10, chapter:'2', tier:'Boss', hull:300,
       phases:'3 phases · cathedral, repair loop, dual weapons. Devotion Surge every 4th turn.',
       weapon:{protocol:'Arc Cannon (enhanced)', routines:'Overload, Shield Drain, Supercharge', ok:false, note:'Overload is Epic, not R'},
@@ -545,15 +610,15 @@ function row(label, value) {
   return `<div class="card-row"><span>${label}</span><span>${value}</span></div>`;
 }
 
-// Unified meta block — all cards show all four fields; missing values show —
-// Renders only the fields a card actually passes — no blank/placeholder rows.
-// Weapon protocols pass weaponType/heat/drop; shields pass heat/drop; routines pass compat/heat.
-function metaRows({ weaponType, compat, heat, drop, conditions } = {}) {
+// Unified meta block — every card shows the SAME three rows in the SAME order:
+// Fits · Heat cost · Drop. Missing values render as "—" (row never omitted).
+// The conditions strip renders only when a card actually has a condition, and always
+// sits immediately after the three rows.
+function metaRows({ fits, heat, drop, conditions } = {}) {
   let html = '';
-  if (weaponType) html += row('Weapon type',     weaponType);
-  if (compat)     html += row('Compatible with', compat);
-  if (heat)       html += row('Heat cost',       heat);
-  if (drop)       html += row('Drop',            drop);
+  html += row('Fits',      fits || '—');
+  html += row('Heat cost', heat || '—');
+  html += row('Drop',      drop || '—');
   if (conditions) {
     const list = Array.isArray(conditions) ? conditions : [conditions];
     list.forEach(c => { html += `<div class="card-conditions">⚠ ${c}</div>`; });
@@ -565,54 +630,74 @@ function perk5(label, content) {
   return `<div class="card-5perk"><div class="perk5-label">5/5 — ${label}</div><div class="card-effect" style="margin-top:4px">${content}</div></div>`;
 }
 
+// Shield-protocol ladder: the common HP/reactivation track, pip notation (n/5).
+function shieldLadder(base) {
+  return `<div class="card-upgrade">${SHIELD_COMMON.hpAdd.map((add, i) =>
+    `<span>${i + 1}/5</span> ${base + add} HP · ${SHIELD_COMMON.react[i]}%`
+  ).join(' &nbsp;')}</div>`;
+}
+
+// ─── SINGLE PLAYER-CARD RENDERER ─────────────────────────────────────────────
+// Every player card is a plain data object passed through here, so all 53 share
+// one identical anatomy — same slots, same order, same formatting, different data:
+//   name → tag row (rarity · kind · slot · element…) → divider → meta rows
+//   (Fits · Heat cost · Drop [· conditions]) → divider → [extra] → effect → ladder
+function renderPlayerCard(d) {
+  const kindCls = d.kind === 'Routine' ? 'tag-routine' : 'tag-type';
+  const slotCls = d.slot === 'Shield' ? 'tag-shield' : 'tag-type';
+  const elemCls = { kinetic: 'tag-kinetic', arc: 'tag-arc', plasma: 'tag-plasma', gamma: 'tag-gamma' };
+  const tagList = [
+    { cls: 'tag-' + d.rarity, label: d.rarity },
+    { cls: kindCls,           label: d.kind  },
+    { cls: slotCls,           label: d.slot  },
+    ...(d.elements || []).map(e => ({ cls: elemCls[e], label: cap(e) }))
+  ];
+  const extra = d.extra ? `<div class="card-damage">${d.extra}</div>` : '';
+  const content = `
+      <div class="card-name">${d.name}</div>
+      <div class="card-tags">${tags(...tagList)}</div>
+      ${divider()}
+      ${metaRows({ fits: d.fits, heat: d.heat, drop: d.drop, conditions: d.conditions })}
+      ${divider()}
+      ${extra}<div class="card-effect">${d.effect}</div>
+      ${d.ladder}
+  `;
+  return card(d.rarity, d.wip ? ' wip' : '', content, {
+    section: d.section, type: d.type, element: d.element, pool: d.pool
+  });
+}
+
 // ─── CARDS ───────────────────────────────────────────────────────────────────
 
 const CARDS = {
   'protocols-weapon': [
 
     // KINETIC CORE
-    card('ST', '', `
-      <div class="card-name">Kinetic Core</div>
-      <div class="card-tags">${tags(
-        {cls:'tag-ST', label:'ST'},
-        {cls:'tag-type', label:'Weapon'},
-        {cls:'tag-kinetic', label:'Kinetic'}
-      )}</div>
-      ${divider()}
-      ${metaRows({ weaponType: 'Mass Accelerator', heat: '2', drop: 'Starter' })}
-      ${divider()}
-      <div class="card-effect">
-        Shield up: <strong>${KINETIC_CORE.shieldUpDmg}</strong> hull dmg<br>
-        Shield down: <strong>${KINETIC_CORE.shieldDownDmg}</strong> hull dmg
-      </div>
-      <div class="card-upgrade"><span>5/5:</span> Penetration ${KINETIC_CORE.upgradePenetration}</div>
-    `, { section: 'protocol', type: 'weapon', element: 'kinetic' }),
+    renderPlayerCard({
+      name: 'Kinetic Core', rarity: 'ST', kind: 'Protocol', slot: 'Weapon', elements: ['kinetic'],
+      section: 'protocol', type: 'weapon', element: 'kinetic', pool: 'game',
+      fits: 'Mass Accelerator', heat: '2', drop: 'Starter',
+      effect: `Shield up: <strong>${KINETIC_CORE.shieldUpDmg}</strong> hull dmg<br>
+        Shield down: <strong>${KINETIC_CORE.shieldDownDmg}</strong> hull dmg`,
+      ladder: perk5('Penetration', KINETIC_CORE.upgradePenetration)
+    }),
 
     // ARC CANNON
     (() => {
+      const base = CANNON_UPGRADES[0][1];
       const max5 = CANNON_UPGRADES[4][1];
       const chainPct = 25;
-      return card('C', '', `
-        <div class="card-name">Arc Cannon</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-type', label:'Weapon'},
-          {cls:'tag-arc', label:'Arc'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ weaponType: 'Cannon', heat: '2', drop: 'Scavenger Probe (Ch1)' })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>${CANNON_UPGRADES[0][1]}→${max5}</strong> arc damage<br>
-          ${rpsRow(CANNON_UPGRADES[0][1], 'arc')} <em>(base)</em><br>
-          ${rpsRow(max5, 'arc')} <em>(5/5)</em>
-        </div>
-        <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)}</div>
-        ${perk5('Arc Chain', `Two chain arcs, each <strong>${chainPct}%</strong> of activation damage<br>
+      return renderPlayerCard({
+        name: 'Arc Cannon', rarity: 'C', kind: 'Protocol', slot: 'Weapon', elements: ['arc'],
+        section: 'protocol', type: 'weapon', element: 'arc',
+        fits: 'Cannon', heat: '2', drop: 'Scavenger Probe (Ch1)',
+        extra: `${rpsRow(base, 'arc')} <em>(base)</em><br>${rpsRow(max5, 'arc')} <em>(5/5)</em>`,
+        effect: `<strong>${base}→${max5}</strong> arc damage`,
+        ladder: `<div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)}</div>${perk5('Arc Chain', `Two chain arcs, each <strong>${chainPct}%</strong> of activation damage<br>
           ${Object.keys(RPS.arc).map(s =>
-            `vs ${cap(s)}: +<strong>${floor(rps(max5,'arc',s) * chainPct * 2 / 100)}</strong>`
-          ).join(' &nbsp;·&nbsp; ')} <em>(both chains)</em>`)}
-      `, { section: 'protocol', type: 'weapon', element: 'arc' });
+            `vs ${cap(s)}: +<strong>${floor(rps(max5, 'arc', s) * chainPct * 2 / 100)}</strong>`
+          ).join(' &nbsp;·&nbsp; ')} <em>(both chains)</em>`)}`
+      });
     })(),
 
     // PLASMA CANNON
@@ -621,50 +706,31 @@ const CARDS = {
       const max  = CANNON_UPGRADES[4][1];
       const scorchRow = (dmg, pct) =>
         Object.keys(RPS.plasma).map(s =>
-          `vs ${cap(s)}: <strong>${floor(rps(dmg,'plasma',s) * pct / 100)}</strong>`
+          `vs ${cap(s)}: <strong>${floor(rps(dmg, 'plasma', s) * pct / 100)}</strong>`
         ).join(' &nbsp;·&nbsp; ');
-      return card('C', '', `
-        <div class="card-name">Plasma Cannon</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-type', label:'Weapon'},
-          {cls:'tag-plasma', label:'Plasma'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ weaponType: 'Cannon', heat: '2', drop: 'Interceptor (Ch 1–2)' })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>${base}→${max}</strong> plasma damage<br>
-          ${rpsRow(base, 'plasma')} <em>(base)</em><br>
-          ${rpsRow(max, 'plasma')} <em>(5/5)</em>
-        </div>
-        <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)}</div>
-        ${perk5('Scorch', `<strong>50%</strong> of damage dealt burns at round start, before anyone acts. Stacks per activation.<br>
-          ${scorchRow(max, 50)} <em>(5/5)</em>`)}
-      `, { section: 'protocol', type: 'weapon', element: 'plasma' });
+      return renderPlayerCard({
+        name: 'Plasma Cannon', rarity: 'C', kind: 'Protocol', slot: 'Weapon', elements: ['plasma'],
+        section: 'protocol', type: 'weapon', element: 'plasma',
+        fits: 'Cannon', heat: '2', drop: 'Interceptor (Ch 1–2)',
+        extra: `${rpsRow(base, 'plasma')} <em>(base)</em><br>${rpsRow(max, 'plasma')} <em>(5/5)</em>`,
+        effect: `<strong>${base}→${max}</strong> plasma damage`,
+        ladder: `<div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)}</div>${perk5('Scorch', `<strong>50%</strong> of damage dealt burns at round start, before anyone acts. Stacks per activation.<br>
+          ${scorchRow(max, 50)} <em>(5/5)</em>`)}`
+      });
     })(),
 
     // GAMMA CANNON
     (() => {
+      const base = CANNON_UPGRADES[0][1];
       const max5 = CANNON_UPGRADES[4][1];
-      return card('C', '', `
-        <div class="card-name">Gamma Cannon</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-type', label:'Weapon'},
-          {cls:'tag-gamma', label:'Gamma'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ weaponType: 'Cannon', heat: '2', drop: 'Gamma Stalker (Ch2) · Keeper P1' })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>${CANNON_UPGRADES[0][1]}→${max5}</strong> gamma damage<br>
-          ${rpsRow(CANNON_UPGRADES[0][1], 'gamma')} <em>(base)</em><br>
-          ${rpsRow(max5, 'gamma')} <em>(5/5)</em>
-        </div>
-        <div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)}</div>
-        ${perk5('Scatter Field', `Enemy attacks deal <strong>25%</strong> less damage this turn`)}
-      `, { section: 'protocol', type: 'weapon', element: 'gamma' });
+      return renderPlayerCard({
+        name: 'Gamma Cannon', rarity: 'C', kind: 'Protocol', slot: 'Weapon', elements: ['gamma'],
+        section: 'protocol', type: 'weapon', element: 'gamma',
+        fits: 'Cannon', heat: '2', drop: 'Gamma Stalker (Ch2) · Keeper P1',
+        extra: `${rpsRow(base, 'gamma')} <em>(base)</em><br>${rpsRow(max5, 'gamma')} <em>(5/5)</em>`,
+        effect: `<strong>${base}→${max5}</strong> gamma damage`,
+        ladder: `<div class="card-upgrade">${upgradeTrack(CANNON_UPGRADES)}</div>${perk5('Scatter Field', `Enemy attacks deal <strong>25%</strong> less damage this turn`)}`
+      });
     })(),
 
     // KINETIC SLUG
@@ -673,137 +739,84 @@ const CARDS = {
       const pen      = 65, penMax = 85;
       const penOf    = (pip) => pip < 5 ? pen : penMax;
       const up       = (dmg, p) => floor(dmg * p / 100);
-      return card('C', '', `
-        <div class="card-name">Kinetic Slug</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-type', label:'Weapon'},
-          {cls:'tag-kinetic', label:'Kinetic'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ weaponType: 'Mass Accelerator', heat: '2', drop: 'Patrol Corvette (Ch1) · Assault Frigate (Ch2)' })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>${SLUG_TRK[0][1]}→${SLUG_TRK[4][1]}</strong> kinetic damage · <strong>${pen}%</strong> penetration<br>
-          Shield up: <strong>${up(SLUG_TRK[0][1], pen)}</strong> hull dmg &nbsp;·&nbsp; Shield down: <strong>${SLUG_TRK[0][1]}</strong> hull dmg
-        </div>
-        <div class="card-upgrade">${SLUG_TRK.map(([pip,dmg]) =>
+      return renderPlayerCard({
+        name: 'Kinetic Slug', rarity: 'C', kind: 'Protocol', slot: 'Weapon', elements: ['kinetic'],
+        section: 'protocol', type: 'weapon', element: 'kinetic',
+        fits: 'Mass Accelerator', heat: '2', drop: 'Patrol Corvette (Ch1) · Foundry Frigate (Ch2)',
+        effect: `<strong>${SLUG_TRK[0][1]}→${SLUG_TRK[4][1]}</strong> kinetic damage · <strong>${pen}%</strong> penetration<br>
+          Shield up: <strong>${up(SLUG_TRK[0][1], pen)}</strong> hull dmg &nbsp;·&nbsp; Shield down: <strong>${SLUG_TRK[0][1]}</strong> hull dmg`,
+        ladder: `<div class="card-upgrade">${SLUG_TRK.map(([pip,dmg]) =>
           `<span>${pip}/5</span> ${up(dmg, penOf(pip))}/${dmg}`
-        ).join(' &nbsp;')} &nbsp;<span>(5/5: pen ${penMax}%)</span></div>
-      `, { section: 'protocol', type: 'weapon', element: 'kinetic' });
+        ).join(' &nbsp;')} &nbsp;<span>(5/5: pen ${penMax}%)</span></div>`
+      });
     })(),
 
     // MOONLIT PHASE BLADE
-    card('U', '', `
-      <div class="card-name">Moonlit Phase Blade</div>
-      <div class="card-tags">${tags(
-        {cls:'tag-U', label:'U'},
-        {cls:'tag-type', label:'Weapon'},
-        {cls:'tag-arc', label:'Arc'},
-        {cls:'tag-plasma', label:'Plasma'},
-        {cls:'tag-gamma', label:'Gamma'}
-      )}</div>
-      ${divider()}
-      ${metaRows({ weaponType: 'Phase Blade', heat: 'TBD', drop: 'Sentient Guardian (rare)', conditions: 'No upgrades · Compatible with Moonfall only' })}
-      ${divider()}
-      <div class="card-effect">
-        Fires a beam of phase energy. Deals damage at <strong>125%</strong> vs any energy shield — triple damage type always finds the counter.
-      </div>
-      <div class="card-na">Base damage TBD — fight sequence session pending.</div>
-    `, { section: 'protocol', type: 'weapon', element: 'arc plasma gamma' })
+    renderPlayerCard({
+      name: 'Moonlit Phase Blade', rarity: 'U', kind: 'Protocol', slot: 'Weapon', elements: ['arc','plasma','gamma'],
+      section: 'protocol', type: 'weapon', element: 'arc plasma gamma',
+      fits: 'Phase Blade', heat: 'TBD', drop: 'Sentient Guardian (rare)',
+      conditions: 'No upgrades · Compatible with Moonfall only',
+      effect: `Fires a beam of phase energy. Deals damage at <strong>125%</strong> vs any energy shield — triple damage type always finds the counter.`,
+      ladder: `<div class="card-na">Base damage TBD — fight sequence session pending.</div>`
+    })
 
   ],
 
   'protocols-shield': [
 
     // MORPHIC VEIL
-    card('ST', '', `
-      <div class="card-name">Morphic Veil</div>
-      <div class="card-tags">${tags(
-        {cls:'tag-ST', label:'ST'},
-        {cls:'tag-shield', label:'Shield'}
-      )}</div>
-      ${divider()}
-      ${metaRows({ heat: `${MORPHIC_VEIL.heatPrep} (prep) · ${MORPHIC_VEIL.heatReactivate} (reactivate)`, drop: 'Starter' })}
-      ${divider()}
-      <div class="card-effect">
-        Deploy: <strong>+${MORPHIC_VEIL.deployHP}</strong> shield HP<br>
-        Reactivate: restore <strong>${floor(MORPHIC_VEIL.deployHP * MORPHIC_VEIL.reactivatePct / 100)}</strong> HP (${MORPHIC_VEIL.reactivatePct}%)
-      </div>
-      <div class="card-upgrade"><span>5/5:</span> ${MORPHIC_VEIL.upgrade}</div>
-    `, { section: 'protocol', type: 'shield', element: '' }),
+    renderPlayerCard({
+      name: 'Morphic Veil', rarity: 'ST', kind: 'Protocol', slot: 'Shield', elements: [],
+      section: 'protocol', type: 'shield', element: '', pool: 'game',
+      fits: '—', heat: `${MORPHIC_VEIL.heatPrep} (prep) · ${MORPHIC_VEIL.heatReactivate} (reactivate)`, drop: 'Starter',
+      effect: `Deploy: <strong>+${MORPHIC_VEIL.deployHP}</strong> shield HP — non-elemental, all damage types deal 100%.<br>
+        Reactivate: restore <strong>${MORPHIC_VEIL.restoreByPip[0]}</strong> HP — flat amount, grows by pip level.`,
+      ladder: `<div class="card-upgrade">${MORPHIC_VEIL.restoreByPip.map((v, i) =>
+        `<span>${i + 1}/5</span> +${v}`).join(' &nbsp;')}</div>` + perk5('Free deploy', MORPHIC_VEIL.upgrade)
+    }),
 
     // ARC SHIELD
     (() => {
       const base = 105;
-      return card('C', '', `
-        <div class="card-name">Arc Shield</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-shield', label:'Shield'},
-          {cls:'tag-arc', label:'Arc'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ heat: '1 (prep) · 2 (reactivate)', drop: 'Scavenger Probe (Ch1)' })}
-        ${divider()}
-        <div class="card-effect">
-          Deploy: <strong>${base}</strong> HP &nbsp;·&nbsp;
+      return renderPlayerCard({
+        name: 'Arc Shield', rarity: 'C', kind: 'Protocol', slot: 'Shield', elements: ['arc'],
+        section: 'protocol', type: 'shield', element: 'arc',
+        fits: '—', heat: '1 (prep) · 2 (reactivate)', drop: 'Scavenger Probe (Ch1)',
+        effect: `Deploy: <strong>${base}</strong> HP &nbsp;·&nbsp;
           Reactivate: <strong>${floor(base * SHIELD_COMMON.react[0] / 100)}</strong> HP (${SHIELD_COMMON.react[0]}%)<br>
-          <strong>On activation:</strong> all weapons this turn +<strong>25%</strong> damage
-        </div>
-        <div class="card-upgrade">${SHIELD_COMMON.hpAdd.map((add, i) =>
-          `<span>T${i+1}</span> ${base + add} HP · ${SHIELD_COMMON.react[i]}%`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'protocol', type: 'shield', element: 'arc' });
+          <strong>On activation:</strong> all weapons this turn +<strong>25%</strong> damage`,
+        ladder: shieldLadder(base)
+      });
     })(),
 
     // PLASMA SHIELD
     (() => {
       const base = 120;
-      return card('C', '', `
-        <div class="card-name">Plasma Shield</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-shield', label:'Shield'},
-          {cls:'tag-plasma', label:'Plasma'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ heat: '1 (prep) · 2 (reactivate)', drop: 'Patrol Corvette (Ch1)' })}
-        ${divider()}
-        <div class="card-effect">
-          Deploy: <strong>${base}</strong> HP &nbsp;·&nbsp;
+      return renderPlayerCard({
+        name: 'Plasma Shield', rarity: 'C', kind: 'Protocol', slot: 'Shield', elements: ['plasma'],
+        section: 'protocol', type: 'shield', element: 'plasma',
+        fits: '—', heat: '1 (prep) · 2 (reactivate)', drop: 'Patrol Corvette (Ch1)',
+        effect: `Deploy: <strong>${base}</strong> HP &nbsp;·&nbsp;
           Reactivate: <strong>${floor(base * SHIELD_COMMON.react[0] / 100)}</strong> HP (${SHIELD_COMMON.react[0]}%)<br>
-          <strong>On activation:</strong> all weapons cost <strong>−1 heat</strong> this round
-        </div>
-        <div class="card-upgrade">${SHIELD_COMMON.hpAdd.map((add, i) =>
-          `<span>T${i+1}</span> ${base + add} HP · ${SHIELD_COMMON.react[i]}%`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'protocol', type: 'shield', element: 'plasma' });
+          <strong>On activation:</strong> all weapons cost <strong>−1 heat</strong> this round`,
+        ladder: shieldLadder(base)
+      });
     })(),
 
     // GAMMA SHIELD
     (() => {
       const base = 135;
       const hullRestore = floor(PLAYER_HULL * 0.05);
-      return card('C', '', `
-        <div class="card-name">Gamma Shield</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-shield', label:'Shield'},
-          {cls:'tag-gamma', label:'Gamma'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ heat: '1 (prep) · 2 (reactivate)', drop: 'TBD' })}
-        ${divider()}
-        <div class="card-effect">
-          Deploy: <strong>${base}</strong> HP &nbsp;·&nbsp;
+      return renderPlayerCard({
+        name: 'Gamma Shield', rarity: 'C', kind: 'Protocol', slot: 'Shield', elements: ['gamma'],
+        section: 'protocol', type: 'shield', element: 'gamma',
+        fits: '—', heat: '1 (prep) · 2 (reactivate)', drop: 'TBD',
+        effect: `Deploy: <strong>${base}</strong> HP &nbsp;·&nbsp;
           Reactivate: <strong>${floor(base * SHIELD_COMMON.react[0] / 100)}</strong> HP (${SHIELD_COMMON.react[0]}%)<br>
-          <strong>On activation:</strong> next round restore <strong>${floor(base * 0.15)}</strong> shield + <strong>${hullRestore}</strong> hull HP
-        </div>
-        <div class="card-upgrade">${SHIELD_COMMON.hpAdd.map((add, i) =>
-          `<span>T${i+1}</span> ${base + add} HP · ${SHIELD_COMMON.react[i]}%`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'protocol', type: 'shield', element: 'gamma' });
+          <strong>On activation:</strong> next round restore <strong>${floor(base * 0.15)}</strong> shield + <strong>${hullRestore}</strong> hull HP`,
+        ladder: shieldLadder(base)
+      });
     })()
 
   ],
@@ -811,21 +824,15 @@ const CARDS = {
   'protocols-system': [
 
     // RECONFIGURE
-    card('ST', '', `
-      <div class="card-name">Reconfigure</div>
-      <div class="card-tags">${tags(
-        {cls:'tag-ST', label:'ST'},
-        {cls:'tag-type', label:'System'}
-      )}</div>
-      ${divider()}
-      ${metaRows({ heat: '1', drop: 'Starter' })}
-      ${divider()}
-      <div class="card-effect">
-        Host protocol for the System track. Reshapes the Core into its utility form and lets you run <strong>System routines</strong> this activation — deck manipulation, heat economy, intel.<br>
-        <span style="color:#7a7a90">Opens the channel; its value is the System routines you stack onto it.</span>
-      </div>
-      <div class="card-na">No upgrade — an enabler has nothing to scale.</div>
-    `, { section: 'protocol', type: 'system', element: '' })
+    renderPlayerCard({
+      name: 'Reconfigure', rarity: 'ST', kind: 'Protocol', slot: 'System', elements: [],
+      section: 'protocol', type: 'system', element: '', pool: 'game',
+      fits: '—', heat: '0, escalating', drop: 'Starter',
+      effect: `Host protocol for the System track. Reshapes the Core into its utility form and lets you run <strong>System routines</strong> this activation — deck manipulation, heat economy, intel.<br>
+        <strong>Cost 0.</strong> Playing it <strong>+1</strong> to its cost · ending the round <strong>−1</strong> (floor 0). Spam it and it heats up; pace it and it's free.<br>
+        <span style="color:#7a7a90">Opens the channel; its value is the System routines you stack onto it.</span>`,
+      ladder: `<div class="card-na">No upgrade — an enabler has nothing to scale.</div>`
+    })
 
   ],
 
@@ -836,54 +843,37 @@ const CARDS = {
       const base   = CANNON_UPGRADES[0][1];
       const pct    = [20,22,24,26,30];
       const selfDmg = [5,4,3,2,0];
-      return card('C', '', `
-        <div class="card-name">Supercharge</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-arc', label:'Arc'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Arc Cannon', heat: '1' })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>+${pct[0]}%</strong> damage this activation<br>
+      return renderPlayerCard({
+        name: 'Supercharge', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: ['arc'],
+        section: 'routine', type: 'weapon', element: 'arc',
+        fits: 'Arc Cannon', heat: '1', drop: 'Reward pool',
+        conditions: `${selfDmg[0]}% current shield HP self-damage`,
+        effect: `<strong>+${pct[0]}%</strong> damage this activation<br>
           ${['plasma','gamma','arc'].map(s =>
             `vs ${cap(s)}: <strong>${floor(rps(base,'arc',s) * (1 + pct[0]/100))}</strong>`
-          ).join(' &nbsp;·&nbsp; ')}
-        </div>
-        <div class="card-conditions">⚠ ${selfDmg[0]}% current shield HP self-damage</div>
-        <div class="card-upgrade">${pct.map((p,i) =>
+          ).join(' &nbsp;·&nbsp; ')}`,
+        ladder: `<div class="card-upgrade">${pct.map((p,i) =>
           `<span>T${i+1}</span> +${p}% / −${selfDmg[i]}% shield`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'weapon', element: 'arc' });
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // SHIELD DRAIN
     (() => {
       const base  = CANNON_UPGRADES[0][1];
       const tiers = [25,30,35,40,50];
-      return card('R', '', `
-        <div class="card-name">Shield Drain</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-R', label:'R'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-arc', label:'Arc'},
-          {cls:'tag-gamma', label:'Gamma'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Arc Cannon · Gamma Cannon', heat: '3' })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>${tiers[0]}%</strong> of damage dealt → shield repair<br>
+      return renderPlayerCard({
+        name: 'Shield Drain', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['arc','gamma'],
+        section: 'routine', type: 'weapon', element: 'arc gamma',
+        fits: 'Arc Cannon · Gamma Cannon', heat: '3', drop: 'Reward pool',
+        effect: `<strong>${tiers[0]}%</strong> of damage dealt → shield repair<br>
           ${['plasma','gamma','arc'].map(s =>
             `vs ${cap(s)}: <strong>+${floor(rps(base,'arc',s) * tiers[0]/100)}</strong>`
-          ).join(' &nbsp;·&nbsp; ')}
-        </div>
-        <div class="card-upgrade">${tiers.map((t,i) =>
+          ).join(' &nbsp;·&nbsp; ')}`,
+        ladder: `<div class="card-upgrade">${tiers.map((t,i) =>
           `<span>T${i+1}</span> ${t}%`
-        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> hull if hull damaged</div>
-      `, { section: 'routine', type: 'weapon', element: 'arc gamma' });
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> hull if hull damaged</div>`
+      });
     })(),
 
     // OVERLOAD
@@ -895,117 +885,91 @@ const CARDS = {
         { bonus: 150, shieldCost: 20 }
       ];
       const t = tiers[0];
-      return card('E', '', `
-        <div class="card-name">Overload</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-E', label:'E'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-arc', label:'Arc'},
-          {cls:'tag-plasma', label:'Plasma'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Arc Cannon · Plasma Cannon', heat: '4', drop: 'Chapter 3', conditions: 'Cannot play at 0 shield HP' })}
-        ${divider()}
-        <div class="card-effect">
-          Drain <strong>${t.shieldCost}%</strong> current shield → <strong>+${t.bonus}%</strong> damage<br>
+      return renderPlayerCard({
+        name: 'Overload', rarity: 'E', kind: 'Routine', slot: 'Weapon', elements: ['arc','plasma'],
+        section: 'routine', type: 'weapon', element: 'arc plasma',
+        fits: 'Arc Cannon · Plasma Cannon', heat: '4', drop: 'Chapter 3',
+        conditions: 'Cannot play at 0 shield HP',
+        effect: `Drain <strong>${t.shieldCost}%</strong> current shield → <strong>+${t.bonus}%</strong> damage<br>
           ${['plasma','gamma','arc'].map(s =>
             `vs ${cap(s)}: <strong>${floor(rps(base,'arc',s) * (1 + t.bonus/100))}</strong>`
-          ).join(' &nbsp;·&nbsp; ')}
-        </div>
-        <div class="card-upgrade">${tiers.map((tier,i) =>
+          ).join(' &nbsp;·&nbsp; ')}`,
+        ladder: `<div class="card-upgrade">${tiers.map((tier,i) =>
           `<span>T${i+1}</span> +${tier.bonus}% / −${tier.shieldCost}% shield`
-        ).join(' &nbsp;')} &nbsp;<span>T3 perk:</span> if &lt;50% shield, cost halved · −1 heat</div>
-      `, { section: 'routine', type: 'weapon', element: 'arc plasma' });
+        ).join(' &nbsp;')} &nbsp;<span>T3 perk:</span> if &lt;50% shield, cost halved · −1 heat</div>`
+      });
     })(),
 
     // COMPROMISE
     (() => {
       const track = [50,60,70,85,100];
-      return card('R', '', `
-        <div class="card-name">Compromise</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-R', label:'R'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-plasma', label:'Plasma'},
-          {cls:'tag-gamma', label:'Gamma'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Plasma Cannon · Gamma Cannon', heat: '2' })}
-        ${divider()}
-        <div class="card-effect">
-          Enemy shield reactivation reduced by <strong>${track[0]}%</strong> for the rest of this round.
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Compromise', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['plasma','gamma'],
+        section: 'routine', type: 'weapon', element: 'plasma gamma',
+        fits: 'Plasma Cannon · Gamma Cannon', heat: '2', drop: 'Reward pool',
+        effect: `Enemy shield reactivation reduced by <strong>${track[0]}%</strong> for the rest of this round.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> −${v}%`
-        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> reactivation restores 0 HP</div>
-      `, { section: 'routine', type: 'weapon', element: 'plasma gamma' });
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> reactivation restores 0 HP</div>`
+      });
+    })(),
+
+    // ARMOUR SPIKE (added 2026-07-25 — starter-kit fill from 2026-07-11, was missing from the viewer)
+    (() => {
+      const track = [50,60,70,85,100];
+      return renderPlayerCard({
+        name: 'Armour Spike', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: ['kinetic'],
+        section: 'routine', type: 'weapon', element: 'kinetic',
+        fits: 'Kinetic Core', heat: '1', drop: 'Reward pool',
+        conditions: 'Bonus only if the enemy shield is down when this activation fires',
+        effect: `<strong>+${track[0]}% damage</strong> if the enemy shield is down — strip first, then close. <span style="color:#7a7a90">Dropped from the starter kit 2026-07-25 (Signal Gain replaces it).</span>`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> +${v}%`
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // HEAVY BORE
     (() => {
       const track = [10,11,13,15,18];
-      return card('C', '', `
-        <div class="card-name">Heavy Bore</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-kinetic', label:'Kinetic'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Mass Accelerator', heat: '1' })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>+${track[0]}</strong> kinetic damage this activation
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Heavy Bore', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: ['kinetic'],
+        section: 'routine', type: 'weapon', element: 'kinetic',
+        fits: 'Mass Accelerator', heat: '1', drop: 'Reward pool',
+        effect: `<strong>+${track[0]}</strong> kinetic damage this activation`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> +${v}`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'weapon', element: 'kinetic' });
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // BURST LOADER
     (() => {
       const track = [50,55,60,65,75];
-      return card('C', '', `
-        <div class="card-name">Burst Loader</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-kinetic', label:'Kinetic'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Mass Accelerator', heat: '2' })}
-        ${divider()}
-        <div class="card-effect">
-          Fire twice — second shot at <strong>${track[0]}%</strong> damage<br>
-          <em>×${(1 + track[0]/100).toFixed(2)} effective</em>
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Burst Loader', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: ['kinetic'],
+        section: 'routine', type: 'weapon', element: 'kinetic',
+        fits: 'Mass Accelerator', heat: '2', drop: 'Reward pool',
+        effect: `Fire twice — second shot at <strong>${track[0]}%</strong> damage<br>
+          <em>×${(1 + track[0]/100).toFixed(2)} effective</em>`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}% ×${(1 + v/100).toFixed(2)}`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'weapon', element: 'kinetic' });
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // ARMOR REND
     (() => {
       const track = [10,12,14,17,20];
-      return card('R', '', `
-        <div class="card-name">Armor Rend</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-R', label:'R'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-kinetic', label:'Kinetic'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Mass Accelerator', heat: '2' })}
-        ${divider()}
-        <div class="card-effect">
-          Target takes <strong>+${track[0]}%</strong> hull damage for 1 round, all sources
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Armor Rend', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['kinetic'],
+        section: 'routine', type: 'weapon', element: 'kinetic',
+        fits: 'Mass Accelerator', heat: '2', drop: 'Reward pool',
+        effect: `Target takes <strong>+${track[0]}%</strong> hull damage for 1 round, all sources`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> +${v}%`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'weapon', element: 'kinetic' });
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // TRANSDUCE
@@ -1017,319 +981,217 @@ const CARDS = {
         { fx: '+20%',              heat: 1 },
         { fx: '+30% + RPS floor',  heat: 1 },
       ];
-      return card('R', '', `
-        <div class="card-name">Transduce</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-R', label:'R'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-kinetic', label:'Kinetic'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Mass Accelerator', heat: `${ladder[0].heat} (drops with upgrade)` })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>The bridge.</strong> Transduce this kinetic shot into a chosen energy type — it hits the shield at full RPS instead of bypassing to hull. Overrides the Kinetic Rule for this activation.
-        </div>
-        <div class="card-upgrade">${ladder.map((t,i) =>
+      return renderPlayerCard({
+        name: 'Transduce', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['kinetic'],
+        section: 'routine', type: 'weapon', element: 'kinetic',
+        fits: 'Mass Accelerator', heat: `${ladder[0].heat} (drops with upgrade)`, drop: 'Reward pool',
+        effect: `<strong>The bridge.</strong> Transduce this kinetic shot into a chosen energy type — it hits the shield at full RPS instead of bypassing to hull. Overrides the Kinetic Rule for this activation.`,
+        ladder: `<div class="card-upgrade">${ladder.map((t,i) =>
           `<span>T${i+1}</span> ${t.fx} · ${t.heat}h`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'weapon', element: 'kinetic' });
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // HALF LIFE
     (() => {
       const track = [25,28,31,35,40];
-      return card('C', '', `
-        <div class="card-name">Half Life</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-gamma', label:'Gamma'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Gamma Cannon', heat: '2' })}
-        ${divider()}
-        <div class="card-effect">
-          This activation leaves <strong>${track[0]}%</strong> residual radiation — halves each round, stacks per activation
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Half Life', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: ['gamma'],
+        section: 'routine', type: 'weapon', element: 'gamma',
+        fits: 'Gamma Cannon', heat: '2', drop: 'Reward pool',
+        effect: `This activation leaves <strong>${track[0]}%</strong> residual radiation — halves each round, stacks per activation`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}%`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'weapon', element: 'gamma' });
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // IGNITE
     (() => {
       const track = [8,9,10,12,15];
-      return card('C', '', `
-        <div class="card-name">Ignite</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-plasma', label:'Plasma'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Plasma Cannon', heat: '2' })}
-        ${divider()}
-        <div class="card-effect">
-          Apply DoT — <strong>${track[0]}</strong> damage at round start for 2 rounds, stacks independently
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Ignite', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: ['plasma'],
+        section: 'routine', type: 'weapon', element: 'plasma',
+        fits: 'Plasma Cannon', heat: '2', drop: 'Reward pool',
+        effect: `Apply DoT — <strong>${track[0]}</strong> damage at round start for 2 rounds, stacks independently`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}×2`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'weapon', element: 'plasma' });
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // THERMAL LANCE
     (() => {
       const base  = CANNON_UPGRADES[0][1];
       const bleed = [15,17,19,22,25];
-      return card('R', '', `
-        <div class="card-name">Thermal Lance</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-R', label:'R'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-plasma', label:'Plasma'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Plasma Cannon', heat: '3' })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>${bleed[0]}%</strong> of shield damage dealt bleeds through to enemy hull<br>
+      return renderPlayerCard({
+        name: 'Thermal Lance', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['plasma'],
+        section: 'routine', type: 'weapon', element: 'plasma',
+        fits: 'Plasma Cannon', heat: '3', drop: 'Reward pool',
+        effect: `<strong>${bleed[0]}%</strong> of shield damage dealt bleeds through to enemy hull<br>
           ${Object.keys(RPS.plasma).map(s =>
             `vs ${cap(s)}: +<strong>${floor(rps(base,'plasma',s) * bleed[0]/100)}</strong> hull`
           ).join(' &nbsp;·&nbsp; ')} <em>(base cannon)</em><br>
-          <em>DoT active: bleedthrough doubled</em>
-        </div>
-        <div class="card-upgrade">${bleed.map((v,i) =>
+          <em>DoT active: bleedthrough doubled</em>`,
+        ladder: `<div class="card-upgrade">${bleed.map((v,i) =>
           `<span>T${i+1}</span> ${v}% / ${v*2}%`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'weapon', element: 'plasma' });
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // SUPERHEATED
     (() => {
       const reflect = [10,15,25,35,50];
-      return card('R', '', `
-        <div class="card-name">Superheated</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-R', label:'R'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-plasma', label:'Plasma'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Plasma Cannon', heat: '3 (2 at T5)' })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>${reflect[0]}%</strong> of all incoming damage this round is reflected to the attacker — shield first, then hull
-        </div>
-        <div class="card-upgrade">${reflect.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Superheated', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['plasma'],
+        section: 'routine', type: 'weapon', element: 'plasma',
+        fits: 'Plasma Cannon', heat: '3 (2 at T5)', drop: 'Reward pool',
+        effect: `<strong>${reflect[0]}%</strong> of all incoming damage this round is reflected to the attacker — shield first, then hull`,
+        ladder: `<div class="card-upgrade">${reflect.map((v,i) =>
           `<span>T${i+1}</span> ${v}%${i===4?' −1 heat':''}`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'weapon', element: 'plasma' });
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // MELTDOWN
     (() => {
       const tiers = [50,75,100];
-      return card('E', '', `
-        <div class="card-name">Meltdown</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-E', label:'E'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-plasma', label:'Plasma'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Plasma Cannon', heat: '1' })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>${tiers[0]}%</strong> of damage dealt permanently reduces enemy max shield HP
-        </div>
-        <div class="card-upgrade">${tiers.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Meltdown', rarity: 'E', kind: 'Routine', slot: 'Weapon', elements: ['plasma'],
+        section: 'routine', type: 'weapon', element: 'plasma',
+        fits: 'Plasma Cannon', heat: '1', drop: 'Reward pool',
+        effect: `<strong>${tiers[0]}%</strong> of damage dealt permanently reduces enemy max shield HP`,
+        ladder: `<div class="card-upgrade">${tiers.map((v,i) =>
           `<span>T${i+1}</span> ${v}%`
-        ).join(' &nbsp;')} &nbsp;<span>T3 perk:</span> TBD</div>
-      `, { section: 'routine', type: 'weapon', element: 'plasma' });
+        ).join(' &nbsp;')} &nbsp;<span>T3 perk:</span> TBD</div>`
+      });
     })(),
 
     // IRRADIATE
     (() => {
       const track = [6,7,8,9,10];
-      return card('R', '', `
-        <div class="card-name">Irradiate</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-R', label:'R'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-gamma', label:'Gamma'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Gamma Cannon', heat: '3' })}
-        ${divider()}
-        <div class="card-effect">
-          Apply fixed gamma burn — <strong>${track[0]}</strong> dmg/round for 3 rounds. Stacks independently.
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Irradiate', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['gamma'],
+        section: 'routine', type: 'weapon', element: 'gamma',
+        fits: 'Gamma Cannon', heat: '3', drop: 'Reward pool',
+        effect: `Apply fixed gamma burn — <strong>${track[0]}</strong> dmg/round for 3 rounds. Stacks independently.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}×3`
-        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> ticks also deal 10% hull</div>
-      `, { section: 'routine', type: 'weapon', element: 'gamma' });
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> ticks also deal 10% hull</div>`
+      });
     })(),
 
     // DESTABILIZE
     (() => {
       const track = [10,15,20,25,30];
-      return card('R', '', `
-        <div class="card-name">Destabilize</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-R', label:'R'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-gamma', label:'Gamma'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Gamma Cannon', heat: '3' })}
-        ${divider()}
-        <div class="card-effect">
-          Next attack against enemy this round deals <strong>+${track[0]}%</strong> damage. Single trigger.
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Destabilize', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['gamma'],
+        section: 'routine', type: 'weapon', element: 'gamma',
+        fits: 'Gamma Cannon', heat: '3', drop: 'Reward pool',
+        effect: `Next attack against enemy this round deals <strong>+${track[0]}%</strong> damage. Single trigger.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> +${v}%`
-        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> triggers twice</div>
-      `, { section: 'routine', type: 'weapon', element: 'gamma' });
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> triggers twice</div>`
+      });
     })(),
 
     // GAMMA REBOUND
     (() => {
       const track = [30,35,40,45,50];
-      return card('R', '', `
-        <div class="card-name">Gamma Rebound</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-R', label:'R'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-gamma', label:'Gamma'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Gamma Cannon', heat: '3 (2 at T5)', conditions: 'Requires active DoT on enemy' })}
-        ${divider()}
-        <div class="card-effect">
-          Convert <strong>${track[0]}%</strong> of total remaining DoT to immediate damage.
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Gamma Rebound', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['gamma'],
+        section: 'routine', type: 'weapon', element: 'gamma',
+        fits: 'Gamma Cannon', heat: '3 (2 at T5)', drop: 'Reward pool',
+        conditions: 'Requires active DoT on enemy',
+        effect: `Convert <strong>${track[0]}%</strong> of total remaining DoT to immediate damage.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}%${i===4?' −1 heat':''}`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'weapon', element: 'gamma' });
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // ARC BARRIER
     (() => {
       const track = [15,18,21,24,30];
-      return card('C', '', `
-        <div class="card-name">Arc Barrier</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-arc', label:'Arc'},
-          {cls:'tag-shield', label:'Shield'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Arc Shield', heat: '1' })}
-        ${divider()}
-        <div class="card-effect">
-          Incoming damage to Arc Shield reduced by <strong>${track[0]}%</strong> this round.
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Arc Barrier', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: ['arc'],
+        section: 'routine', type: 'shield', element: 'arc',
+        fits: 'Arc Shield', heat: '1', drop: 'Reward pool',
+        effect: `Incoming damage to Arc Shield reduced by <strong>${track[0]}%</strong> this round.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}%`
-        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> extends to hull</div>
-      `, { section: 'routine', type: 'shield', element: 'arc' });
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> extends to hull</div>`
+      });
     })(),
 
     // SURGE CONVERSION
     (() => {
       const track = [20,25,30,35,45];
-      return card('R', '', `
-        <div class="card-name">Surge Conversion</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-R', label:'R'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-arc', label:'Arc'},
-          {cls:'tag-shield', label:'Shield'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Arc Shield', heat: '2' })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>${track[0]}%</strong> of damage dealt to Arc Shield this round → bonus on next weapon activation.
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Surge Conversion', rarity: 'R', kind: 'Routine', slot: 'Shield', elements: ['arc'],
+        section: 'routine', type: 'shield', element: 'arc',
+        fits: 'Arc Shield', heat: '2', drop: 'Reward pool',
+        effect: `<strong>${track[0]}%</strong> of damage dealt to Arc Shield this round → bonus on next weapon activation.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}%`
-        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> triggers twice</div>
-      `, { section: 'routine', type: 'shield', element: 'arc' });
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> triggers twice</div>`
+      });
     })(),
 
     // THORNS
     (() => {
       const track = [30,33,36,40,45];
-      return card('C', '', `
-        <div class="card-name">Thorns</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-arc', label:'Arc'},
-          {cls:'tag-shield', label:'Shield'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Arc Shield', heat: '1' })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>${track[0]}%</strong> of damage dealt to Arc Shield this round reflected to enemy shield.
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Thorns', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: ['arc'],
+        section: 'routine', type: 'shield', element: 'arc',
+        fits: 'Arc Shield', heat: '1', drop: 'Reward pool',
+        effect: `<strong>${track[0]}%</strong> of damage dealt to Arc Shield this round reflected to enemy shield.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}%`
-        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> overflows to hull at 0 shield</div>
-      `, { section: 'routine', type: 'shield', element: 'arc' });
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> overflows to hull at 0 shield</div>`
+      });
     })(),
 
     // DIMENSIONAL SINK
     (() => {
       const track = [20,24,28,33,40];
-      return card('C', '', `
-        <div class="card-name">Dimensional Sink</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-gamma', label:'Gamma'},
-          {cls:'tag-shield', label:'Shield'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Gamma Shield', heat: '1' })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>${track[0]}%</strong> of damage dealt to Gamma Shield → HP restored next round, split shield + hull equally.
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Dimensional Sink', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: ['gamma'],
+        section: 'routine', type: 'shield', element: 'gamma',
+        fits: 'Gamma Shield', heat: '1', drop: 'Reward pool',
+        effect: `<strong>${track[0]}%</strong> of damage dealt to Gamma Shield → HP restored next round, split shield + hull equally.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}%`
-        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> restored immediately</div>
-      `, { section: 'routine', type: 'shield', element: 'gamma' });
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> restored immediately</div>`
+      });
     })(),
 
     // HALF-LIFE FIELD
     (() => {
       const track = [18,21,24,28,34];
-      return card('C', '', `
-        <div class="card-name">Half-Life Field</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-gamma', label:'Gamma'},
-          {cls:'tag-shield', label:'Shield'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Gamma Shield', heat: '1' })}
-        ${divider()}
-        <div class="card-effect">
-          Restore <strong>${track[0]} shield HP</strong> next round, then halves each round after — gamma's decaying residual, pointed inward. Stacks with itself.
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Half-Life Field', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: ['gamma'],
+        section: 'routine', type: 'shield', element: 'gamma',
+        fits: 'Gamma Shield', heat: '1', drop: 'Reward pool',
+        effect: `Restore <strong>${track[0]} shield HP</strong> next round, then halves each round after — gamma's decaying residual, pointed inward. Stacks with itself.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v} HP`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'shield', element: 'gamma' });
+        ).join(' &nbsp;')}</div>`
+      });
+    })(),
+
+    // BARRIER PULSE (added 2026-07-25 — was missing from the viewer)
+    (() => {
+      const track = [5,7,9,11,14];
+      return renderPlayerCard({
+        name: 'Barrier Pulse', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: ['gamma'],
+        section: 'routine', type: 'shield', element: 'gamma',
+        fits: 'Gamma Shield', heat: '1', drop: 'Reward pool',
+        effect: `Restore <strong>${track[0]}% of max shield HP</strong> immediately — the containment field pulses inward, on demand.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> ${v}%`
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // ENTROPY WELL
@@ -1341,138 +1203,115 @@ const CARDS = {
         { fx: '35%', heat: 1 },
         { fx: '50%', heat: 1 },
       ];
-      return card('R', '', `
-        <div class="card-name">Entropy Well</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-R', label:'R'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-gamma', label:'Gamma'},
-          {cls:'tag-shield', label:'Shield'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Gamma Shield', heat: `${ladder[0].heat} (drops with upgrade)` })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>Once per fight.</strong> The first time your shield is depleted, it auto-reactivates at <strong>${ladder[0].fx}</strong> of max instead of breaking.
-        </div>
-        <div class="card-upgrade">${ladder.map((t,i) =>
+      return renderPlayerCard({
+        name: 'Entropy Well', rarity: 'R', kind: 'Routine', slot: 'Shield', elements: ['gamma'],
+        section: 'routine', type: 'shield', element: 'gamma',
+        fits: 'Gamma Shield', heat: `${ladder[0].heat} (drops with upgrade)`, drop: 'Reward pool',
+        conditions: 'Once per fight.',
+        effect: `The first time your shield is depleted, it auto-reactivates at <strong>${ladder[0].fx}</strong> of max instead of breaking.`,
+        ladder: `<div class="card-upgrade">${ladder.map((t,i) =>
           `<span>T${i+1}</span> ${t.fx} · ${t.heat}h`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'shield', element: 'gamma' });
+        ).join(' &nbsp;')}</div>`
+      });
+    })(),
+
+    // RAD COUNTER (added 2026-07-25 — was missing from the viewer)
+    (() => {
+      const track = [6,8,10,13,18];
+      return renderPlayerCard({
+        name: 'Rad Counter', rarity: 'R', kind: 'Routine', slot: 'Shield', elements: ['gamma'],
+        section: 'routine', type: 'shield', element: 'gamma',
+        fits: 'Gamma Shield', heat: '2', drop: 'Reward pool',
+        effect: `The first time the shield takes damage this round, the attacker gains <strong>Half Life ${track[0]}</strong> — a Gamma DoT that halves each round. Retaliation at the pace of radiation.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> HL ${v}`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> triggers on every hit</div>`
+      });
     })(),
 
     // BACKDRAFT
     (() => {
       const track = [4,5,6,8,10];
-      return card('R', '', `
-        <div class="card-name">Backdraft</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-R', label:'R'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-plasma', label:'Plasma'},
-          {cls:'tag-shield', label:'Shield'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Plasma Shield', heat: '2' })}
-        ${divider()}
-        <div class="card-effect">
-          When the Plasma Shield is hit this round, the attacker takes <strong>Scorch ${track[0]}</strong> (Plasma DoT) — absorb the blow, set them on fire.
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Backdraft', rarity: 'R', kind: 'Routine', slot: 'Shield', elements: ['plasma'],
+        section: 'routine', type: 'shield', element: 'plasma',
+        fits: 'Plasma Shield', heat: '2', drop: 'Reward pool',
+        effect: `When the Plasma Shield is hit this round, the attacker takes <strong>Scorch ${track[0]}</strong> (Plasma DoT) — absorb the blow, set them on fire.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> Scorch ${v}`
-        ).join(' &nbsp;')} &nbsp;<span>T5:</span> on every hit this round</div>
-      `, { section: 'routine', type: 'shield', element: 'plasma' });
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> on every hit this round</div>`
+      });
     })(),
 
     // ABLATIVE LAYER
     (() => {
       const track = [15,18,21,25,30];
-      return card('C', '', `
-        <div class="card-name">Ablative Layer</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-plasma', label:'Plasma'},
-          {cls:'tag-shield', label:'Shield'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Plasma Shield', heat: '1' })}
-        ${divider()}
-        <div class="card-effect">
-          The superheated outer layer ablates the strike. Incoming damage to the Plasma Shield reduced <strong>${track[0]}%</strong> this round.
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Ablative Layer', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: ['plasma'],
+        section: 'routine', type: 'shield', element: 'plasma',
+        fits: 'Plasma Shield', heat: '1', drop: 'Reward pool',
+        effect: `The superheated outer layer ablates the strike. Incoming damage to the Plasma Shield reduced <strong>${track[0]}%</strong> this round.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}%`
-        ).join(' &nbsp;')} &nbsp;<span>T5:</span> Scorch the attacker for 5</div>
-      `, { section: 'routine', type: 'shield', element: 'plasma' });
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> Scorch the attacker for 5</div>`
+      });
     })(),
 
     // PRESSURE VALVE
     (() => {
       const track = ['Vent 2','Vent 3','Vent 4','Vent 5','Vent 6, weapons −1 heat'];
-      return card('C', '', `
-        <div class="card-name">Pressure Valve</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-plasma', label:'Plasma'},
-          {cls:'tag-shield', label:'Shield'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'Plasma Shield', heat: '0' })}
-        ${divider()}
-        <div class="card-effect">
-          On Plasma Shield activation, <strong>vent 2 heat</strong> — the barrier dumps the Core's heat, turning defense into an attack enabler.
-        </div>
-        <div class="card-upgrade">${track.map((fx,i) =>
+      return renderPlayerCard({
+        name: 'Pressure Valve', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: ['plasma'],
+        section: 'routine', type: 'shield', element: 'plasma',
+        fits: 'Plasma Shield', heat: '0', drop: 'Reward pool',
+        effect: `On Plasma Shield activation, <strong>vent 2 heat</strong> — the barrier dumps the Core's heat, turning defense into an attack enabler.`,
+        ladder: `<div class="card-upgrade">${track.map((fx,i) =>
           `<span>T${i+1}</span> ${fx}`
-        ).join(' &nbsp;')}</div>
-        <div class="card-na">⚠ Balance watch — possible reactivate→vent loop; kept for playtest.</div>
-      `, { section: 'routine', type: 'shield', element: 'plasma' });
+        ).join(' &nbsp;')}</div><div class="card-na">⚠ Balance watch — possible reactivate→vent loop; kept for playtest.</div>`
+      });
     })(),
 
     // PHASE SHIFT
     (() => {
       const track = [20,16,12];
-      return card('E', '', `
-        <div class="card-name">Phase Shift</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-E', label:'E'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-shield', label:'Shield'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'All shield protocols', heat: '4' })}
-        ${divider()}
-        <div class="card-effect">
-          Reactive hard counter. Next incoming attack this round is <strong>negated entirely</strong> if it exceeds the threshold. At 4 heat it eats half your round — you trade offense to erase a telegraphed buffed hit. Small hits pass through.
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Phase Shift', rarity: 'E', kind: 'Routine', slot: 'Shield', elements: [],
+        section: 'routine', type: 'shield', element: '',
+        fits: 'All shield protocols', heat: '4', drop: 'Reward pool',
+        effect: `Reactive hard counter. Next incoming attack this round is <strong>negated entirely</strong> if it exceeds the threshold. At 4 heat it eats half your round — you trade offense to erase a telegraphed buffed hit. Small hits pass through.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> >${v} dmg`
-        ).join(' &nbsp;')} &nbsp;<span>T3:</span> +deal 15 dmg back to attacker on trigger</div>
-      `, { section: 'routine', type: 'shield', element: '' });
+        ).join(' &nbsp;')} &nbsp;<span>T3 perk:</span> +deal 15 dmg back to attacker on trigger</div>`
+      });
     })(),
 
-    // DEFLECT
+    // BRACE (re-ruled 2026-07-25 — nerfed to the new scale, ×2 in the starting deck)
     (() => {
-      const track = [25,30,35,42,50];
-      return card('C', '', `
-        <div class="card-name">Deflect</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-shield', label:'Shield'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'All shield protocols', heat: '2' })}
-        ${divider()}
-        <div class="card-effect">
-          Reactive. Reduce the next incoming hit this round by <strong>${track[0]}%</strong> — the no-threshold cousin of Phase Shift.
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
-          `<span>T${i+1}</span> ${v}%`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'shield', element: '' });
+      const track = [5,7,9,12,15];
+      return renderPlayerCard({
+        name: 'Brace', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: [],
+        section: 'routine', type: 'shield', element: '', pool: 'game',
+        fits: 'All shield protocols', heat: '1', drop: 'Starter',
+        effect: `Gain <strong>${track[0]} temporary shield HP</strong> this round — absorbs before your real shield; the remainder vanishes at Vent. The vanilla defend. <strong>Starting deck carries ×2 copies</strong>, each tracking its own pips. <span style="color:#7a7a90">New-scale numbers (ship 100 / hit 10).</span>`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> ${v}`
+        ).join(' &nbsp;')}</div>`
+      });
+    })(),
+
+    // DEFLECT (100% rework 2026-07-25 — the Parry; old %-reduction design killed by the flat-numbers rule)
+    (() => {
+      const track = [15,18,21,25,30];
+      return renderPlayerCard({
+        name: 'Deflect', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: [],
+        section: 'routine', type: 'shield', element: '', pool: 'game',
+        fits: 'All shield protocols', heat: '3 (T5: 2)', drop: 'Starter',
+        conditions: 'Blocks the first hit this round only — later hits pass untouched',
+        effect: `<strong>The Parry — ${track[0]} temporary shield against the first hit this round.</strong> One big swing gets walled; a flurry punches past it. Reading the intent row is the skill of playing it. <span style="color:#7a7a90">New-scale numbers (ship 100 / hit 10).</span>`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> ${v}`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> heat 3 → 2</div>`
+      });
     })(),
 
     // RATTLE
@@ -1484,23 +1323,15 @@ const CARDS = {
         { fx: '−30%',        heat: 1 },
         { fx: '−40% ×2 hits', heat: 1 },
       ];
-      return card('R', '', `
-        <div class="card-name">Rattle</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-R', label:'R'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-shield', label:'Shield'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'All shield protocols', heat: `${ladder[0].heat} (drops with upgrade)` })}
-        ${divider()}
-        <div class="card-effect">
-          Proactive debuff. The enemy's next attack deals <strong>${ladder[0].fx}</strong> damage — mitigate at the source before it lands.
-        </div>
-        <div class="card-upgrade">${ladder.map((t,i) =>
+      return renderPlayerCard({
+        name: 'Rattle', rarity: 'R', kind: 'Routine', slot: 'Shield', elements: [],
+        section: 'routine', type: 'shield', element: '',
+        fits: 'All shield protocols', heat: `${ladder[0].heat} (drops with upgrade)`, drop: 'Reward pool',
+        effect: `Proactive debuff. The enemy's next attack deals <strong>${ladder[0].fx}</strong> damage — mitigate at the source before it lands.`,
+        ladder: `<div class="card-upgrade">${ladder.map((t,i) =>
           `<span>T${i+1}</span> ${t.fx} · ${t.heat}h`
-        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> covers two attacks</div>
-      `, { section: 'routine', type: 'shield', element: '' });
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> covers two attacks</div>`
+      });
     })(),
 
     // CLEANSE
@@ -1512,65 +1343,72 @@ const CARDS = {
         { fx: 'Remove all +50% → shield', heat: 1 },
         { fx: 'Remove all +100% → shield', heat: 1 },
       ];
-      return card('R', '', `
-        <div class="card-name">Cleanse</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-R', label:'R'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-shield', label:'Shield'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'All shield protocols', heat: `${ladder[0].heat} (drops with upgrade)` })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>Remove a random DoT/debuff</strong> on your ship — the universal answer to Scorch & residual radiation. High tiers remove all and convert the cleansed damage into shield HP.
-        </div>
-        <div class="card-upgrade">${ladder.map((t,i) =>
+      return renderPlayerCard({
+        name: 'Cleanse', rarity: 'R', kind: 'Routine', slot: 'Shield', elements: [],
+        section: 'routine', type: 'shield', element: '',
+        fits: 'All shield protocols', heat: `${ladder[0].heat} (drops with upgrade)`, drop: 'Reward pool',
+        effect: `<strong>Remove a random DoT/debuff</strong> on your ship — the universal answer to Scorch & residual radiation. High tiers remove all and convert the cleansed damage into shield HP.`,
+        ladder: `<div class="card-upgrade">${ladder.map((t,i) =>
           `<span>T${i+1}</span> ${t.fx} · ${t.heat}h`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'shield', element: '' });
+        ).join(' &nbsp;')}</div>`
+      });
+    })(),
+
+    // ALPHA STRIKE (new 2026-07-25 — the Opener, Deflect's weapon mirror; name provisional)
+    (() => {
+      const track = [8,9,11,13,15];
+      return renderPlayerCard({
+        name: 'Alpha Strike', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: [],
+        section: 'routine', type: 'weapon', element: '', pool: 'game',
+        fits: 'All weapon protocols', heat: '3 (T5: 2)', drop: 'Starter',
+        conditions: 'Playable only on your first activation this round — any earlier activation closes the window',
+        effect: `<strong>The Opener — +${track[0]} damage</strong>, only as the round's first activation. Commit now, or buff first and give it up: the round's defining question. <span style="color:#7a7a90">New-scale numbers (ship 100 / hit 10).</span>`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> +${v}`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> heat 3 → 2</div>`
+      });
+    })(),
+
+    // SIGNAL GAIN (new 2026-07-25 — the starter kit's weapon routine; replaces Armour Spike there)
+    (() => {
+      const track = [2,3,4,5,5];
+      return renderPlayerCard({
+        name: 'Signal Gain', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: [],
+        section: 'routine', type: 'weapon', element: '', pool: 'game',
+        fits: 'All weapon protocols', heat: '2 (T5: 1)', drop: 'Starter',
+        effect: `<strong>+${track[0]} damage</strong> this activation — flat, any weapon. The AI boosts the routine's output signal. <strong>Starting deck carries ×2 copies</strong>, each tracking its own pips. <span style="color:#7a7a90">New-scale numbers (ship 100 / hit 10).</span>`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> +${v}`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> heat 2 → 1</div>`
+      });
     })(),
 
     // FOCUS FIRE
     (() => {
       const track = [12,15,18,22,28];
-      return card('C', '', `
-        <div class="card-name">Focus Fire</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'All weapon protocols', heat: '1' })}
-        ${divider()}
-        <div class="card-effect">
-          This activation deals <strong>+${track[0]}%</strong> damage, all weapon types.
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Focus Fire', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: [],
+        section: 'routine', type: 'weapon', element: '',
+        fits: 'All weapon protocols', heat: '1', drop: 'Reward pool',
+        effect: `This activation deals <strong>+${track[0]}%</strong> damage, all weapon types.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> +${v}%`
-        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> −1 heat on this activation</div>
-      `, { section: 'routine', type: 'weapon', element: '' });
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> −1 heat on this activation</div>`
+      });
     })(),
 
     // CALIBRATE
     (() => {
       const track = [1,1,1,1,2];
-      return card('C', '', `
-        <div class="card-name">Calibrate</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'All weapon protocols', heat: '0' })}
-        ${divider()}
-        <div class="card-effect">
-          Your next weapon activation this round costs <strong>−${track[0]} heat</strong>.
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Calibrate', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: [],
+        section: 'routine', type: 'weapon', element: '',
+        fits: 'All weapon protocols', heat: '0', drop: 'Reward pool',
+        effect: `Your next weapon activation this round costs <strong>−${track[0]} heat</strong>.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> −${v} heat`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'weapon', element: '' });
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // CALCULATED
@@ -1582,43 +1420,29 @@ const CARDS = {
         { fx: '110% flat', heat: 1 },
         { fx: '120% flat', heat: 1 },
       ];
-      return card('R', '', `
-        <div class="card-name">Calculated</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-R', label:'R'},
-          {cls:'tag-routine', label:'Routine'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'All weapon protocols', heat: `${ladder[0].heat} (drops with upgrade)` })}
-        ${divider()}
-        <div class="card-effect">
-          RPS multiplier <strong>ignored entirely</strong> — this activation deals a flat <strong>100%</strong> regardless of shield type. Rescues bad matchups; don't play it on a favorable one.
-        </div>
-        <div class="card-upgrade">${ladder.map((t,i) =>
+      return renderPlayerCard({
+        name: 'Calculated', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: [],
+        section: 'routine', type: 'weapon', element: '',
+        fits: 'All weapon protocols', heat: `${ladder[0].heat} (drops with upgrade)`, drop: 'Reward pool',
+        effect: `RPS multiplier <strong>ignored entirely</strong> — this activation deals a flat <strong>100%</strong> regardless of shield type. Rescues bad matchups; don't play it on a favorable one.`,
+        ladder: `<div class="card-upgrade">${ladder.map((t,i) =>
           `<span>T${i+1}</span> ${t.fx} · ${t.heat}h`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'weapon', element: '' });
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // FLANKING
     (() => {
       const track = [20,24,28,34,40];
-      return card('C', '', `
-        <div class="card-name">Flanking</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'All weapon protocols', heat: '1' })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>${track[0]}%</strong> of this activation's damage bypasses the shield and hits hull directly; the rest resolves normally.
-        </div>
-        <div class="card-upgrade">${track.map((v,i) =>
+      return renderPlayerCard({
+        name: 'Flanking', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: [],
+        section: 'routine', type: 'weapon', element: '',
+        fits: 'All weapon protocols', heat: '1', drop: 'Reward pool',
+        effect: `<strong>${track[0]}%</strong> of this activation's damage bypasses the shield and hits hull directly; the rest resolves normally.`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}%`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'weapon', element: '' });
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // SUPPRESS
@@ -1630,42 +1454,25 @@ const CARDS = {
         { fx: 'Block this + next round',   heat: 1 },
         { fx: 'Block 2 rds +10% strip',    heat: 1 },
       ];
-      return card('R', '', `
-        <div class="card-name">Suppress</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-R', label:'R'},
-          {cls:'tag-routine', label:'Routine'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'All weapon protocols', heat: `${ladder[0].heat} (drops with upgrade)` })}
-        ${divider()}
-        <div class="card-effect">
-          The enemy <strong>cannot reactivate its shield</strong> this round — pure tempo, no damage of its own.
-        </div>
-        <div class="card-upgrade">${ladder.map((t,i) =>
+      return renderPlayerCard({
+        name: 'Suppress', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: [],
+        section: 'routine', type: 'weapon', element: '',
+        fits: 'All weapon protocols', heat: `${ladder[0].heat} (drops with upgrade)`, drop: 'Reward pool',
+        effect: `The enemy <strong>cannot reactivate its shield</strong> this round — pure tempo, no damage of its own.`,
+        ladder: `<div class="card-upgrade">${ladder.map((t,i) =>
           `<span>T${i+1}</span> ${t.fx} · ${t.heat}h`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'weapon', element: '' });
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // MOONFALL
-    card('U', '', `
-      <div class="card-name">Moonfall</div>
-      <div class="card-tags">${tags(
-        {cls:'tag-U', label:'U'},
-        {cls:'tag-routine', label:'Routine'},
-        {cls:'tag-arc', label:'Arc'},
-        {cls:'tag-plasma', label:'Plasma'},
-        {cls:'tag-gamma', label:'Gamma'}
-      )}</div>
-      ${divider()}
-      ${metaRows({ compat: 'Moonlit Phase Blade only', heat: 'TBD' })}
-      ${divider()}
-      <div class="card-effect">
-        At the start of your next round, 7 satellite drones each fire once — 7 hits at [TBD] dmg each, shield → hull order, 125% vs any energy shield. Then applies <strong>Scorch</strong> (Plasma DoT) and <strong>Radiation</strong> (Gamma DoT). Both stack with existing instances.
-      </div>
-      <div class="card-na">Damage values TBD — fight sequence session pending.</div>
-    `, { section: 'routine', type: 'weapon', element: 'arc plasma gamma' }),
+    renderPlayerCard({
+      name: 'Moonfall', rarity: 'U', kind: 'Routine', slot: 'Weapon', elements: ['arc','plasma','gamma'],
+      section: 'routine', type: 'weapon', element: 'arc plasma gamma',
+      fits: 'Moonlit Phase Blade only', heat: 'TBD', drop: 'Sentient Guardian (rare)',
+      effect: `At the start of your next round, 7 satellite drones each fire once — 7 hits at [TBD] dmg each, shield → hull order, 125% vs any energy shield. Then applies <strong>Scorch</strong> (Plasma DoT) and <strong>Radiation</strong> (Gamma DoT). Both stack with existing instances.`,
+      ladder: `<div class="card-na">Damage values TBD — fight sequence session pending.</div>`
+    }),
 
     // PHASE SIGHT
     (() => {
@@ -1676,23 +1483,15 @@ const CARDS = {
         { fx: 'Prefetch 5',          heat: 0 },
         { fx: 'Prefetch 5 + draw 1', heat: 0 },
       ];
-      return card('C', '', `
-        <div class="card-name">Phase Sight</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-type', label:'System'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'System protocols', heat: `${ladder[0].heat} (drops with upgrade)` })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>Prefetch 3</strong> — look at the top 3 of your draw pile, discard any, redraw. The AI reads ahead in its decode queue.
-        </div>
-        <div class="card-upgrade">${ladder.map((t,i) =>
+      return renderPlayerCard({
+        name: 'Phase Sight', rarity: 'C', kind: 'Routine', slot: 'System', elements: [],
+        section: 'routine', type: 'system', element: '',
+        fits: 'System protocols', heat: `${ladder[0].heat} (drops with upgrade)`, drop: 'Reward pool',
+        effect: `<strong>Prefetch 3</strong> — look at the top 3 of your draw pile, discard any, redraw. The AI reads ahead in its decode queue.`,
+        ladder: `<div class="card-upgrade">${ladder.map((t,i) =>
           `<span>T${i+1}</span> ${t.fx} · ${t.heat}h`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'system', element: '' });
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // DECODE
@@ -1704,23 +1503,15 @@ const CARDS = {
         { fx: 'Draw 3, Prefetch 1',  heat: 0 },
         { fx: 'Draw 3, Prefetch 2',  heat: 0 },
       ];
-      return card('C', '', `
-        <div class="card-name">Decode</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-type', label:'System'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'System protocols', heat: `${ladder[0].heat} (drops with upgrade)` })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>Draw 2</strong> — the decoder pulls more routines from the deck and prints them as punch cards.
-        </div>
-        <div class="card-upgrade">${ladder.map((t,i) =>
+      return renderPlayerCard({
+        name: 'Decode', rarity: 'C', kind: 'Routine', slot: 'System', elements: [],
+        section: 'routine', type: 'system', element: '',
+        fits: 'System protocols', heat: `${ladder[0].heat} (drops with upgrade)`, drop: 'Reward pool',
+        effect: `<strong>Draw 2</strong> — the decoder pulls more routines from the deck and prints them as punch cards.`,
+        ladder: `<div class="card-upgrade">${ladder.map((t,i) =>
           `<span>T${i+1}</span> ${t.fx} · ${t.heat}h`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'system', element: '' });
+        ).join(' &nbsp;')}</div>`
+      });
     })(),
 
     // COOLANT
@@ -1732,23 +1523,15 @@ const CARDS = {
         'Vent 5',
         'Vent 5, next activation −1h',
       ];
-      return card('C', '', `
-        <div class="card-name">Coolant</div>
-        <div class="card-tags">${tags(
-          {cls:'tag-C', label:'C'},
-          {cls:'tag-routine', label:'Routine'},
-          {cls:'tag-type', label:'System'}
-        )}</div>
-        ${divider()}
-        ${metaRows({ compat: 'System protocols', heat: '0' })}
-        ${divider()}
-        <div class="card-effect">
-          <strong>Vent 2 heat</strong> — flush the Core's thermal buffer, reducing current heat and freeing room before the cap this round.
-        </div>
-        <div class="card-upgrade">${ladder.map((fx,i) =>
+      return renderPlayerCard({
+        name: 'Coolant', rarity: 'C', kind: 'Routine', slot: 'System', elements: [],
+        section: 'routine', type: 'system', element: '',
+        fits: 'System protocols', heat: '0', drop: 'Reward pool',
+        effect: `<strong>Vent 2 heat</strong> — flush the Core's thermal buffer, reducing current heat and freeing room before the cap this round.`,
+        ladder: `<div class="card-upgrade">${ladder.map((fx,i) =>
           `<span>T${i+1}</span> ${fx}`
-        ).join(' &nbsp;')}</div>
-      `, { section: 'routine', type: 'system', element: '' });
+        ).join(' &nbsp;')}</div>`
+      });
     })()
 
   ],
@@ -1758,10 +1541,41 @@ const CARDS = {
 
 // ─── FILTER ───────────────────────────────────────────────────────────────────
 
-const activeFilters = { view: 'cards', section: 'all', type: 'all', element: 'all', rarity: 'all', eclass: 'all', echapter: 'all', search: '' };
+const activeFilters = { view: 'cards', pool: 'all', section: 'all', type: 'all', element: 'all', rarity: 'all', sort: 'default', eclass: 'all', echapter: 'all', search: '' };
+
+// ─── SORT ─────────────────────────────────────────────────────────────────────
+// Reorders .card elements WITHIN each section grid (a pure DOM operation — the
+// CARDS source arrays are never touched). Composes with filters: hidden cards keep
+// their hidden state, sorting only changes order. Every comparator falls back to the
+// card's original curated index (data-idx, stamped in render()) so ties stay stable.
+const SORT_GRIDS = ['protocols-weapon', 'protocols-shield', 'protocols-system', 'routines', 'wip'];
+const RARITY_ORDER = { ST: 0, C: 1, R: 2, E: 3, U: 4 };
+
+function cardIdx(c)    { return parseInt(c.dataset.idx, 10)  || 0; }
+function cardHeat(c)   { return c.dataset.heat === '' ? Infinity : parseInt(c.dataset.heat, 10); }
+function cardRarity(c) { return RARITY_ORDER[c.dataset.rarity] ?? 99; }
+function cardName(c)   { return (c.querySelector('.card-name')?.textContent || '').trim(); }
+
+function applySort() {
+  const mode = activeFilters.sort;
+  const cmp = {
+    default: (a, b) => cardIdx(a) - cardIdx(b),
+    rarity:  (a, b) => (cardRarity(a) - cardRarity(b)) || (cardIdx(a) - cardIdx(b)),
+    heat:    (a, b) => (cardHeat(a)   - cardHeat(b))   || (cardIdx(a) - cardIdx(b)),
+    az:      (a, b) => cardName(a).localeCompare(cardName(b)) || (cardIdx(a) - cardIdx(b)),
+  }[mode] || ((a, b) => cardIdx(a) - cardIdx(b));
+
+  SORT_GRIDS.forEach(id => {
+    const grid = document.getElementById(id);
+    if (!grid) return;
+    [...grid.querySelectorAll('.card')].sort(cmp).forEach(c => grid.appendChild(c));
+  });
+}
 
 function applyFilters() {
   const q = activeFilters.search.toLowerCase();
+
+  applySort();
 
   // view switch
   document.body.classList.toggle('view-enemies', activeFilters.view === 'enemies');
@@ -1769,8 +1583,9 @@ function applyFilters() {
   document.getElementById('enemies-page').hidden = activeFilters.view !== 'enemies';
 
   // cards
-  const sf = activeFilters.section, tf = activeFilters.type, ef = activeFilters.element, rf = activeFilters.rarity;
+  const sf = activeFilters.section, tf = activeFilters.type, ef = activeFilters.element, rf = activeFilters.rarity, pf = activeFilters.pool;
   document.querySelectorAll('.card').forEach(c => {
+    const poolMatch   = pf === 'all' || c.dataset.pool === pf;
     const secMatch    = sf === 'all' || c.dataset.section === sf;
     const typeMatch   = tf === 'all' || c.dataset.type === tf;
     const elemMatch   = ef === 'all' || (c.dataset.element || '').split(' ').includes(ef);
@@ -1778,7 +1593,7 @@ function applyFilters() {
     const name        = (c.querySelector('.card-name')?.textContent || '').toLowerCase();
     const effect      = (c.querySelector('.card-effect')?.textContent || '').toLowerCase();
     const searchMatch = q === '' || name.includes(q) || effect.includes(q);
-    c.hidden = !(secMatch && typeMatch && elemMatch && rarityMatch && searchMatch);
+    c.hidden = !(poolMatch && secMatch && typeMatch && elemMatch && rarityMatch && searchMatch);
   });
   ['protocols-weapon-section','protocols-shield-section','protocols-system-section','routines-section','wip-section'].forEach(id => {
     const el = document.getElementById(id);
@@ -1826,13 +1641,18 @@ document.getElementById('search-box').addEventListener('input', e => {
 });
 
 document.getElementById('clear-filters').addEventListener('click', () => {
-  activeFilters.section = activeFilters.type = activeFilters.element = activeFilters.rarity = 'all';
+  activeFilters.pool = activeFilters.section = activeFilters.type = activeFilters.element = activeFilters.rarity = 'all';
   activeFilters.eclass = activeFilters.echapter = 'all';
+  activeFilters.sort = 'default';
   activeFilters.search = '';
   document.getElementById('search-box').value = '';
   // reset every group's active state to its "All" button (leave the View toggle as-is)
   document.querySelectorAll('.filter-btn[data-filter]:not([data-filter="view"])').forEach(b =>
     b.classList.toggle('active', b.dataset.value === 'all')
+  );
+  // the Sort group has no "All" — reactivate its Default button explicitly
+  document.querySelectorAll('.filter-btn[data-filter="sort"]').forEach(b =>
+    b.classList.toggle('active', b.dataset.value === 'default')
   );
   applyFilters();
 });
@@ -1853,12 +1673,29 @@ function render() {
     const container = document.getElementById(sectionId);
     if (!container) continue;
     container.innerHTML = cardList.join('');
+    // Stamp per-grid sort keys: data-idx = original curated order (Default sort + tie
+    // breaker); data-heat = leading integer parsed from the "Heat cost" meta row
+    // ('2 (T5: 1)'→2, '0, escalating'→0, '—'/missing→'' which sorts last as Infinity).
+    container.querySelectorAll('.card').forEach((c, i) => {
+      c.dataset.idx = i;
+      const heatRow = [...c.querySelectorAll('.card-row')]
+        .find(r => (r.querySelector('span')?.textContent || '').trim() === 'Heat cost');
+      const heatText = heatRow ? (heatRow.querySelectorAll('span')[1]?.textContent || '') : '';
+      const m = heatText.trim().match(/^-?\d+/);
+      c.dataset.heat = m ? m[0] : '';
+    });
     if (sectionId === 'wip') inProgress += cardList.length;
     else complete += cardList.length;
   }
 
   const metaEl = document.getElementById('meta-line');
-  metaEl.dataset.base = `Last updated: 2026-06-13 &nbsp;·&nbsp; ${complete} cards`;
+  const total   = document.querySelectorAll('#cards-page .card').length;
+  const inGame  = document.querySelectorAll('#cards-page .card[data-pool="game"]').length;
+  const out     = document.querySelectorAll('#cards-page .card[data-pool="out"]').length;
+  metaEl.dataset.base = `Card rework — last updated: 2026-07-25 &nbsp;·&nbsp; ${total} cards &nbsp;·&nbsp; `
+    + `<span style="color:#7ddf8a;">In game: ${inGame}</span> &nbsp;·&nbsp; `
+    + `<span style="color:#c9a44a;">Unassigned: ${total - inGame - out}</span> &nbsp;·&nbsp; `
+    + `<span style="color:#d97b7b;">Out: ${out}</span>`;
   metaEl.innerHTML = metaEl.dataset.base;
 
   let enemyCount = 0;
