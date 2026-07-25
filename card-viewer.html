@@ -1474,6 +1474,26 @@ const CARDS = {
       ladder: `<div class="card-na">Damage values TBD — fight sequence session pending.</div>`
     }),
 
+    // THERMAL CAPACITOR (new 2026-07-25 — the overload engine; Mihai design; first 4-tier Rare)
+    (() => {
+      const ladder = [
+        { carry: 2, heat: 4 },
+        { carry: 3, heat: 4 },
+        { carry: 4, heat: 3 },
+        { carry: 4, heat: 2 },
+      ];
+      return renderPlayerCard({
+        name: 'Thermal Capacitor', rarity: 'R', kind: 'Routine', slot: 'System', elements: [],
+        section: 'routine', type: 'system', element: '', pool: 'game',
+        fits: 'System protocols', heat: '4 (drops with upgrade)', drop: 'Reward pool',
+        conditions: 'Auto-burns on execution — one play per fight; the engine outlives the card',
+        effect: `<strong>Install the overload engine:</strong> for the rest of the fight, unused heat at round end carries into next round as extra budget — up to <strong>${ladder[0].carry}</strong>. The gauge shows carried heat as an OVERLOAD segment past the ceiling. You earn the surplus by under-spending: the Heat Inversion, made card.`,
+        ladder: `<div class="card-upgrade">${ladder.map((t,i) =>
+          `<span>T${i+1}</span> carry ${t.carry} · ${t.heat}h`
+        ).join(' &nbsp;')} &nbsp;<span>(Rare = 4-tier track)</span></div>`
+      });
+    })(),
+
     // HOT SWAP (new 2026-07-25 — burn-then-print compile cycle; Mihai design)
     (() => {
       const ladder = [
