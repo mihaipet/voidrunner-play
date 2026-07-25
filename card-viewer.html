@@ -130,8 +130,8 @@
   .card[data-pool="out"] { opacity: 0.55; }
 
   .card.ST  { border-top-color: #5a5a6e; }
-  .card.C   { border-top-color: #3a6aaa; }
-  .card.R   { border-top-color: #4a7c4a; }
+  .card.C   { border-top-color: #9a9aa8; }
+  .card.R   { border-top-color: #3a6aaa; }
   .card.E   { border-top-color: #8a3aaa; }
   .card.U   { border-top-color: #cc8800; }
   .card.wip { border-style: dashed; border-top-style: dashed; opacity: 0.6; }
@@ -142,8 +142,8 @@
   .tag { font-size: 11px; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; letter-spacing: 0.08em; }
   .tag-type    { background: #1e1e2e; color: #a0a0c0; }
   .tag-ST      { background: #2a2a3a; color: #aaaacc; }
-  .tag-C       { background: #1a2040; color: #6699dd; }
-  .tag-R       { background: #1a2e1a; color: #88cc88; }
+  .tag-C       { background: #26262e; color: #c8c8d4; }
+  .tag-R       { background: #1a2040; color: #6699dd; }
   .tag-E       { background: #2a1a3a; color: #bb77dd; }
   .tag-U       { background: #2e2000; color: #ddaa22; }
   .tag-kinetic { background: #2e1e10; color: #dd9955; }
@@ -1289,7 +1289,7 @@ const CARDS = {
     (() => {
       const track = [5,7,9,12,15];
       return renderPlayerCard({
-        name: 'Brace', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: [],
+        name: 'Brace', rarity: 'ST', kind: 'Routine', slot: 'Shield', elements: [],
         section: 'routine', type: 'shield', element: '', pool: 'game',
         fits: 'All shield protocols', heat: '1', drop: 'Starter',
         effect: `Gain <strong>${track[0]} temporary shield HP</strong> this round — absorbs before your real shield; the remainder vanishes at Vent. The vanilla defend. <strong>Starting deck carries ×2 copies</strong>, each tracking its own pips. <span style="color:#7a7a90">New-scale numbers (ship 100 / hit 10).</span>`,
@@ -1303,7 +1303,7 @@ const CARDS = {
     (() => {
       const track = [15,18,21,25,30];
       return renderPlayerCard({
-        name: 'Deflect', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: [],
+        name: 'Deflect', rarity: 'ST', kind: 'Routine', slot: 'Shield', elements: [],
         section: 'routine', type: 'shield', element: '', pool: 'game',
         fits: 'All shield protocols', heat: '3 (T5: 2)', drop: 'Starter',
         conditions: 'Blocks the first hit this round only — later hits pass untouched',
@@ -1358,7 +1358,7 @@ const CARDS = {
     (() => {
       const track = [8,9,11,13,15];
       return renderPlayerCard({
-        name: 'Alpha Strike', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: [],
+        name: 'Alpha Strike', rarity: 'ST', kind: 'Routine', slot: 'Weapon', elements: [],
         section: 'routine', type: 'weapon', element: '', pool: 'game',
         fits: 'All weapon protocols', heat: '3 (T5: 2)', drop: 'Starter',
         conditions: 'Playable only on your first activation this round — any earlier activation closes the window',
@@ -1373,7 +1373,7 @@ const CARDS = {
     (() => {
       const track = [2,3,4,5,5];
       return renderPlayerCard({
-        name: 'Signal Gain', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: [],
+        name: 'Signal Gain', rarity: 'ST', kind: 'Routine', slot: 'Weapon', elements: [],
         section: 'routine', type: 'weapon', element: '', pool: 'game',
         fits: 'All weapon protocols', heat: '2 (T5: 1)', drop: 'Starter',
         effect: `<strong>+${track[0]} damage</strong> this activation — flat, any weapon. The AI boosts the routine's output signal. <strong>Starting deck carries ×2 copies</strong>, each tracking its own pips. <span style="color:#7a7a90">New-scale numbers (ship 100 / hit 10).</span>`,
@@ -1525,7 +1525,7 @@ const CARDS = {
         { vent: 4, debt: 1 },
       ];
       return renderPlayerCard({
-        name: 'Heat Buffer', rarity: 'C', kind: 'Routine', slot: 'System', elements: [],
+        name: 'Heat Buffer', rarity: 'ST', kind: 'Routine', slot: 'System', elements: [],
         section: 'routine', type: 'system', element: '', pool: 'game',
         fits: 'System protocols', heat: '0', drop: 'Starter',
         conditions: 'The debt is unavoidable — next round starts with the loaned heat already on the gauge',
