@@ -1285,6 +1285,21 @@ const CARDS = {
       });
     })(),
 
+    // REINFORCE (new 2026-07-26 — the restore booster; parasitic on the restoring activation)
+    (() => {
+      const track = [5,7,9,12,15];
+      return renderPlayerCard({
+        name: 'Reinforce', rarity: 'ST', kind: 'Routine', slot: 'Shield', elements: [],
+        section: 'routine', type: 'shield', element: '', pool: 'game',
+        fits: 'All shield protocols', heat: '2 (T5: 1)', drop: 'Starter',
+        conditions: 'Boosts THIS activation’s restore — does nothing staged without one; dead when the pool is full',
+        effect: `<strong>This activation's shield restore heals +${track[0]} extra</strong> — real shield HP, persists across rounds. Brace answers this round; Reinforce funds the fight. The AI re-routes auxiliary power through the emitters. <span style="color:#7a7a90">New-scale numbers (ship 100 / hit 10).</span>`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> +${v}`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> heat 2 → 1</div>`
+      });
+    })(),
+
     // BRACE (re-ruled 2026-07-25 — nerfed to the new scale, ×3 in the starting deck)
     (() => {
       const track = [5,7,9,12,15];
@@ -1754,7 +1769,7 @@ function render() {
   const total   = document.querySelectorAll('#cards-page .card').length;
   const inGame  = document.querySelectorAll('#cards-page .card[data-pool="game"]').length;
   const out     = document.querySelectorAll('#cards-page .card[data-pool="out"]').length;
-  metaEl.dataset.base = `Card rework — last updated: 2026-07-25 &nbsp;·&nbsp; ${total} cards &nbsp;·&nbsp; `
+  metaEl.dataset.base = `Card rework — last updated: 2026-07-26 &nbsp;·&nbsp; ${total} cards &nbsp;·&nbsp; `
     + `<span style="color:#7ddf8a;">In game: ${inGame}</span> &nbsp;·&nbsp; `
     + `<span style="color:#c9a44a;">Unassigned: ${total - inGame - out}</span> &nbsp;·&nbsp; `
     + `<span style="color:#d97b7b;">Out: ${out}</span>`;
