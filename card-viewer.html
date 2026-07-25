@@ -1474,6 +1474,27 @@ const CARDS = {
       ladder: `<div class="card-na">Damage values TBD — fight sequence session pending.</div>`
     }),
 
+    // HOT SWAP (new 2026-07-25 — burn-then-print compile cycle; Mihai design)
+    (() => {
+      const ladder = [
+        { burn: '2 random', heat: 3 },
+        { burn: '1 random', heat: 3 },
+        { burn: '1 random', heat: 2 },
+        { burn: '1 random', heat: 1 },
+        { burn: '1 chosen', heat: 1 },
+      ];
+      return renderPlayerCard({
+        name: 'Hot Swap', rarity: 'C', kind: 'Routine', slot: 'System', elements: [],
+        section: 'routine', type: 'system', element: '', pool: 'game',
+        fits: 'System protocols', heat: '3 (drops with upgrade)', drop: 'Reward pool',
+        conditions: 'Burn resolves FIRST — the fresh prints are never at risk. Short hand: burns what’s there, the print always resolves',
+        effect: `<strong>Burn ${ladder[0].burn} routines, then print 2.</strong> The AI purges live cards to compile fresh ones — burned routines are out for the rest of the fight (back next fight; Delete is the forever word). Random burn is the weakness; v5 makes it surgical.`,
+        ladder: `<div class="card-upgrade">${ladder.map((t,i) =>
+          `<span>T${i+1}</span> burn ${t.burn} · ${t.heat}h`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> you choose the burn</div>`
+      });
+    })(),
+
     // HEAT BUFFER (new 2026-07-25 — the heat loan; System trio candidate 1, ruled in)
     (() => {
       const ladder = [
