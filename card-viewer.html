@@ -1384,6 +1384,21 @@ const CARDS = {
       });
     })(),
 
+    // SPIN UP (new 2026-07-26 — the ramp; Reinforce's attack-side mirror)
+    (() => {
+      const track = [2,3,4,5,5];
+      return renderPlayerCard({
+        name: 'Spin Up', rarity: 'ST', kind: 'Routine', slot: 'Weapon', elements: [],
+        section: 'routine', type: 'weapon', element: '', pool: 'game',
+        fits: 'All weapon protocols', heat: '2 (T5: 1)', drop: 'Starter',
+        conditions: 'Bonus attaches to THE STAGED PROTOCOL only — lasts the rest of the fight, resets between fights',
+        effect: `<strong>This activation's protocol permanently gains +${track[0]} damage for the rest of the fight.</strong> Stacks per play; the protocol's displayed base updates on the spot. Signal Gain's +2 now — this is +2 forever. Investment, not impact: dead in the fight's last rounds. <span style="color:#7a7a90">New-scale numbers (ship 100 / hit 10).</span>`,
+        ladder: `<div class="card-upgrade">${track.map((v,i) =>
+          `<span>T${i+1}</span> +${v}`
+        ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> heat 2 → 1</div>`
+      });
+    })(),
+
     // SIGNAL GAIN (new 2026-07-25 — the starter kit's weapon routine; replaces Armour Spike there)
     (() => {
       const track = [2,3,4,5,5];
