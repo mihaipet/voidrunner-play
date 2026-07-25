@@ -1545,6 +1545,27 @@ const CARDS = {
       });
     })(),
 
+    // SPOOLER (new 2026-07-26 — the deferred print; completes the starting deck)
+    (() => {
+      const ladder = [
+        { print: 1, heat: 3 },
+        { print: 2, heat: 3 },
+        { print: 2, heat: 2 },
+        { print: 2, heat: 1 },
+        { print: 2, heat: 1 },
+      ];
+      return renderPlayerCard({
+        name: 'Spooler', rarity: 'ST', kind: 'Routine', slot: 'System', elements: [],
+        section: 'routine', type: 'system', element: '', pool: 'game',
+        fits: 'System protocols', heat: '3 (drops with upgrade)', drop: 'Starter',
+        conditions: 'The extra prints arrive NEXT round; stacks per play',
+        effect: `<strong>Next round, print +${ladder[0].print} routine</strong> — the AI queues the job tonight, the punch cards land tomorrow. Heat Buffer loans heat; Spooler loans cards. <span style="color:#7a7a90">T5 rider: next round starts at EXACTLY 0 heat — overrides the shield baseline, Heat Buffer debts, and enemy heat injection.</span>`,
+        ladder: `<div class="card-upgrade">${ladder.map((t,i) =>
+          `<span>T${i+1}</span> +${t.print} · ${t.heat}h`
+        ).join(' &nbsp;')} &nbsp;<span>T5 rider:</span> next round starts at 0 heat</div>`
+      });
+    })(),
+
     // HEAT BUFFER (new 2026-07-25 — the heat loan; System trio candidate 1, ruled in)
     (() => {
       const ladder = [
