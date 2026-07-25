@@ -1285,14 +1285,14 @@ const CARDS = {
       });
     })(),
 
-    // BRACE (re-ruled 2026-07-25 — nerfed to the new scale, ×2 in the starting deck)
+    // BRACE (re-ruled 2026-07-25 — nerfed to the new scale, ×3 in the starting deck)
     (() => {
       const track = [5,7,9,12,15];
       return renderPlayerCard({
         name: 'Brace', rarity: 'ST', kind: 'Routine', slot: 'Shield', elements: [],
         section: 'routine', type: 'shield', element: '', pool: 'game',
         fits: 'All shield protocols', heat: '1', drop: 'Starter',
-        effect: `Gain <strong>${track[0]} temporary shield HP</strong> this round — absorbs before your real shield; the remainder vanishes at Vent. The vanilla defend. <strong>Starting deck carries ×2 copies</strong>, each tracking its own pips. <span style="color:#7a7a90">New-scale numbers (ship 100 / hit 10).</span>`,
+        effect: `Gain <strong>${track[0]} temporary shield HP</strong> this round — absorbs before your real shield; the remainder vanishes at Vent. The vanilla defend. <strong>Starting deck carries ×3 copies</strong>, each tracking its own pips. <span style="color:#7a7a90">New-scale numbers (ship 100 / hit 10).</span>`,
         ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> ${v}`
         ).join(' &nbsp;')}</div>`
@@ -1376,7 +1376,7 @@ const CARDS = {
         name: 'Signal Gain', rarity: 'ST', kind: 'Routine', slot: 'Weapon', elements: [],
         section: 'routine', type: 'weapon', element: '', pool: 'game',
         fits: 'All weapon protocols', heat: '2 (T5: 1)', drop: 'Starter',
-        effect: `<strong>+${track[0]} damage</strong> this activation — flat, any weapon. The AI boosts the routine's output signal. <strong>Starting deck carries ×2 copies</strong>, each tracking its own pips. <span style="color:#7a7a90">New-scale numbers (ship 100 / hit 10).</span>`,
+        effect: `<strong>+${track[0]} damage</strong> this activation — flat, any weapon. The AI boosts the routine's output signal. <strong>Starting deck carries ×3 copies</strong>, each tracking its own pips. <span style="color:#7a7a90">New-scale numbers (ship 100 / hit 10).</span>`,
         ladder: `<div class="card-upgrade">${track.map((v,i) =>
           `<span>T${i+1}</span> +${v}`
         ).join(' &nbsp;')} &nbsp;<span>T5 perk:</span> heat 2 → 1</div>`
