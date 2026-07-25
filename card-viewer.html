@@ -1558,7 +1558,7 @@ const CARDS = {
         name: 'Spooler', rarity: 'ST', kind: 'Routine', slot: 'System', elements: [],
         section: 'routine', type: 'system', element: '', pool: 'game',
         fits: 'System protocols', heat: '3 (drops with upgrade)', drop: 'Starter',
-        conditions: 'The extra prints arrive NEXT round; stacks per play',
+        conditions: 'The extra prints arrive NEXT round only — stacking adds volume to that round, never extends to later rounds',
         effect: `<strong>Next round, print +${ladder[0].print} routine</strong> — the AI queues the job tonight, the punch cards land tomorrow. Heat Buffer loans heat; Spooler loans cards. <span style="color:#7a7a90">T5 rider: next round starts at EXACTLY 0 heat — overrides the shield baseline, Heat Buffer debts, and enemy heat injection.</span>`,
         ladder: `<div class="card-upgrade">${ladder.map((t,i) =>
           `<span>T${i+1}</span> +${t.print} · ${t.heat}h`
