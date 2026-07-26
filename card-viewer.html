@@ -1442,16 +1442,22 @@ const CARDS = {
       });
     })(),
 
-    // FOCUS FIRE
+    // FOCUS FIRE (100% reworked 2026-07-27 — the first debuff card: Target Lock)
     (() => {
-      const track = [12,15,18,22,28];
+      const ladder = [
+        { now: 5, heat: 3 },
+        { now: 6, heat: 3 },
+        { now: 6, heat: 2 },
+        { now: 7, heat: 2 },
+        { now: 7, heat: 1 },
+      ];
       return renderPlayerCard({
         name: 'Focus Fire', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: [],
-        section: 'routine', type: 'weapon', element: '',
-        fits: 'All weapon protocols', heat: '1',
-        effect: `This activation deals <strong>+${track[0]}%</strong> damage, all weapon types.`,
-        track: track.map(v => `+${v}%`),
-        capstone: { text: `−1 heat on this activation` }
+        section: 'routine', type: 'weapon', element: '', pool: 'game',
+        fits: 'Any weapon protocol', heat: `${ladder[0].heat} (drops with upgrade)`,
+        effect: `This activation's attacks deal <strong>+5 damage</strong>, and the enemy gains <strong>Target Lock</strong>: your next weapon activation against them also deals <strong>+5</strong>. Persists until consumed · stacks as charges.`,
+        track: ladder.map(t => `+${t.now} / +${t.now} next · ${t.heat}h`),
+        capstone: { text: `+7 now / applies <strong>Target Lock ×2</strong> — the next 2 weapon activations each deal +7` }
       });
     })(),
 
