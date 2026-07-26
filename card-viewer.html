@@ -1461,14 +1461,14 @@ const CARDS = {
       });
     })(),
 
-    // CALIBRATE
+    // CALIBRATE — OUT 2026-07-27 (the pool's first Out; effect banked as a future System routine)
     (() => {
       const track = [1,1,1,1,2];
       return renderPlayerCard({
         name: 'Calibrate', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: [],
-        section: 'routine', type: 'weapon', element: '',
+        section: 'routine', type: 'weapon', element: '', pool: 'out',
         fits: 'All weapon protocols', heat: '0',
-        effect: `Your next weapon activation this round costs <strong>−${track[0]} heat</strong>.`,
+        effect: `Your next weapon activation this round costs <strong>−${track[0]} heat</strong>. <em>Effect banked — returns as a System routine.</em>`,
         track: track.map(v => `−${v} heat`)
       });
     })(),
