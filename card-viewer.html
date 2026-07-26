@@ -1639,15 +1639,15 @@ const CARDS = {
       const ladder = [
         'Vent 2',
         'Vent 3',
-        'Vent 4',
-        'Vent 5',
-        'Vent 5, next activation −1h',
+        'Vent 4, print 1',
+        'Vent 4, print 2',
       ];
       return renderPlayerCard({
-        name: 'Coolant', rarity: 'C', kind: 'Routine', slot: 'System', elements: [],
-        section: 'routine', type: 'system', element: '',
-        fits: 'System protocols', heat: '0',
-        effect: `<strong>Vent 2 heat</strong> — reduce current heat, freeing room before the cap this round.`,
+        name: 'Coolant', rarity: 'R', kind: 'Routine', slot: 'System', elements: [],
+        section: 'routine', type: 'system', element: '', pool: 'game',
+        fits: 'System protocols', heat: '0 (all tiers)',
+        conditions: 'Once per combat — the spent card stays in this fight’s deck as a CURSE: drawn, dead, unstageable',
+        effect: `<strong>Vent 2 heat.</strong> Free, instant, once — then the curse clogs your draws for the rest of the fight.`,
         track: ladder
       });
     })()
