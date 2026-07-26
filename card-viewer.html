@@ -1367,19 +1367,19 @@ const CARDS = {
     // RATTLE
     (() => {
       const ladder = [
-        { fx: '−20%',        heat: 2 },
-        { fx: '−25%',        heat: 2 },
-        { fx: '−30%',        heat: 2 },
-        { fx: '−30%',        heat: 1 },
-        { fx: '−40% ×2 hits', heat: 1 },
+        { fx: 'Next attack −3', heat: 2 },
+        { fx: 'Next attack −4', heat: 2 },
+        { fx: 'Next attack −5', heat: 1 },
+        { fx: 'Next 2 attacks −5', heat: 1 },
       ];
       return renderPlayerCard({
         name: 'Rattle', rarity: 'R', kind: 'Routine', slot: 'Shield', elements: [],
-        section: 'routine', type: 'shield', element: '',
-        fits: 'All shield protocols', heat: `${ladder[0].heat} (drops with upgrade)`,
-        effect: `The enemy's next attack deals <strong>${ladder[0].fx}</strong> damage.`,
+        section: 'routine', type: 'shield', element: '', pool: 'game',
+        fits: 'Any shield protocol', heat: `${ladder[0].heat} (drops with upgrade)`,
+        conditions: 'One attack consumes one charge — a multi-hit flurry’s first hit eats the mark',
+        effect: `The enemy's <strong>next attack deals −3 damage</strong>. Persists until consumed · stacks as charges · the intent row shows the reduced number.`,
         track: ladder.map(t => `${t.fx} · ${t.heat}h`),
-        capstone: { text: `covers two attacks` }
+        capstone: { text: `<strong>−5 on the next two attacks</strong> — the mark covers a second swing` }
       });
     })(),
 
