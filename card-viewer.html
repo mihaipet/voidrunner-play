@@ -1599,17 +1599,18 @@ const CARDS = {
     // PHASE SIGHT
     (() => {
       const ladder = [
-        { fx: 'Prefetch 3',          heat: 1 },
-        { fx: 'Prefetch 4',          heat: 1 },
-        { fx: 'Prefetch 4',          heat: 0 },
-        { fx: 'Prefetch 5',          heat: 0 },
-        { fx: 'Prefetch 5 + draw 1', heat: 0 },
+        { fx: 'Look 2 — draw 1, discard 1', heat: 3 },
+        { fx: 'Look 2 — draw 1, discard 1', heat: 2 },
+        { fx: 'Look 3 — draw 1, discard 2', heat: 2 },
+        { fx: 'Look 3 — draw 2, discard 1', heat: 2 },
+        { fx: 'Look 3 — draw 2, discard 1', heat: 1 },
       ];
       return renderPlayerCard({
         name: 'Phase Sight', rarity: 'C', kind: 'Routine', slot: 'System', elements: [],
-        section: 'routine', type: 'system', element: '',
+        section: 'routine', type: 'system', element: '', pool: 'game',
         fits: 'System protocols', heat: `${ladder[0].heat} (drops with upgrade)`,
-        effect: `<strong>Prefetch 3</strong> — look at the top 3 of your draw pile, discard any, redraw.`,
+        conditions: 'Draws are MANDATORY — you must draw the required count, wanted or not',
+        effect: `<strong>Prefetch</strong> — look at the top 2 of the draw pile: <strong>draw 1, discard 1</strong>. Everything looked at leaves the pile.`,
         track: ladder.map(t => `${t.fx} · ${t.heat}h`)
       });
     })(),
@@ -1617,18 +1618,19 @@ const CARDS = {
     // DECODE
     (() => {
       const ladder = [
-        { fx: 'Draw 2',              heat: 1 },
-        { fx: 'Draw 2',              heat: 0 },
-        { fx: 'Draw 3',              heat: 0 },
-        { fx: 'Draw 3, Prefetch 1',  heat: 0 },
-        { fx: 'Draw 3, Prefetch 2',  heat: 0 },
+        { fx: 'Print 1', heat: 2 },
+        { fx: 'Print 2', heat: 2 },
+        { fx: 'Print 2', heat: 1 },
+        { fx: 'Print 3', heat: 1 },
+        { fx: 'Print 3', heat: 1 },
       ];
       return renderPlayerCard({
         name: 'Decode', rarity: 'C', kind: 'Routine', slot: 'System', elements: [],
-        section: 'routine', type: 'system', element: '',
+        section: 'routine', type: 'system', element: '', pool: 'game',
         fits: 'System protocols', heat: `${ladder[0].heat} (drops with upgrade)`,
-        effect: `<strong>Draw 2</strong> — pull two more routines from the deck.`,
-        track: ladder.map(t => `${t.fx} · ${t.heat}h`)
+        effect: `<strong>Print 1</strong> routine.`,
+        track: ladder.map(t => `${t.fx} · ${t.heat}h`),
+        capstone: { text: `Print 3 — <strong>1 chosen</strong> (search the draw pile for any routine), 2 random` }
       });
     })(),
 
