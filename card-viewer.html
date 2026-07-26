@@ -985,16 +985,22 @@ const CARDS = {
       });
     })(),
 
-    // ARMOUR SPIKE (added 2026-07-25 — starter-kit fill from 2026-07-11, was missing from the viewer)
+    // BREACH VECTOR (was Armour Spike — renamed + reworked 2026-07-27, its pool turn)
     (() => {
-      const track = [50,60,70,85,100];
+      const ladder = [
+        { fx: '+1 / 10 missing', heat: 2 },
+        { fx: '+1 / 8 missing',  heat: 2 },
+        { fx: '+1 / 5 missing',  heat: 2 },
+        { fx: '+1 / 5 missing',  heat: 1 },
+        { fx: '+2 / 5 missing',  heat: 1 },
+      ];
       return renderPlayerCard({
-        name: 'Armour Spike', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: ['kinetic'],
-        section: 'routine', type: 'weapon', element: 'kinetic',
-        fits: 'Kinetic Core', heat: '1',
-        conditions: 'Bonus only if the enemy shield is down when this activation fires',
-        effect: `<strong>+${track[0]}% damage</strong> if the enemy shield is down — strip first, then close.`,
-        track: track.map(v => `+${v}%`)
+        name: 'Breach Vector', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: [],
+        section: 'routine', type: 'weapon', element: '', pool: 'game',
+        fits: 'Any weapon protocol', heat: `${ladder[0].heat} (drops with upgrade)`,
+        conditions: 'Scales with MISSING shield only — +0 at full shields, +0 vs shieldless enemies',
+        effect: `This activation's attacks deal <strong>+1 damage per 10 shield the enemy is missing</strong> (live at fire time, rounded down).`,
+        track: ladder.map(t => `${t.fx} · ${t.heat}h`)
       });
     })(),
 
