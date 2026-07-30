@@ -1694,6 +1694,24 @@ const CARDS = {
         effect: `<strong>Vent 2 heat.</strong> Free, instant, once — then the curse clogs your draws for the rest of the fight.`,
         track: ladder
       });
+    })(),
+
+    // DEEP READ (new 2026-07-31 — Mihai's in-fight calibrator, bounds ruled C: once per fight AND heavy heat; name provisional)
+    (() => {
+      const ladder = [
+        { fx: '+1 read', heat: 6 },
+        { fx: '+1 read', heat: 5 },
+        { fx: '+2 reads', heat: 5 },
+        { fx: '+2 reads', heat: 4 },
+      ];
+      return renderPlayerCard({
+        name: 'Deep Read', rarity: 'R', kind: 'Routine', slot: 'System', elements: [],
+        section: 'routine', type: 'system', element: '', pool: 'game',
+        fits: 'System protocols', heat: `${ladder[0].heat} → 4 with upgrades`,
+        conditions: 'Once per fight — pure setup: no damage, no shield, this round gets nothing',
+        effect: `The protocol staged in your <strong>next activation</strong> gains <strong>+1 read</strong> (permanent).`,
+        track: ladder.map(t => `${t.fx} · ${t.heat}h`)
+      });
     })()
 
   ],
