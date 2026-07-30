@@ -1392,7 +1392,7 @@ const CARDS = {
         section: 'routine', type: 'shield', element: '', pool: 'game',
         fits: 'All shield protocols', heat: '2 (T5: 1)',
         conditions: 'Boosts THIS activation’s restore — does nothing staged without one; dead when the pool is full',
-        effect: `<strong>This activation's shield restore heals +${track[0]} extra</strong> — real shield HP, persists across rounds.`,
+        effect: `<strong>This activation's shield restore heals +${track[0]} extra</strong> — real shield HP, persists across rounds. <strong>Starting deck carries ×3 copies</strong> (swapped with Brace 2026-07-31), each tracking its own pips.`,
         track: track.map(v => `+${v}`),
         capstone: { text: `heat 2 → 1` }
       });
@@ -1405,7 +1405,7 @@ const CARDS = {
         name: 'Brace', rarity: 'ST', kind: 'Routine', slot: 'Shield', elements: [],
         section: 'routine', type: 'shield', element: '', pool: 'game',
         fits: 'All shield protocols', heat: '1',
-        effect: `Gain <strong>${track[0]} temporary shield HP</strong> this round — absorbs before your real shield; the remainder vanishes at Vent. <strong>Starting deck carries ×3 copies</strong>, each tracking its own pips.`,
+        effect: `Gain <strong>${track[0]} temporary shield HP</strong> this round — absorbs before your real shield; the remainder vanishes at Vent. <strong>Starting deck carries ×1</strong> (swapped with Reinforce 2026-07-31).`,
         track: track.map(v => `${v}`)
       });
     })(),
