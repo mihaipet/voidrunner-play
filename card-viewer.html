@@ -1591,29 +1591,43 @@ const CARDS = {
         name: 'Accumulator', rarity: 'R', kind: 'Routine', slot: 'System', elements: [],
         section: 'routine', type: 'system', element: '', pool: 'game',
         fits: 'System protocols', heat: '4 (drops with upgrade)',
-        conditions: 'Auto-burns on execution — one play per fight; the engine outlives the card',
+        conditions: 'Auto-scrambles on execution — one play per fight; the engine outlives the card',
         effect: `<strong>Install the overload engine:</strong> for the rest of the fight, unused heat at round end carries into next round as extra budget — up to <strong>${ladder[0].carry}</strong>. The gauge shows carried heat as an OVERLOAD segment past the ceiling.`,
         track: ladder.map(t => `carry ${t.carry} · ${t.heat}h`)
       });
     })(),
 
-    // HOT SWAP (new 2026-07-25 — burn-then-print compile cycle; Mihai design)
+    // HOT SWAP (new 2026-07-25 — scramble-then-print compile cycle; Mihai design. Burn→Scramble rename 2026-07-31)
     (() => {
       const ladder = [
-        { burn: '2 random', heat: 3 },
-        { burn: '1 random', heat: 3 },
-        { burn: '1 random', heat: 2 },
-        { burn: '1 random', heat: 1 },
-        { burn: '1 chosen', heat: 1 },
+        { scr: '2 random', heat: 3 },
+        { scr: '1 random', heat: 3 },
+        { scr: '1 random', heat: 2 },
+        { scr: '1 random', heat: 1 },
+        { scr: '1 chosen', heat: 1 },
       ];
       return renderPlayerCard({
         name: 'Hot Swap', rarity: 'C', kind: 'Routine', slot: 'System', elements: [],
         section: 'routine', type: 'system', element: '', pool: 'game',
         fits: 'System protocols', heat: '3 (drops with upgrade)',
-        conditions: 'Burn resolves FIRST — the fresh prints are never at risk',
-        effect: `<strong>Burn ${ladder[0].burn} routines, then print 2.</strong> Burned routines are out for the rest of the fight (back next fight; Delete is the forever word).`,
-        track: ladder.map(t => `burn ${t.burn} · ${t.heat}h`),
-        capstone: { text: `you choose the burn` }
+        conditions: 'Scramble resolves FIRST — the fresh prints are never at risk',
+        effect: `<strong>Scramble ${ladder[0].scr} routines, then print 2.</strong> Scrambled routines go to the scrambled pool — unstageable this fight (back next fight; Delete is the forever word).`,
+        track: ladder.map(t => `scramble ${t.scr} · ${t.heat}h`),
+        capstone: { text: `you choose the scramble` }
+      });
+    })(),
+
+    // HOTFIX (new 2026-07-31 — the starter heal; the first card to carry the Scramble keyword)
+    (() => {
+      const track = [5,7,9,12,15];
+      return renderPlayerCard({
+        name: 'Hotfix', rarity: 'ST', kind: 'Routine', slot: 'System', elements: [],
+        section: 'routine', type: 'system', element: '', pool: 'game',
+        fits: 'System protocols', heat: '2 (T5: 1)',
+        conditions: 'Scrambles on play — unstageable for the rest of this fight (once per fight per copy)',
+        effect: `<strong>Restore ${track[0]} hull</strong> — real, persistent hull HP.`,
+        track: track.map(v => `+${v}`),
+        capstone: { text: `heat 2 → 1` }
       });
     })(),
 
