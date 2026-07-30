@@ -182,6 +182,11 @@
   .card-tags { display: flex; flex-wrap: wrap; gap: 5px; }
 
   .tag { font-size: 11px; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; letter-spacing: 0.08em; }
+  /* Category icons (Mihai ruling 2026-07-31): weapon=rocket · shield=shield · system=cpu chip.
+     Inline in tags and effect text as a visual legend wherever protocol categories are named. */
+  .cat-ic { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2;
+            stroke-linecap: round; stroke-linejoin: round; vertical-align: -2px; margin-right: 3px; }
+  .card-effect .cat-ic { margin: 0 1px; vertical-align: -2px; }
   .tag-type    { background: #1e1e2e; color: #a0a0c0; }
   .tag-ST      { background: #2a2a3a; color: #e8e8f0; }
   .tag-C       { background: #1a2040; color: #6699dd; }
@@ -673,6 +678,18 @@ function shieldTrack(base) {
   return SHIELD_COMMON.hpAdd.map((add, i) => `${base + add} HP · ${SHIELD_COMMON.react[i]}%`);
 }
 
+// ─── CATEGORY ICONS (Tabler, MIT — inlined) ──────────────────────────────────
+// Mihai ruling 2026-07-31: weapon = rocket · shield = shield · system = cpu chip.
+const CAT_IC = {
+  weapon: '<path d="M4 13a8 8 0 0 1 7 7a6 6 0 0 0 3 -5a9 9 0 0 0 6 -8a3 3 0 0 0 -3 -3a9 9 0 0 0 -8 6a6 6 0 0 0 -5 3"/><path d="M7 14a6 6 0 0 0 -3 6a6 6 0 0 0 6 -3"/><path d="M15 9m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/>',
+  shield: '<path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/>',
+  system: '<path d="M5 5m0 1a1 1 0 0 1 1 -1h12a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-12a1 1 0 0 1 -1 -1z"/><path d="M9 9h6v6h-6z"/><path d="M3 10h2"/><path d="M3 14h2"/><path d="M10 3v2"/><path d="M14 3v2"/><path d="M21 10h-2"/><path d="M21 14h-2"/><path d="M14 21v-2"/><path d="M10 21v-2"/>'
+};
+const catIc = k => CAT_IC[k] ? `<svg class="cat-ic" viewBox="0 0 24 24">${CAT_IC[k]}</svg>` : '';
+// Inline legend tokens for effect text: "the next staged weapon PICON.weapon", "any protocol PICON.any"
+const PICON = { weapon: catIc('weapon'), shield: catIc('shield'), system: catIc('system'),
+                any: catIc('weapon') + catIc('shield') + catIc('system') };
+
 // ─── SINGLE PLAYER-CARD RENDERER ─────────────────────────────────────────────
 // FIXED ANATOMY. Every player card is a plain data object passed through here and
 // renders exactly these six sections, in this order, at these heights — nothing is
@@ -696,7 +713,7 @@ function renderPlayerCard(d) {
   const tagList = [
     { cls: 'tag-' + d.rarity, label: d.rarity },
     { cls: kindCls,           label: d.kind  },
-    { cls: slotCls,           label: d.slot  },
+    { cls: slotCls,           label: catIc(d.slot.toLowerCase()) + d.slot },
     ...(d.elements || []).map(e => ({ cls: elemCls[e], label: cap(e) }))
   ];
 
@@ -1031,7 +1048,7 @@ const CARDS = {
         fits: 'Any weapon protocol',
         heat: `${ladder[0].heat} → 4 with upgrades`,
         conditions: 'Stages ALONE — protocol + this card only. No kill, no read: the whiff is the weakness',
-        effect: `<strong>+5 damage</strong> this activation. <strong>If the target is destroyed by this activation: +1 read</strong> to the weapon protocol staged with it.`,
+        effect: `<strong>+5 damage</strong> this activation. <strong>If the target is destroyed by this activation: +1 read</strong> to the weapon protocol ${PICON.weapon} staged with it.`,
         track: ladder.map(t => `${t.fx} · ${t.heat}h`)
       });
     })(),
@@ -1455,7 +1472,7 @@ const CARDS = {
         section: 'routine', type: 'weapon', element: '', pool: 'game',
         fits: 'All weapon protocols', heat: '2 (T5: 1)',
         conditions: 'Bonus attaches to THE STAGED PROTOCOL only — lasts the rest of the fight, resets between fights',
-        effect: `<strong>This activation's protocol permanently gains +${track[0]} damage for the rest of the fight.</strong> Stacks per play; the protocol's displayed base updates on the spot.`,
+        effect: `<strong>This activation's protocol ${PICON.weapon} permanently gains +${track[0]} damage for the rest of the fight.</strong> Stacks per play; the protocol's displayed base updates on the spot.`,
         track: track.map(v => `+${v}`),
         capstone: { text: `heat 2 → 1` }
       });
@@ -1487,7 +1504,7 @@ const CARDS = {
         name: 'Focus Fire', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: [],
         section: 'routine', type: 'weapon', element: '', pool: 'game',
         fits: 'Any weapon protocol', heat: `${ladder[0].heat} (drops with upgrade)`,
-        effect: `This activation's attacks deal <strong>+5 damage</strong>, and the enemy gains <strong>Target Lock</strong>: your next weapon activation against them also deals <strong>+5</strong>. Persists until consumed · stacks as charges.`,
+        effect: `This activation's attacks deal <strong>+5 damage</strong>, and the enemy gains <strong>Target Lock</strong>: your next weapon ${PICON.weapon} activation against them also deals <strong>+5</strong>. Persists until consumed · stacks as charges.`,
         track: ladder.map(t => `+${t.now} / +${t.now} next · ${t.heat}h`),
         capstone: { text: `+7 now / applies <strong>Target Lock ×2</strong> — the next 2 weapon activations each deal +7` }
       });
@@ -1709,7 +1726,7 @@ const CARDS = {
         section: 'routine', type: 'system', element: '', pool: 'game',
         fits: 'System protocols', heat: `${ladder[0].heat} → 4 with upgrades`,
         conditions: 'Once per fight — pure setup: no damage, no shield, this round gets nothing',
-        effect: `The protocol staged in your <strong>next activation</strong> gains <strong>+1 read</strong> (permanent).`,
+        effect: `The protocol ${PICON.any} staged in your <strong>next activation</strong> gains <strong>+1 read</strong> (permanent).`,
         track: ladder.map(t => `${t.fx} · ${t.heat}h`)
       });
     })()
