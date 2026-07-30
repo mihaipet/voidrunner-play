@@ -931,7 +931,18 @@ const CARDS = {
           <strong>On activation:</strong> next round restore <strong>${floor(base * 0.15)}</strong> shield + <strong>${hullRestore}</strong> hull HP`,
         track: shieldTrack(base)
       });
-    })()
+    })(),
+
+    // PRISM SHIELD (2026-07-31 — the tri-shield merge, the Prism Cannon's twin; opens in design/open.md)
+    renderPlayerCard({
+      name: 'Prism Shield', rarity: 'U', kind: 'Protocol', slot: 'Shield', elements: ['arc','plasma','gamma'],
+      section: 'protocol', type: 'shield', element: 'arc plasma gamma',
+      fits: 'n/a', heat: '1 deploy (proposed)',
+      conditions: 'Never drops — all 3 elemental shields at read 7/7 (21 reads) fuse into this',
+      effect: `Carries <strong>all three shield capstones</strong>: Zero-Cycle · Overfill · Slow Field.<br>
+        <strong>Is all three elements — every elemental attack lands in the resisted lane: 75%.</strong> Kinetic bypass unchanged.<br>
+        Merged deploy: TBD (rec 80)`
+    })
 
   ],
 
