@@ -120,12 +120,13 @@
      height is chosen so no card actually scrolls — overflow is a safety
      valve only. Change --card-h and the fixed section heights together. */
   :root {
-    --card-h:    744px;   /* fixed sections 426 + dividers 85 + padding 38 + effect 190 */
+    /* Re-sized 2026-07-31 (Mihai): track = 5-row table, all text one step larger */
+    --card-h:    836px;   /* fixed sections 522 + dividers 85 + padding 38 + effect 190 */
     --sec-head:   72px;   /* tallest: Moonlit Phase Blade (6 tags → 2 rows) */
-    --sec-stats:  52px;   /* 3 label/value rows */
-    --sec-cond:   68px;   /* tallest: Reinforce (3 wrapped lines) */
-    --sec-track:  88px;   /* tallest: Cleanse (4 wrapped lines) */
-    --sec-cap:   146px;   /* tallest: Plasma Cannon / Scorch (text + 5/5 matrix) */
+    --sec-stats:  64px;   /* 3 label/value rows @ 14px */
+    --sec-cond:   76px;   /* tallest: Reinforce (3 wrapped lines @ 12px) */
+    --sec-track: 152px;   /* 5-tier table, one row per tier */
+    --sec-cap:   158px;   /* tallest: Plasma Cannon / Scorch (text + 5/5 matrix) */
   }
 
   .card {
@@ -145,20 +146,20 @@
   .c-body  { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 
   .sec-label {
-    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
     color: #4a4a60; margin-bottom: 5px;
   }
 
   /* one standard damage-matrix markup, used on every card that has one */
   .mx {
-    display: grid; grid-template-columns: 34px repeat(3, 1fr);
-    gap: 2px 4px; font-size: 11px; margin-bottom: 6px;
+    display: grid; grid-template-columns: 36px repeat(3, 1fr);
+    gap: 2px 4px; font-size: 12px; margin-bottom: 6px;
   }
   .mx-cell   { line-height: 1.4; white-space: nowrap; }
   .mx-col    { color: #6a6a80; text-align: right; }
   .mx-rowlbl { color: #6a6a80; }
   .mx-val    { color: #ffffff; text-align: right; }
-  .mx-note   { font-size: 10px; color: #55556a; margin: -3px 0 6px; }
+  .mx-note   { font-size: 11px; color: #55556a; margin: -3px 0 6px; }
 
   .pool-chip {
     position: absolute; top: 0; right: 12px;
@@ -202,13 +203,18 @@
 
   hr.divider { border: none; border-top: 1px solid #1e1e22; margin: 8px 0; }
 
-  .card-row { display: flex; justify-content: space-between; color: #9090a0; font-size: 13px; }
+  .card-row { display: flex; justify-content: space-between; color: #9090a0; font-size: 14px; }
   .card-row span:last-child { color: #d0d0d8; text-align: right; }
-  .card-effect { color: #c0c0c8; font-size: 13px; line-height: 1.6; }
+  .card-effect { color: #c0c0c8; font-size: 14px; line-height: 1.6; }
   .card-effect strong { color: #ffffff; }
-  .card-upgrade { color: #9090a8; font-size: 11px; line-height: 1.55; border-left: 2px solid #2a2a3a; padding-left: 9px; }
-  .card-upgrade span { color: #7070a0; }
-  .card-conditions { color: #dd7777; font-size: 11px; font-style: italic; line-height: 1.5; }
+  /* Upgrade track — one row per tier (Mihai ruling 2026-07-31: tables, not inline) */
+  .trk { width: 100%; border-collapse: collapse; }
+  .trk td { padding: 3px 6px; border-bottom: 1px solid #1e1e26; font-size: 12.5px; line-height: 1.45; }
+  .trk tr:last-child td { border-bottom: none; }
+  .trk-tier { color: #7070a0; width: 30px; white-space: nowrap; }
+  .trk-val  { color: #b8b8c8; }
+  .trk tr.trk-top .trk-tier, .trk tr.trk-top .trk-val { color: #d8c88a; } /* final tier = the capstone read */
+  .card-conditions { color: #dd7777; font-size: 12px; font-style: italic; line-height: 1.5; }
   .card-na { color: #444455; font-style: italic; font-size: 12px; }
 
   /* ─── ENEMY CARDS ────────────────────────────────────────────────── */
@@ -260,7 +266,7 @@
   .filter-btn[data-value="rare"].active     { background: #1a1000; border-color: #cc8800; color: #ddaa22; }
   .card-5perk { border: 1px solid #252535; border-left: 3px solid #5555a0; padding: 8px 10px; background: #0e0e18; }
   .perk5-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #6060a0; margin-bottom: 4px; }
-  .perk5-body { color: #c0c0c8; font-size: 12px; line-height: 1.55; }
+  .perk5-body { color: #c0c0c8; font-size: 13px; line-height: 1.55; }
   .perk5-body strong { color: #ffffff; }
   .card-5perk .mx { margin-top: 5px; margin-bottom: 0; }
   .card-5perk .mx-note { margin: 2px 0 0; }
@@ -278,6 +284,62 @@
   #clear-filters { width: 100%; }
   #search-box:focus { border-color: #5555a0; }
   #search-box::placeholder { color: #444455; }
+
+  /* ─── CARD FIELDS (the display filter — Mihai 2026-07-31) ──────────────
+     The modal writes hf-<field> classes on <body>; these rules hide the
+     matching pieces on every card. Scoped to #cards-page so the modal's own
+     template samples never hide themselves. */
+  .sw { display: contents; }
+  body.hf-name  #cards-page .card-name  { display: none; }
+  body.hf-tags  #cards-page .card-tags  { display: none; }
+  body.hf-fits  #cards-page .row-fits   { display: none; }
+  body.hf-heat  #cards-page .row-heat   { display: none; }
+  body.hf-drops #cards-page .row-drops  { display: none; }
+  body.hf-cond  #cards-page .sw-cond    { display: none; }
+  body.hf-matrix #cards-page .mx, body.hf-matrix #cards-page .mx-note { display: none; }
+  body.hf-effect #cards-page .card-effect { display: none; }
+  body.hf-track #cards-page .sw-track   { display: none; }
+  body.hf-cap   #cards-page .sw-cap     { display: none; }
+  /* a fully-emptied section disappears whole, divider included */
+  body.hf-name.hf-tags #cards-page .c-head { display: none; }
+  body.hf-fits.hf-heat.hf-drops #cards-page .sw-stats { display: none; }
+  body.hf-matrix.hf-effect #cards-page .sw-body { display: none; }
+  /* effect text hidden + card has no matrix → nothing left, drop the section */
+  body.hf-effect #cards-page .sw-body:not(:has(.mx)) { display: none; }
+  /* with fields hidden, cards shrink to their visible content */
+  body.custom-fields .card   { height: auto; }
+  body.custom-fields .c-sec  { height: auto !important; }
+  body.custom-fields .c-body { flex: 0 0 auto; }
+  #fields-btn.active { background: #1a2040; border-color: #5555a0; color: #9db4ff; }
+
+  #fields-modal { position: fixed; inset: 0; z-index: 100; }
+  #fields-modal[hidden] { display: none; }
+  .fm-backdrop { position: absolute; inset: 0; background: rgba(5,5,10,0.85); }
+  .fm-panel {
+    position: relative; margin: 3vh auto; width: min(780px, 94vw); max-height: 94vh;
+    background: #13131a; border: 1px solid #333344; border-top: 4px solid #5555a0;
+    display: flex; flex-direction: column;
+  }
+  .fm-head { display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 20px; border-bottom: 1px solid #222; }
+  .fm-title { color: #fff; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; }
+  #fm-close { background: none; border: 1px solid #333344; color: #9090a0;
+    font-family: inherit; font-size: 14px; padding: 4px 11px; cursor: pointer; }
+  #fm-close:hover { border-color: #5555a0; color: #c8c8d0; }
+  .fm-hint { color: #7a7a90; font-size: 13px; padding: 12px 20px 0; }
+  .fm-body { overflow-y: auto; padding: 8px 20px 14px; }
+  .fm-row { display: flex; gap: 16px; align-items: flex-start;
+    padding: 11px 8px; border-bottom: 1px solid #1e1e22; cursor: pointer; }
+  .fm-row:last-child { border-bottom: none; }
+  .fm-row:hover { background: #181820; }
+  .fm-row input { width: 19px; height: 19px; margin-top: 1px; accent-color: #5555a0; flex: 0 0 auto; cursor: pointer; }
+  .fm-sample { flex: 1; min-width: 0; }
+  .fm-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: #6a6a80; margin-bottom: 5px; }
+  .fm-foot { display: flex; justify-content: flex-end; gap: 10px;
+    padding: 13px 20px; border-top: 1px solid #222; }
+  .fm-foot .filter-btn { width: auto; padding: 8px 20px; font-size: 13px; }
+  #fm-apply { background: #1a2040; border-color: #5555a0; color: #9db4ff; }
 </style>
 </head>
 <body>
@@ -303,6 +365,11 @@
   <div class="filter-sep"></div>
 
   <span class="fg-cards">
+    <div class="filter-group">
+      <span class="filter-label">Display</span>
+      <button id="fields-btn" class="filter-btn">Card fields…</button>
+    </div>
+    <div class="filter-sep"></div>
     <div class="filter-group">
       <span class="filter-label">Pool</span>
       <button class="filter-btn active" data-filter="pool" data-value="all">All</button>
@@ -405,6 +472,57 @@
   <div class="grid" id="wip"></div>
 </div>
 </div><!-- /cards-page -->
+
+<!-- ─── CARD FIELDS MODAL ─── a full template card, every possible field with a
+     checkbox. Untick → Apply → every card shows only the ticked fields. -->
+<div id="fields-modal" hidden>
+  <div class="fm-backdrop"></div>
+  <div class="fm-panel">
+    <div class="fm-head">
+      <span class="fm-title">Card fields</span>
+      <button id="fm-close" aria-label="Close">✕</button>
+    </div>
+    <div class="fm-hint">Untick what you don't want to see, then Apply. Every card keeps only the ticked fields. Your selection is remembered.</div>
+    <div class="fm-body">
+      <label class="fm-row"><input type="checkbox" data-field="name" checked>
+        <div class="fm-sample"><div class="fm-lbl">Name</div>
+          <div class="card-name">Card Name</div></div></label>
+      <label class="fm-row"><input type="checkbox" data-field="tags" checked>
+        <div class="fm-sample"><div class="fm-lbl">Tags — rarity · kind · slot · element</div>
+          <div class="card-tags"><span class="tag tag-R">R</span><span class="tag tag-type">Protocol</span><span class="tag tag-type">Weapon</span><span class="tag tag-plasma">Plasma</span></div></div></label>
+      <label class="fm-row"><input type="checkbox" data-field="fits" checked>
+        <div class="fm-sample"><div class="fm-lbl">Stats — fits</div>
+          <div class="card-row"><span>Fits</span><span>Any weapon protocol</span></div></div></label>
+      <label class="fm-row"><input type="checkbox" data-field="heat" checked>
+        <div class="fm-sample"><div class="fm-lbl">Stats — heat cost</div>
+          <div class="card-row"><span>Heat cost</span><span>2</span></div></div></label>
+      <label class="fm-row"><input type="checkbox" data-field="drops" checked>
+        <div class="fm-sample"><div class="fm-lbl">Stats — drops from</div>
+          <div class="card-row"><span>Drops from</span><span class="card-na">n/a</span></div></div></label>
+      <label class="fm-row"><input type="checkbox" data-field="cond" checked>
+        <div class="fm-sample"><div class="fm-lbl">Conditions</div>
+          <div class="card-conditions">⚠ Once per fight · stages alone</div></div></label>
+      <label class="fm-row"><input type="checkbox" data-field="matrix" checked>
+        <div class="fm-sample"><div class="fm-lbl">Damage matrix</div>
+          <div class="mx"><div class="mx-cell mx-rowlbl"></div><div class="mx-cell mx-col">vs Plasma</div><div class="mx-cell mx-col">vs Gamma</div><div class="mx-cell mx-col">vs Arc</div>
+          <div class="mx-cell mx-rowlbl">base</div><div class="mx-cell mx-val">15</div><div class="mx-cell mx-val">20</div><div class="mx-cell mx-val">25</div></div></div></label>
+      <label class="fm-row"><input type="checkbox" data-field="effect" checked>
+        <div class="fm-sample"><div class="fm-lbl">Effect text</div>
+          <div class="card-effect">Attacks this activation gain <strong>+2</strong> damage.</div></div></label>
+      <label class="fm-row"><input type="checkbox" data-field="track" checked>
+        <div class="fm-sample"><div class="fm-lbl">Upgrade track</div>
+          <table class="trk"><tr><td class="trk-tier">v1</td><td class="trk-val">+2 · h2</td></tr><tr><td class="trk-tier">v2</td><td class="trk-val">+3 · h2</td></tr><tr class="trk-top"><td class="trk-tier">v3</td><td class="trk-val">+4 · h1</td></tr></table></div></label>
+      <label class="fm-row"><input type="checkbox" data-field="cap" checked>
+        <div class="fm-sample"><div class="fm-lbl">Capstone</div>
+          <div class="card-5perk"><div class="perk5-label">5/5 — Overdrive</div>
+          <div class="perk5-body">The top-tier named special.</div></div></div></label>
+    </div>
+    <div class="fm-foot">
+      <button id="fm-reset" class="filter-btn">Show everything</button>
+      <button id="fm-apply" class="filter-btn">Apply</button>
+    </div>
+  </div>
+</div>
 
 <div id="enemies-page" hidden>
   <h1>Voidrunner — Enemies</h1>
@@ -718,8 +836,9 @@ function renderPlayerCard(d) {
   ];
 
   // 2 — STATS: the same three rows, same order, on every card.
-  const stats = [['Fits', d.fits], ['Heat cost', d.heat], ['Drops from', null]]
-    .map(([l, v]) => `<div class="card-row"><span>${l}</span><span>${v || NA}</span></div>`).join('');
+  // Each row carries a field class so the Card-fields modal can toggle it.
+  const stats = [['Fits', d.fits, 'fits'], ['Heat cost', d.heat, 'heat'], ['Drops from', null, 'drops']]
+    .map(([l, v, f]) => `<div class="card-row row-${f}"><span>${l}</span><span>${v || NA}</span></div>`).join('');
 
   // 3 — CONDITIONS
   const condList = d.conditions ? (Array.isArray(d.conditions) ? d.conditions : [d.conditions]) : [];
@@ -730,10 +849,13 @@ function renderPlayerCard(d) {
   // 4 — EFFECT (matrix first, then rules text)
   const effect = (d.matrix ? matrixBlock(d.matrix) : '') + `<div class="card-effect">${d.effect}</div>`;
 
-  // 5 — UPGRADE TRACK: one format everywhere, denominator = number of tiers.
+  // 5 — UPGRADE TRACK: one row per tier (v1…vN), final tier tinted gold —
+  // it's the capstone read (Mihai ruling 2026-07-31: tables, not inline text).
   const n = (d.track || []).length;
   const track = n
-    ? `<div class="card-upgrade">${d.track.map((v, i) => `<span>${i + 1}/${n}</span> ${v}`).join(' · ')}</div>`
+    ? `<table class="trk">${d.track.map((v, i) =>
+        `<tr${i === n - 1 ? ' class="trk-top"' : ''}><td class="trk-tier">v${i + 1}</td><td class="trk-val">${v}</td></tr>`
+      ).join('')}</table>`
     : NA;
 
   // 6 — CAPSTONE: one standard box style.
@@ -744,21 +866,18 @@ function renderPlayerCard(d) {
       + `<div class="perk5-body">${cs.text}</div>${cs.matrix ? matrixBlock(cs.matrix) : ''}</div>`
     : NA;
 
+  // Each section sits in a display:contents wrapper (.sw-*) carrying its own
+  // divider, so the Card-fields modal can hide a section + its divider as one.
   const content = `
       <div class="c-sec c-head">
         <div class="card-name">${d.name}</div>
         <div class="card-tags">${tags(...tagList)}</div>
       </div>
-      ${divider()}
-      <div class="c-sec c-stats">${stats}</div>
-      ${divider()}
-      <div class="c-sec c-cond">${secLabel('Conditions')}${cond}</div>
-      ${divider()}
-      <div class="c-sec c-body">${secLabel('Effect')}${effect}</div>
-      ${divider()}
-      <div class="c-sec c-track">${secLabel('Upgrade track')}${track}</div>
-      ${divider()}
-      <div class="c-sec c-cap">${secLabel('Capstone')}${capstone}</div>
+      <div class="sw sw-stats">${divider()}<div class="c-sec c-stats">${stats}</div></div>
+      <div class="sw sw-cond">${divider()}<div class="c-sec c-cond">${secLabel('Conditions')}${cond}</div></div>
+      <div class="sw sw-body">${divider()}<div class="c-sec c-body">${secLabel('Effect')}${effect}</div></div>
+      <div class="sw sw-track">${divider()}<div class="c-sec c-track">${secLabel('Upgrade track')}${track}</div></div>
+      <div class="sw sw-cap">${divider()}<div class="c-sec c-cap">${secLabel('Capstone')}${capstone}</div></div>
   `;
   return card(d.rarity, d.wip ? ' wip' : '', content, {
     section: d.section, type: d.type, element: d.element, pool: d.pool
@@ -860,8 +979,8 @@ const CARDS = {
       section: 'protocol', type: 'weapon', element: 'arc plasma gamma',
       fits: 'Phase Blade', heat: 'TBD',
       conditions: 'No upgrades · Compatible with Moonfall only',
-      effect: `Fires a beam of phase energy. Deals damage at <strong>125%</strong> vs any energy shield.<br>
-        Base damage: TBD`
+      effect: `<strong>TRI-ELEMENT</strong> — hits as Arc + Plasma + Gamma at once: every elemental shield is in its vulnerable lane, always <strong>125%</strong>.<br>
+        Fires a beam of phase energy. Base damage: TBD`
     }),
 
     // PRISM CANNON (2026-07-31 — the tri-cannon merge easter egg, named by Mihai; opens in design/open.md)
@@ -870,8 +989,8 @@ const CARDS = {
       section: 'protocol', type: 'weapon', element: 'arc plasma gamma',
       fits: 'n/a', heat: '2 (proposed)',
       conditions: 'Never drops — all 3 elemental cannons at read 7/7 (21 reads) fuse into this',
-      effect: `Carries <strong>all three capstones</strong>: Twin Discharge · Burn-Through · Decay Field.<br>
-        <strong>Hits as all three elements — always the vulnerable lane: 125%</strong> vs any elemental shield.<br>
+      effect: `<strong>TRI-ELEMENT</strong> — hits as Arc + Plasma + Gamma at once: every elemental shield is in its vulnerable lane, always <strong>125%</strong>.<br>
+        Carries <strong>all three capstones</strong>: Twin Discharge · Burn-Through · Decay Field.<br>
         Merged base: TBD (rec 22)`
     })
 
@@ -1064,6 +1183,25 @@ const CARDS = {
       });
     })(),
 
+    // SYNAPTIC LINK
+    (() => {
+      const ladder = [
+        { fx: '+1/lvl · print 1', heat: 3 },
+        { fx: '+1/lvl · print 2', heat: 2 },
+        { fx: '+2/lvl · print 2', heat: 2 },
+        { fx: '+2/lvl · print 3', heat: 2 },
+      ];
+      return renderPlayerCard({
+        name: 'Synaptic Link', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: [],
+        section: 'routine', type: 'weapon', element: '', pool: 'game',
+        fits: 'Any weapon protocol',
+        heat: `${ladder[0].heat} → 2 with upgrades`,
+        conditions: 'Staged cards don’t count — the second routine slot works against it. Weakest with a level-1 deck',
+        effect: `Attacks this activation <strong>+1 damage per LEVEL of routines in your hand</strong>. Then <strong>discard your hand</strong> and <strong>print 1</strong>.`,
+        track: ladder.map(t => `${t.fx} · ${t.heat}h`)
+      });
+    })(),
+
     // HEAVY BORE
     (() => {
       const track = [10,11,13,15,18];
@@ -1178,7 +1316,7 @@ const CARDS = {
       const tiers = [50,75,100];
       return renderPlayerCard({
         name: 'Meltdown', rarity: 'E', kind: 'Routine', slot: 'Weapon', elements: ['plasma'],
-        section: 'routine', type: 'weapon', element: 'plasma',
+        section: 'routine', type: 'weapon', element: 'plasma', pool: 'out',
         fits: 'Plasma Cannon', heat: '1',
         effect: `<strong>${tiers[0]}%</strong> of damage dealt permanently reduces enemy max shield HP`,
         track: tiers.map(v => `${v}%`),
@@ -1376,8 +1514,9 @@ const CARDS = {
       const track = [20,16,12];
       return renderPlayerCard({
         name: 'Phase Shift', rarity: 'E', kind: 'Routine', slot: 'Shield', elements: [],
-        section: 'routine', type: 'shield', element: '',
+        section: 'routine', type: 'shield', element: '', pool: 'game',
         fits: 'All shield protocols', heat: '4',
+        conditions: 'The designed jackpot — sub-threshold hits pass through; collapses after one trigger',
         effect: `Next incoming attack this round is <strong>negated entirely</strong> if it exceeds the threshold. Small hits pass through.`,
         track: track.map(v => `&gt;${v} dmg`),
         capstone: { text: `+deal 15 dmg back to attacker on trigger` }
@@ -1754,6 +1893,30 @@ const CARDS = {
         effect: `The protocol ${PICON.any} staged in your <strong>next activation</strong> gains <strong>+1 read</strong> (permanent).`,
         track: ladder.map(t => `${t.fx} · ${t.heat}h`)
       });
+    })(),
+
+    // CORE DUMP (name proposed — Mihai's exhaust Epic, 2026-07-31 second sitting)
+    (() => {
+      return renderPlayerCard({
+        name: 'Flush', rarity: 'E', kind: 'Routine', slot: 'System', elements: [],
+        section: 'routine', type: 'system', element: '', pool: 'game',
+        fits: 'System protocols', heat: '0',
+        conditions: 'Scrambles on play — once per fight',
+        effect: `<strong>Full heat release</strong> — vent ALL heat. Then <strong>2 random cards in your hand cost +1 heat</strong> until played.`,
+        track: ['full vent · 2 cards +1 heat', 'full vent · 1 card +1 heat', 'full vent · 1 card +1 · gains CACHED (stays in hand on Vent)'],
+      });
+    })(),
+
+    // OVERCLOCK (from the effect bank 2026-07-25 — the Heat Inversion's flagship)
+    (() => {
+      return renderPlayerCard({
+        name: 'Overclock', rarity: 'E', kind: 'Routine', slot: 'System', elements: [],
+        section: 'routine', type: 'system', element: '', pool: 'game',
+        fits: 'System protocols', heat: '1 (T3: 0)',
+        conditions: 'The thermal hangover: next round starts at +1 heat',
+        effect: `This round your <strong>heat cap +2</strong> — the sanctioned big turn: raise the ceiling, never gain resource.`,
+        track: ['cap +2 · h1', 'cap +3 · h1', 'cap +3 · h0'],
+      });
     })()
 
   ],
@@ -1881,6 +2044,51 @@ document.getElementById('clear-filters').addEventListener('click', () => {
   applyFilters();
 });
 
+// ─── CARD FIELDS MODAL ────────────────────────────────────────────────────────
+// Body classes hf-<field> hide pieces of every card (CSS above); the selection
+// persists in localStorage so the view survives a reload.
+
+const FIELD_KEYS = ['name','tags','fits','heat','drops','cond','matrix','effect','track','cap'];
+
+function applyFieldPrefs(prefs) {
+  FIELD_KEYS.forEach(f => document.body.classList.toggle('hf-' + f, prefs[f] === false));
+  const anyHidden = FIELD_KEYS.some(f => prefs[f] === false);
+  document.body.classList.toggle('custom-fields', anyHidden);
+  document.getElementById('fields-btn').classList.toggle('active', anyHidden);
+}
+
+let fieldPrefs = {};
+try { fieldPrefs = JSON.parse(localStorage.getItem('viewer-fields') || '{}'); } catch { fieldPrefs = {}; }
+applyFieldPrefs(fieldPrefs);
+
+const fieldsModal = document.getElementById('fields-modal');
+
+document.getElementById('fields-btn').addEventListener('click', () => {
+  fieldsModal.querySelectorAll('input[data-field]').forEach(cb => {
+    cb.checked = fieldPrefs[cb.dataset.field] !== false;
+  });
+  fieldsModal.hidden = false;
+});
+
+function closeFieldsModal() { fieldsModal.hidden = true; }
+document.getElementById('fm-close').addEventListener('click', closeFieldsModal);
+fieldsModal.querySelector('.fm-backdrop').addEventListener('click', closeFieldsModal);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !fieldsModal.hidden) closeFieldsModal(); });
+
+document.getElementById('fm-apply').addEventListener('click', () => {
+  fieldPrefs = {};
+  fieldsModal.querySelectorAll('input[data-field]').forEach(cb => {
+    fieldPrefs[cb.dataset.field] = cb.checked;
+  });
+  localStorage.setItem('viewer-fields', JSON.stringify(fieldPrefs));
+  applyFieldPrefs(fieldPrefs);
+  closeFieldsModal();
+});
+
+document.getElementById('fm-reset').addEventListener('click', () => {
+  fieldsModal.querySelectorAll('input[data-field]').forEach(cb => { cb.checked = true; });
+});
+
 // ─── SIDEBAR COLLAPSE ─────────────────────────────────────────────────────────
 
 document.getElementById('nav-toggle').addEventListener('click', () => {
@@ -1916,7 +2124,7 @@ function render() {
   const total   = document.querySelectorAll('#cards-page .card').length;
   const inGame  = document.querySelectorAll('#cards-page .card[data-pool="game"]').length;
   const out     = document.querySelectorAll('#cards-page .card[data-pool="out"]').length;
-  metaEl.dataset.base = `Card rework — last updated: 2026-07-26 &nbsp;·&nbsp; ${total} cards &nbsp;·&nbsp; `
+  metaEl.dataset.base = `Card rework — last updated: 2026-07-31 &nbsp;·&nbsp; ${total} cards &nbsp;·&nbsp; `
     + `<span style="color:#7ddf8a;">In game: ${inGame}</span> &nbsp;·&nbsp; `
     + `<span style="color:#c9a44a;">Unassigned: ${total - inGame - out}</span> &nbsp;·&nbsp; `
     + `<span style="color:#d97b7b;">Out: ${out}</span>`;
