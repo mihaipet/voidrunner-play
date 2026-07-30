@@ -169,9 +169,11 @@
   .pool-chip.out { background: #331616; color: #d97b7b; border-color: #5c2e2e; }
   .card[data-pool="out"] { opacity: 0.55; }
 
-  .card.ST  { border-top-color: #5a5a6e; }
-  .card.C   { border-top-color: #9a9aa8; }
-  .card.R   { border-top-color: #3a6aaa; }
+  /* Rarity colors — Mihai ruling 2026-07-31: ST white · C blue · R green (emerald,
+     deliberately distinct from Gamma's lime) · E purple · U gold */
+  .card.ST  { border-top-color: #e8e8f0; }
+  .card.C   { border-top-color: #3a6aaa; }
+  .card.R   { border-top-color: #2aa864; }
   .card.E   { border-top-color: #8a3aaa; }
   .card.U   { border-top-color: #cc8800; }
   .card.wip { border-style: dashed; border-top-style: dashed; opacity: 0.6; }
@@ -181,9 +183,9 @@
 
   .tag { font-size: 11px; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; letter-spacing: 0.08em; }
   .tag-type    { background: #1e1e2e; color: #a0a0c0; }
-  .tag-ST      { background: #2a2a3a; color: #aaaacc; }
-  .tag-C       { background: #26262e; color: #c8c8d4; }
-  .tag-R       { background: #1a2040; color: #6699dd; }
+  .tag-ST      { background: #2a2a3a; color: #e8e8f0; }
+  .tag-C       { background: #1a2040; color: #6699dd; }
+  .tag-R       { background: #12301f; color: #4ecc88; }
   .tag-E       { background: #2a1a3a; color: #bb77dd; }
   .tag-U       { background: #2e2000; color: #ddaa22; }
   .tag-kinetic { background: #2e1e10; color: #dd9955; }
@@ -1000,6 +1002,25 @@ const CARDS = {
         fits: 'Any weapon protocol', heat: `${ladder[0].heat} (drops with upgrade)`,
         conditions: 'Scales with MISSING shield only — +0 at full shields, +0 vs shieldless enemies',
         effect: `This activation's attacks deal <strong>+1 damage per 10 shield the enemy is missing</strong> (live at fire time, rounded down).`,
+        track: ladder.map(t => `${t.fx} · ${t.heat}h`)
+      });
+    })(),
+
+    // QUANTIC READ (new 2026-07-31 — the kill-credit read source, read-economy sitting)
+    (() => {
+      const ladder = [
+        { fx: '+5',  heat: 6 },
+        { fx: '+6',  heat: 6 },
+        { fx: '+8',  heat: 5 },
+        { fx: '+10', heat: 4 },
+      ];
+      return renderPlayerCard({
+        name: 'Quantic Read', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: [],
+        section: 'routine', type: 'weapon', element: '', pool: 'game',
+        fits: 'Any weapon protocol',
+        heat: `${ladder[0].heat} → 4 with upgrades`,
+        conditions: 'Stages ALONE — protocol + this card only. No kill, no read: the whiff is the weakness',
+        effect: `<strong>+5 damage</strong> this activation. <strong>If the target is destroyed by this activation: +1 read</strong> to an owned weapon protocol.`,
         track: ladder.map(t => `${t.fx} · ${t.heat}h`)
       });
     })(),
