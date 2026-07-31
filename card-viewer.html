@@ -554,7 +554,7 @@ const RPS = {
   kinetic: { plasma: 1.00, gamma:  1.00, arc:    1.00 }
 };
 
-const CANNON_UPGRADES = [[1,26],[2,28],[3,30],[4,32],[5,35]];
+const CANNON_UPGRADES = [[1,18],[2,20],[3,22],[4,24],[5,24]]; // ship-100 rebase + flat +2 read steps (Mihai 2026-07-31); read 5 spends its step on the capstone
 
 // Re-ruled 2026-07-25 (card rework session, new HP scale): KC 10/20, 5/5 ignores shields;
 // Veil deploy 50, flat restore ladder, 5/5 = free deploy. Source: design files + game-pool.md.
@@ -905,19 +905,15 @@ const CARDS = {
       const max5 = CANNON_UPGRADES[4][1];
       const chainPct = 25;
       return renderPlayerCard({
-        name: 'Arc Cannon', rarity: 'C', kind: 'Protocol', slot: 'Weapon', elements: ['arc'],
+        name: 'Arc Cannon', rarity: 'C', kind: 'Protocol', slot: 'Weapon', pool: 'game', elements: ['arc'],
         section: 'protocol', type: 'weapon', element: 'arc',
         fits: 'Cannon', heat: '2',
         matrix: cannonMatrix('arc', base, max5),
         effect: `<strong>${base}→${max5}</strong> arc damage`,
         track: CANNON_UPGRADES.map(([, dmg]) => dmg),
         capstone: {
-          label: 'Arc Chain',
-          text: `Two chain arcs, each <strong>${chainPct}%</strong> of activation damage`,
-          matrix: {
-            rows: [['5/5', MATRIX_COLS.map(s => '+' + floor(rps(max5, 'arc', s) * chainPct * 2 / 100))]],
-            note: 'both chains'
-          }
+          label: 'Twin Discharge',
+          text: `Fires <strong>TWICE</strong> — ${max5}, then ${Math.floor(max5/2)} (second discharge at half). Every routine rider fires with both.`
         }
       });
     })(),
@@ -927,16 +923,15 @@ const CARDS = {
       const base = CANNON_UPGRADES[0][1];
       const max  = CANNON_UPGRADES[4][1];
       return renderPlayerCard({
-        name: 'Plasma Cannon', rarity: 'C', kind: 'Protocol', slot: 'Weapon', elements: ['plasma'],
+        name: 'Plasma Cannon', rarity: 'C', kind: 'Protocol', slot: 'Weapon', pool: 'game', elements: ['plasma'],
         section: 'protocol', type: 'weapon', element: 'plasma',
         fits: 'Cannon', heat: '2',
         matrix: cannonMatrix('plasma', base, max),
         effect: `<strong>${base}→${max}</strong> plasma damage`,
         track: CANNON_UPGRADES.map(([, dmg]) => dmg),
         capstone: {
-          label: 'Scorch',
-          text: `<strong>50%</strong> of damage dealt burns at round start, before anyone acts. Stacks per activation.`,
-          matrix: { rows: [['5/5', MATRIX_COLS.map(s => floor(rps(max, 'plasma', s) * 50 / 100))]] }
+          label: 'Burn-Through',
+          text: `Damage past the shield crosses to hull at <strong>FULL value</strong> — untaxed by an unfavourable RPS lane (never reduces a favourable one).`
         }
       });
     })(),
@@ -946,13 +941,13 @@ const CARDS = {
       const base = CANNON_UPGRADES[0][1];
       const max5 = CANNON_UPGRADES[4][1];
       return renderPlayerCard({
-        name: 'Gamma Cannon', rarity: 'C', kind: 'Protocol', slot: 'Weapon', elements: ['gamma'],
+        name: 'Gamma Cannon', rarity: 'C', kind: 'Protocol', slot: 'Weapon', pool: 'game', elements: ['gamma'],
         section: 'protocol', type: 'weapon', element: 'gamma',
         fits: 'Cannon', heat: '2',
         matrix: cannonMatrix('gamma', base, max5),
         effect: `<strong>${base}→${max5}</strong> gamma damage`,
         track: CANNON_UPGRADES.map(([, dmg]) => dmg),
-        capstone: { label: 'Scatter Field', text: `Enemy attacks deal <strong>25%</strong> less damage this turn` }
+        capstone: { label: 'Decay Field', text: `A shield hit here <strong>cannot restore or repair next round</strong>, and the shield loses <strong>5 MAX pool</strong> per hit.` }
       });
     })(),
 
