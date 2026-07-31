@@ -412,6 +412,12 @@
     </div>
     <div class="filter-sep"></div>
     <div class="filter-group">
+      <span class="filter-label">Family</span>
+      <button class="filter-btn active" data-filter="family" data-value="all">All</button>
+      <button class="filter-btn" data-filter="family" data-value="mass-accelerator">Mass Accelerator</button>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
       <span class="filter-label">Rarity</span>
       <button class="filter-btn active" data-filter="rarity" data-value="all">All</button>
       <button class="filter-btn" data-filter="rarity" data-value="ST">ST</button>
@@ -600,9 +606,10 @@ function card(rarity, extra, content, opts = {}) {
   // Card-rework session (2026-07-25): every card starts UNASSIGNED; cards enter the
   // game pool one by one as Mihai rules them in. Source of truth: design/cards/game-pool.md.
   const pool = opts.pool    || 'unassigned';
+  const fam  = opts.family  || '';
   const chip = pool === 'game' ? '<span class="pool-chip">In Game</span>'
              : pool === 'out'  ? '<span class="pool-chip out">Out</span>' : '';
-  return `<div class="card ${rarity}${extra}" data-section="${sec}" data-type="${type}" data-element="${elem}" data-rarity="${rarity}" data-pool="${pool}">${chip}${content}</div>`;
+  return `<div class="card ${rarity}${extra}" data-section="${sec}" data-type="${type}" data-element="${elem}" data-rarity="${rarity}" data-pool="${pool}" data-family="${fam}">${chip}${content}</div>`;
 }
 
 function wip(rarity, content, opts = {}) {
@@ -880,7 +887,7 @@ function renderPlayerCard(d) {
       <div class="sw sw-cap">${divider()}<div class="c-sec c-cap">${secLabel('Capstone')}${capstone}</div></div>
   `;
   return card(d.rarity, d.wip ? ' wip' : '', content, {
-    section: d.section, type: d.type, element: d.element, pool: d.pool
+    section: d.section, type: d.type, element: d.element, pool: d.pool, family: d.family
   });
 }
 
@@ -892,7 +899,7 @@ const CARDS = {
     // KINETIC CORE
     renderPlayerCard({
       name: 'Kinetic Core', rarity: 'ST', kind: 'Protocol', slot: 'Weapon', elements: ['kinetic'],
-      section: 'protocol', type: 'weapon', element: 'kinetic', pool: 'game',
+      section: 'protocol', type: 'weapon', element: 'kinetic', pool: 'game', family: 'mass-accelerator',
       fits: 'Mass Accelerator', heat: '2',
       effect: `Shield up: <strong>${KINETIC_CORE.shieldUpDmg}</strong> hull dmg<br>
         Shield down: <strong>${KINETIC_CORE.shieldDownDmg}</strong> hull dmg`,
@@ -951,20 +958,23 @@ const CARDS = {
       });
     })(),
 
-    // KINETIC SLUG
+    // KINETIC SLUG — RULED IN 2026-07-31 (fifth sitting): cannon-grammar chassis
+    // (reads climb 18→24 like the three cannons, read 5 = capstone), penetration
+    // is the identity. Mirrors data/cards.json.
     (() => {
-      const SLUG_TRK = [[1,24],[2,25],[3,27],[4,28],[5,30]];
+      const SLUG_TRK = [[1,18],[2,20],[3,22],[4,24],[5,24]];
       const pen      = 65, penMax = 85;
-      const penOf    = (pip) => pip < 5 ? pen : penMax;
+      const penOf    = (read) => read < 5 ? pen : penMax;
       const up       = (dmg, p) => floor(dmg * p / 100);
       return renderPlayerCard({
-        name: 'Kinetic Slug', rarity: 'C', kind: 'Protocol', slot: 'Weapon', elements: ['kinetic'],
-        section: 'protocol', type: 'weapon', element: 'kinetic',
+        name: 'Kinetic Slug', rarity: 'C', kind: 'Protocol', slot: 'Weapon', pool: 'game', elements: ['kinetic'],
+        section: 'protocol', type: 'weapon', element: 'kinetic', family: 'mass-accelerator',
         fits: 'Mass Accelerator', heat: '2',
-        effect: `<strong>${SLUG_TRK[0][1]}→${SLUG_TRK[4][1]}</strong> kinetic damage · <strong>${pen}%</strong> penetration<br>
-          Shield up: <strong>${up(SLUG_TRK[0][1], pen)}</strong> hull dmg &nbsp;·&nbsp; Shield down: <strong>${SLUG_TRK[0][1]}</strong> hull dmg`,
-        track: SLUG_TRK.map(([pip, dmg]) => `${up(dmg, penOf(pip))}/${dmg}`),
-        capstone: { text: `pen <strong>${penMax}%</strong>` }
+        effect: `<strong>${SLUG_TRK[0][1]}→${SLUG_TRK[3][1]}</strong> kinetic damage · <strong>${pen}%</strong> penetration<br>
+          Shield up: <strong>${up(SLUG_TRK[0][1], pen)}</strong> hull dmg &nbsp;·&nbsp; Shield down: <strong>${SLUG_TRK[0][1]}</strong> hull dmg<br>
+          <em>vs Kinetic Core (10 up / 20 down): better through shields, never the bigger closer.</em>`,
+        track: SLUG_TRK.map(([read, dmg]) => `${up(dmg, penOf(read))} up / ${dmg} down`),
+        capstone: { label: 'Full Bore', text: `Penetration jumps to <strong>${penMax}%</strong> — <strong>${up(SLUG_TRK[4][1], penMax)} up / ${SLUG_TRK[4][1]} down</strong>. The shield nearly stops mattering.` }
       });
     })(),
 
@@ -1004,46 +1014,51 @@ const CARDS = {
       capstone: { label: 'Free deploy', text: MORPHIC_VEIL.upgrade }
     }),
 
-    // ARC SHIELD
+    // ARC SHIELD — DROP-ENABLED 2026-07-31 (ninth sitting): simple ruled chassis so
+    // the reward band's shield slot fires. The ruled capstone (Zero-Cycle) is OWED here.
     (() => {
-      const base = 105;
+      const pools = [40,45,50,55,60];
       return renderPlayerCard({
-        name: 'Arc Shield', rarity: 'C', kind: 'Protocol', slot: 'Shield', elements: ['arc'],
+        name: 'Arc Shield', rarity: 'C', kind: 'Protocol', slot: 'Shield', pool: 'game', elements: ['arc'],
         section: 'protocol', type: 'shield', element: 'arc',
-        heat: '1 (prep) · 2 (reactivate)',
-        effect: `Deploy: <strong>${base}</strong> HP &nbsp;·&nbsp;
-          Reactivate: <strong>${floor(base * SHIELD_COMMON.react[0] / 100)}</strong> HP (${SHIELD_COMMON.react[0]}%)<br>
-          <strong>On activation:</strong> all weapons this turn +<strong>25%</strong> damage`,
-        track: shieldTrack(base)
+        fits: 'Shield slot', heat: '1 (deploy & restore)',
+        conditions: 'Capstone OWED — Zero-Cycle as ruled BENT vs GT-12 (free restores are illegal, the loop-gate stays); redesign lands at the shield sitting',
+        effect: `Deploys <strong>${pools[0]}→${pools[4]}</strong> ARC shield by read · restore <strong>5</strong> per activation.<br>
+          Arc fire hits it weakly (<strong>−25%</strong>); gamma fire hits it hard (<strong>+25%</strong>).<br>
+          <em>vs the Veil (50, no element): more pool if you dodge its weakness — less if you fly into it.</em>`,
+        track: pools.map(v => `deploy ${v}`)
       });
     })(),
 
-    // PLASMA SHIELD
+    // PLASMA SHIELD — DROP-ENABLED 2026-07-31 (ninth sitting): simple ruled chassis so
+    // the reward band's shield slot fires. The ruled capstone (Overfill) is OWED here.
     (() => {
-      const base = 120;
+      const pools = [40,45,50,55,60];
       return renderPlayerCard({
-        name: 'Plasma Shield', rarity: 'C', kind: 'Protocol', slot: 'Shield', elements: ['plasma'],
+        name: 'Plasma Shield', rarity: 'C', kind: 'Protocol', slot: 'Shield', pool: 'game', elements: ['plasma'],
         section: 'protocol', type: 'shield', element: 'plasma',
-        heat: '1 (prep) · 2 (reactivate)',
-        effect: `Deploy: <strong>${base}</strong> HP &nbsp;·&nbsp;
-          Reactivate: <strong>${floor(base * SHIELD_COMMON.react[0] / 100)}</strong> HP (${SHIELD_COMMON.react[0]}%)<br>
-          <strong>On activation:</strong> all weapons cost <strong>−1 heat</strong> this round`,
-        track: shieldTrack(base)
+        fits: 'Shield slot', heat: '1 (deploy & restore)',
+        conditions: 'Capstone OWED — Overfill (ruled at the protocol-block sitting) lands at the shield sitting',
+        effect: `Deploys <strong>${pools[0]}→${pools[4]}</strong> PLASMA shield by read · restore <strong>5</strong> per activation.<br>
+          Plasma fire hits it weakly (<strong>−25%</strong>); arc fire hits it hard (<strong>+25%</strong>).<br>
+          <em>vs the Veil (50, no element): more pool if you dodge its weakness — less if you fly into it.</em>`,
+        track: pools.map(v => `deploy ${v}`)
       });
     })(),
 
-    // GAMMA SHIELD
+    // GAMMA SHIELD — DROP-ENABLED 2026-07-31 (ninth sitting): simple ruled chassis so
+    // the reward band's shield slot fires. The ruled capstone (Slow Field) is OWED here.
     (() => {
-      const base = 135;
-      const hullRestore = floor(PLAYER_HULL * 0.05);
+      const pools = [40,45,50,55,60];
       return renderPlayerCard({
-        name: 'Gamma Shield', rarity: 'C', kind: 'Protocol', slot: 'Shield', elements: ['gamma'],
+        name: 'Gamma Shield', rarity: 'C', kind: 'Protocol', slot: 'Shield', pool: 'game', elements: ['gamma'],
         section: 'protocol', type: 'shield', element: 'gamma',
-        heat: '1 (prep) · 2 (reactivate)',
-        effect: `Deploy: <strong>${base}</strong> HP &nbsp;·&nbsp;
-          Reactivate: <strong>${floor(base * SHIELD_COMMON.react[0] / 100)}</strong> HP (${SHIELD_COMMON.react[0]}%)<br>
-          <strong>On activation:</strong> next round restore <strong>${floor(base * 0.15)}</strong> shield + <strong>${hullRestore}</strong> hull HP`,
-        track: shieldTrack(base)
+        fits: 'Shield slot', heat: '1 (deploy & restore)',
+        conditions: 'Capstone OWED — Slow Field (ruled at the protocol-block sitting) lands at the shield sitting',
+        effect: `Deploys <strong>${pools[0]}→${pools[4]}</strong> GAMMA shield by read · restore <strong>5</strong> per activation.<br>
+          Gamma fire hits it weakly (<strong>−25%</strong>); plasma fire hits it hard (<strong>+25%</strong>).<br>
+          <em>vs the Veil (50, no element): more pool if you dodge its weakness — less if you fly into it.</em>`,
+        track: pools.map(v => `deploy ${v}`)
       });
     })(),
 
@@ -1197,14 +1212,16 @@ const CARDS = {
       });
     })(),
 
-    // HEAVY BORE
+    // HEAVY BORE — RULED IN 2026-07-31 (fifth sitting): un-gated per category law,
+    // +3→8 @1h, MA affinity = the flat ignores penetration. Mirrors data/cards.json.
     (() => {
-      const track = [10,11,13,15,18];
+      const track = [3,4,5,6,8];
       return renderPlayerCard({
-        name: 'Heavy Bore', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: ['kinetic'],
-        section: 'routine', type: 'weapon', element: 'kinetic',
-        fits: 'Mass Accelerator', heat: '1',
-        effect: `<strong>+${track[0]}</strong> kinetic damage this activation`,
+        name: 'Heavy Bore', rarity: 'C', kind: 'Routine', slot: 'Weapon', pool: 'game', elements: [],
+        section: 'routine', type: 'weapon', element: '', family: 'mass-accelerator',
+        fits: 'All weapon protocols', heat: '1',
+        effect: `<strong>+${track[0]}</strong> damage on this activation's attacks.<br>
+          <em>MASS ACCELERATOR AFFINITY: on the Kinetic Core or Kinetic Slug the bonus is NOT reduced by penetration — the full value reaches the hull, shield up or down.</em>`,
         track: track.map(v => `+${v}`)
       });
     })(),
@@ -1214,9 +1231,9 @@ const CARDS = {
       const track = [50,55,60,65,75];
       return renderPlayerCard({
         name: 'Burst Loader', rarity: 'C', kind: 'Routine', slot: 'Weapon', pool: 'game', elements: [],
-        section: 'routine', type: 'weapon', element: '',
+        section: 'routine', type: 'weapon', element: '', family: 'mass-accelerator',
         fits: 'All weapon protocols', heat: '2',
-        conditions: 'Un-gated 2026-07-31 — a Common may not hard-gate to a protocol (category gating). Mass Accelerator affinity kicker NOT ruled',
+        conditions: 'MASS ACCELERATOR AFFINITY (ruled 2026-07-31): on the Kinetic Core or Kinetic Slug the second shot fires 10 points higher',
         effect: `Your weapon fires <strong>TWICE</strong> this activation — the second shot deals <strong>${track[0]}%</strong> of the FIRST SHOT'S FINAL damage (routine bonuses included, then halved with it).<br>
           <em>Riders are multiplied ~×${(1 + track[0]/100).toFixed(2)}, never doubled — the double-fire balance law.</em>`,
         track: track.map(v => `2nd shot ${v}%`),
@@ -1224,33 +1241,52 @@ const CARDS = {
       });
     })(),
 
-    // ARMOR REND
+    // ARMOR REND — RULED IN 2026-07-31 (fifth sitting): flat per-hit rework. Applies
+    // AFTER per-hit caps (the anti-Marauder niche). Mirrors data/cards.json.
     (() => {
-      const track = [10,12,14,17,20];
+      const track = [2,3,4,5,6];
       return renderPlayerCard({
-        name: 'Armor Rend', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['kinetic'],
-        section: 'routine', type: 'weapon', element: 'kinetic',
+        name: 'Armor Rend', rarity: 'R', kind: 'Routine', slot: 'Weapon', pool: 'game', elements: ['kinetic'],
+        section: 'routine', type: 'weapon', element: 'kinetic', family: 'mass-accelerator',
         fits: 'Mass Accelerator', heat: '2',
-        effect: `Target takes <strong>+${track[0]}%</strong> hull damage for 1 round, all sources`,
-        track: track.map(v => `+${v}%`)
+        effect: `For 1 round, <strong>every hit that reaches the enemy HULL deals +${track[0]} more</strong> — every shot, every damage-over-time tick, each hit of a multi-shot.<br>
+          <em>Does nothing while damage isn't reaching hull — rip the armor, then feed the round. Lands AFTER per-hit damage caps.</em>`,
+        track: track.map(v => `+${v} per hit`)
       });
     })(),
 
-    // TRANSDUCE
+    // TRANSDUCE — RULED IN 2026-07-31 (fifth sitting): the bridge routine. The
+    // conversion auto-picks the COUNTER lane vs the live shield (the choice was
+    // dominated — counter is always best — so no pick UI is needed). The old "RPS
+    // floor" capstone died with the choice; T5 = +6. Mirrors data/cards.json.
     (() => {
       const ladder = [
-        { fx: '100%',              heat: 2 },
-        { fx: '100%',              heat: 1 },
-        { fx: '+10%',              heat: 1 },
-        { fx: '+20%',              heat: 1 },
-        { fx: '+30% + RPS floor',  heat: 1 },
+        { fx: 'convert',  heat: 2 },
+        { fx: 'convert',  heat: 1 },
+        { fx: '+2 dmg',   heat: 1 },
+        { fx: '+4 dmg',   heat: 1 },
+        { fx: '+6 dmg',   heat: 1 },
       ];
       return renderPlayerCard({
-        name: 'Transduce', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['kinetic'],
-        section: 'routine', type: 'weapon', element: 'kinetic',
+        name: 'Transduce', rarity: 'R', kind: 'Routine', slot: 'Weapon', pool: 'game', elements: ['kinetic'],
+        section: 'routine', type: 'weapon', element: 'kinetic', family: 'mass-accelerator',
         fits: 'Mass Accelerator', heat: `${ladder[0].heat} (drops with upgrade)`,
-        effect: `Transduce this kinetic shot into a chosen energy type — it hits the shield at full RPS instead of bypassing to hull. Overrides the Kinetic Rule for this activation.`,
+        effect: `This activation your kinetic shot <strong>TRANSDUCES into energy</strong> — it strikes the enemy SHIELD in its weakest lane (<strong>125%</strong>) instead of bypassing to hull. No elemental shield up = nothing to convert into; the shot stays kinetic.`,
         track: ladder.map(t => `${t.fx} · ${t.heat}h`)
+      });
+    })(),
+
+    // PARITY DRIVE — RULED IN 2026-07-31 (seventh sitting): Mihai's odd-round engine.
+    (() => {
+      const track = ['+25%','+28%','+32% · 2h','+35% + FLIP · 2h'];
+      return renderPlayerCard({
+        name: 'Parity Drive', rarity: 'R', kind: 'Routine', slot: 'System', pool: 'game', elements: [],
+        section: 'routine', type: 'system', element: '',
+        fits: 'All system protocols', heat: '3 (drops with upgrade)',
+        conditions: 'SCRAMBLES — one use per fight. Multiple copies stack (additively, per the locked % rule)',
+        effect: `For the rest of this fight your attacks deal <strong>+25%</strong> damage on <strong>ODD rounds</strong> (1, 3, 5…).`,
+        track,
+        capstone: { label: 'The Flip', text: `The drive locks to the parity of the round you PLAY it on — played on an even round, it becomes an even-round drive. No choice UI: when you play it IS the choice.` }
       });
     })(),
 
@@ -1923,7 +1959,7 @@ const CARDS = {
 
 // ─── FILTER ───────────────────────────────────────────────────────────────────
 
-const activeFilters = { view: 'cards', pool: 'all', section: 'all', type: 'all', element: 'all', rarity: 'all', sort: 'default', eclass: 'all', echapter: 'all', search: '' };
+const activeFilters = { view: 'cards', pool: 'all', section: 'all', type: 'all', element: 'all', family: 'all', rarity: 'all', sort: 'default', eclass: 'all', echapter: 'all', search: '' };
 
 // ─── SORT ─────────────────────────────────────────────────────────────────────
 // Reorders .card elements WITHIN each section grid (a pure DOM operation — the
@@ -1965,19 +2001,20 @@ function applyFilters() {
   document.getElementById('enemies-page').hidden = activeFilters.view !== 'enemies';
 
   // cards
-  const sf = activeFilters.section, tf = activeFilters.type, ef = activeFilters.element, rf = activeFilters.rarity, pf = activeFilters.pool;
+  const sf = activeFilters.section, tf = activeFilters.type, ef = activeFilters.element, rf = activeFilters.rarity, pf = activeFilters.pool, ff = activeFilters.family;
   document.querySelectorAll('.card').forEach(c => {
     const poolMatch   = pf === 'all' || c.dataset.pool === pf;
     const secMatch    = sf === 'all' || c.dataset.section === sf;
     const typeMatch   = tf === 'all' || c.dataset.type === tf;
     const elemMatch   = ef === 'all' || (c.dataset.element || '').split(' ').includes(ef);
+    const famMatch    = ff === 'all' || c.dataset.family === ff;
     const rarityMatch = rf === 'all' || c.dataset.rarity === rf;
     const name        = (c.querySelector('.card-name')?.textContent || '').toLowerCase();
     // search the EFFECT body and the CAPSTONE box (Scorch, Arc Chain, … live there)
     const effect      = [...c.querySelectorAll('.card-effect, .perk5-body')]
                           .map(e => e.textContent).join(' ').toLowerCase();
     const searchMatch = q === '' || name.includes(q) || effect.includes(q);
-    c.hidden = !(poolMatch && secMatch && typeMatch && elemMatch && rarityMatch && searchMatch);
+    c.hidden = !(poolMatch && secMatch && typeMatch && elemMatch && famMatch && rarityMatch && searchMatch);
   });
   ['protocols-weapon-section','protocols-shield-section','protocols-system-section','routines-section','wip-section'].forEach(id => {
     const el = document.getElementById(id);
@@ -2024,8 +2061,23 @@ document.getElementById('search-box').addEventListener('input', e => {
   applyFilters();
 });
 
+// ── CARD LIBRARY mode (2026-07-31): opened from the game's title screen with
+// ?from=game — show a back button that returns to the title screen.
+if (new URLSearchParams(location.search).get('from') === 'game'
+    || sessionStorage.getItem('vr.fromGame') === '1') {
+  const b = document.createElement('button');
+  b.textContent = '← BACK TO GAME';
+  b.style.cssText = 'position:fixed;top:12px;right:16px;z-index:200;font-family:inherit;' +
+    'font-size:11px;letter-spacing:3px;padding:9px 18px;background:#0a0f18;color:#22d2ff;' +
+    'border:1px solid #2a4a6a;cursor:pointer;';
+  b.onmouseenter = () => { b.style.borderColor = '#22d2ff'; };
+  b.onmouseleave = () => { b.style.borderColor = '#2a4a6a'; };
+  b.onclick = () => history.back();
+  document.body.appendChild(b);
+}
+
 document.getElementById('clear-filters').addEventListener('click', () => {
-  activeFilters.pool = activeFilters.section = activeFilters.type = activeFilters.element = activeFilters.rarity = 'all';
+  activeFilters.pool = activeFilters.section = activeFilters.type = activeFilters.element = activeFilters.family = activeFilters.rarity = 'all';
   activeFilters.eclass = activeFilters.echapter = 'all';
   activeFilters.sort = 'default';
   activeFilters.search = '';
