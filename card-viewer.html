@@ -1213,12 +1213,14 @@ const CARDS = {
     (() => {
       const track = [50,55,60,65,75];
       return renderPlayerCard({
-        name: 'Burst Loader', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: ['kinetic'],
-        section: 'routine', type: 'weapon', element: 'kinetic',
-        fits: 'Mass Accelerator', heat: '2',
-        effect: `Fire twice — second shot at <strong>${track[0]}%</strong> damage<br>
-          <em>×${(1 + track[0]/100).toFixed(2)} effective</em>`,
-        track: track.map(v => `${v}% ×${(1 + v/100).toFixed(2)}`)
+        name: 'Burst Loader', rarity: 'C', kind: 'Routine', slot: 'Weapon', pool: 'game', elements: [],
+        section: 'routine', type: 'weapon', element: '',
+        fits: 'All weapon protocols', heat: '2',
+        conditions: 'Un-gated 2026-07-31 — a Common may not hard-gate to a protocol (category gating). Mass Accelerator affinity kicker NOT ruled',
+        effect: `Your weapon fires <strong>TWICE</strong> this activation — the second shot deals <strong>${track[0]}%</strong> of the FIRST SHOT'S FINAL damage (routine bonuses included, then halved with it).<br>
+          <em>Riders are multiplied ~×${(1 + track[0]/100).toFixed(2)}, never doubled — the double-fire balance law.</em>`,
+        track: track.map(v => `2nd shot ${v}%`),
+        capstone: { text: `Beats per-hit damage CAPS: two smaller hits slip under a cap one big hit cannot.` }
       });
     })(),
 
