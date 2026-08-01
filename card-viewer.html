@@ -560,30 +560,10 @@ const RPS = {
   kinetic: { plasma: 1.00, gamma:  1.00, arc:    1.00 }
 };
 
-const CANNON_UPGRADES = [[1,18],[2,20],[3,22],[4,24],[5,24]]; // ship-100 rebase + flat +2 read steps (Mihai 2026-07-31); read 5 spends its step on the capstone
-
-// Re-ruled 2026-07-25 (card rework session, new HP scale): KC 10/20, 5/5 ignores shields;
-// Veil deploy 50, flat restore ladder, 5/5 = free deploy. Source: design files + game-pool.md.
-const KINETIC_CORE = {
-  shieldUpDmg:   10,
-  shieldDownDmg: 20,
-  upgradePenetration: 'Ignores shields entirely — <strong>20</strong> hull dmg regardless of shield state (100% penetration)'
-};
-
-const MORPHIC_VEIL = {
-  deployHP: 50,
-  restoreByPip: [5, 10, 15, 20, 20],
-  heatPrep: 1,
-  heatReactivate: 1,
-  upgrade: 'Initial deploy costs 0 — rounds start at 0 heat instead of 1: <strong>+1 usable heat every round</strong>'
-};
-
-const SHIELD_COMMON = {
-  hpAdd:  [0, 5, 10, 15, 25],   // cumulative HP added per tier (T1=+0)
-  react:  [10, 11, 12, 13, 15]  // reactivation % per tier
-};
-
-const PLAYER_HULL = 140;
+// The hand-kept card numbers that used to live here (CANNON_UPGRADES, KINETIC_CORE,
+// MORPHIC_VEIL, SHIELD_COMMON, PLAYER_HULL) are GONE — 2026-08-01, repair plan C1.
+// Every card number now comes from v1/data/cards.json at load time. RPS above stays:
+// it is the elemental lane table the matrices are drawn through, not card data.
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
@@ -610,10 +590,6 @@ function card(rarity, extra, content, opts = {}) {
   const chip = pool === 'game' ? '<span class="pool-chip">In Game</span>'
              : pool === 'out'  ? '<span class="pool-chip out">Out</span>' : '';
   return `<div class="card ${rarity}${extra}" data-section="${sec}" data-type="${type}" data-element="${elem}" data-rarity="${rarity}" data-pool="${pool}" data-family="${fam}">${chip}${content}</div>`;
-}
-
-function wip(rarity, content, opts = {}) {
-  return card(rarity, ' wip', content, { section: 'wip', ...opts });
 }
 
 // ─── ENEMY CARDS ─────────────────────────────────────────────────────────────
@@ -790,19 +766,6 @@ function matrixBlock(m) {
   return `<div class="mx">${head}${body}</div>` + (m.note ? `<div class="mx-note">${m.note}</div>` : '');
 }
 
-// Cannon-style matrix: the same weapon at base and at 5/5, run through the RPS table.
-function cannonMatrix(weaponType, baseDmg, maxDmg) {
-  return { rows: [
-    ['base', MATRIX_COLS.map(s => rps(baseDmg, weaponType, s))],
-    ['5/5',  MATRIX_COLS.map(s => rps(maxDmg,  weaponType, s))]
-  ] };
-}
-
-// Shield-protocol upgrade track: the common HP / reactivation ladder, as plain values.
-function shieldTrack(base) {
-  return SHIELD_COMMON.hpAdd.map((add, i) => `${base + add} HP · ${SHIELD_COMMON.react[i]}%`);
-}
-
 // ─── CATEGORY ICONS (Tabler, MIT — inlined) ──────────────────────────────────
 // Mihai ruling 2026-07-31: weapon = rocket · shield = shield · system = cpu chip.
 const CAT_IC = {
@@ -811,9 +774,6 @@ const CAT_IC = {
   system: '<path d="M5 5m0 1a1 1 0 0 1 1 -1h12a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-12a1 1 0 0 1 -1 -1z"/><path d="M9 9h6v6h-6z"/><path d="M3 10h2"/><path d="M3 14h2"/><path d="M10 3v2"/><path d="M14 3v2"/><path d="M21 10h-2"/><path d="M21 14h-2"/><path d="M14 21v-2"/><path d="M10 21v-2"/>'
 };
 const catIc = k => CAT_IC[k] ? `<svg class="cat-ic" viewBox="0 0 24 24">${CAT_IC[k]}</svg>` : '';
-// Inline legend tokens for effect text: "the next staged weapon PICON.weapon", "any protocol PICON.any"
-const PICON = { weapon: catIc('weapon'), shield: catIc('shield'), system: catIc('system'),
-                any: catIc('weapon') + catIc('shield') + catIc('system') };
 
 // ─── SINGLE PLAYER-CARD RENDERER ─────────────────────────────────────────────
 // FIXED ANATOMY. Every player card is a plain data object passed through here and
@@ -891,1071 +851,291 @@ function renderPlayerCard(d) {
   });
 }
 
-// ─── CARDS ───────────────────────────────────────────────────────────────────
-
-const CARDS = {
-  'protocols-weapon': [
-
-    // KINETIC CORE
-    renderPlayerCard({
-      name: 'Kinetic Core', rarity: 'ST', kind: 'Protocol', slot: 'Weapon', elements: ['kinetic'],
-      section: 'protocol', type: 'weapon', element: 'kinetic', pool: 'game', family: 'mass-accelerator',
-      fits: 'Mass Accelerator', heat: '2',
-      effect: `Shield up: <strong>${KINETIC_CORE.shieldUpDmg}</strong> hull dmg<br>
-        Shield down: <strong>${KINETIC_CORE.shieldDownDmg}</strong> hull dmg`,
-      capstone: { label: 'Penetration', text: KINETIC_CORE.upgradePenetration }
-    }),
-
-    // ARC CANNON
-    (() => {
-      const base = CANNON_UPGRADES[0][1];
-      const max5 = CANNON_UPGRADES[4][1];
-      const chainPct = 25;
-      return renderPlayerCard({
-        name: 'Arc Cannon', rarity: 'C', kind: 'Protocol', slot: 'Weapon', pool: 'game', elements: ['arc'],
-        section: 'protocol', type: 'weapon', element: 'arc',
-        fits: 'Cannon', heat: '2',
-        matrix: cannonMatrix('arc', base, max5),
-        effect: `<strong>${base}→${max5}</strong> arc damage`,
-        track: CANNON_UPGRADES.map(([, dmg]) => dmg),
-        capstone: {
-          label: 'Twin Discharge',
-          text: `Fires <strong>TWICE</strong> — ${max5}, then ${Math.floor(max5/2)} (second discharge at half). Every routine rider fires with both.`
-        }
-      });
-    })(),
-
-    // PLASMA CANNON
-    (() => {
-      const base = CANNON_UPGRADES[0][1];
-      const max  = CANNON_UPGRADES[4][1];
-      return renderPlayerCard({
-        name: 'Plasma Cannon', rarity: 'C', kind: 'Protocol', slot: 'Weapon', pool: 'game', elements: ['plasma'],
-        section: 'protocol', type: 'weapon', element: 'plasma',
-        fits: 'Cannon', heat: '2',
-        matrix: cannonMatrix('plasma', base, max),
-        effect: `<strong>${base}→${max}</strong> plasma damage`,
-        track: CANNON_UPGRADES.map(([, dmg]) => dmg),
-        capstone: {
-          label: 'Burn-Through',
-          text: `Damage past the shield crosses to hull at <strong>FULL value</strong> — untaxed by an unfavourable RPS lane (never reduces a favourable one).`
-        }
-      });
-    })(),
-
-    // GAMMA CANNON
-    (() => {
-      const base = CANNON_UPGRADES[0][1];
-      const max5 = CANNON_UPGRADES[4][1];
-      return renderPlayerCard({
-        name: 'Gamma Cannon', rarity: 'C', kind: 'Protocol', slot: 'Weapon', pool: 'game', elements: ['gamma'],
-        section: 'protocol', type: 'weapon', element: 'gamma',
-        fits: 'Cannon', heat: '2',
-        matrix: cannonMatrix('gamma', base, max5),
-        effect: `<strong>${base}→${max5}</strong> gamma damage`,
-        track: CANNON_UPGRADES.map(([, dmg]) => dmg),
-        capstone: { label: 'Decay Field', text: `A shield hit here <strong>cannot restore or repair next round</strong>, and the shield loses <strong>5 MAX pool</strong> per hit.` }
-      });
-    })(),
-
-    // KINETIC SLUG — RULED IN 2026-07-31 (fifth sitting): cannon-grammar chassis
-    // (reads climb 18→24 like the three cannons, read 5 = capstone), penetration
-    // is the identity. Mirrors data/cards.json.
-    (() => {
-      const SLUG_TRK = [[1,18],[2,20],[3,22],[4,24],[5,24]];
-      const pen      = 65, penMax = 85;
-      const penOf    = (read) => read < 5 ? pen : penMax;
-      const up       = (dmg, p) => floor(dmg * p / 100);
-      return renderPlayerCard({
-        name: 'Kinetic Slug', rarity: 'C', kind: 'Protocol', slot: 'Weapon', pool: 'game', elements: ['kinetic'],
-        section: 'protocol', type: 'weapon', element: 'kinetic', family: 'mass-accelerator',
-        fits: 'Mass Accelerator', heat: '2',
-        effect: `<strong>${SLUG_TRK[0][1]}→${SLUG_TRK[3][1]}</strong> kinetic damage · <strong>${pen}%</strong> penetration<br>
-          Shield up: <strong>${up(SLUG_TRK[0][1], pen)}</strong> hull dmg &nbsp;·&nbsp; Shield down: <strong>${SLUG_TRK[0][1]}</strong> hull dmg<br>
-          <em>vs Kinetic Core (10 up / 20 down): better through shields, never the bigger closer.</em>`,
-        track: SLUG_TRK.map(([read, dmg]) => `${up(dmg, penOf(read))} up / ${dmg} down`),
-        capstone: { label: 'Full Bore', text: `Penetration jumps to <strong>${penMax}%</strong> — <strong>${up(SLUG_TRK[4][1], penMax)} up / ${SLUG_TRK[4][1]} down</strong>. The shield nearly stops mattering.` }
-      });
-    })(),
-
-    // MOONLIT PHASE BLADE
-    renderPlayerCard({
-      name: 'Moonlit Phase Blade', rarity: 'U', kind: 'Protocol', slot: 'Weapon', elements: ['arc','plasma','gamma'],
-      section: 'protocol', type: 'weapon', element: 'arc plasma gamma',
-      fits: 'Phase Blade', heat: 'TBD',
-      conditions: 'No upgrades · Compatible with Moonfall only',
-      effect: `<strong>TRI-ELEMENT</strong> — hits as Arc + Plasma + Gamma at once: every elemental shield is in its vulnerable lane, always <strong>125%</strong>.<br>
-        Fires a beam of phase energy. Base damage: TBD`
-    }),
-
-    // PRISM CANNON (2026-07-31 — the tri-cannon merge easter egg, named by Mihai; opens in design/open.md)
-    renderPlayerCard({
-      name: 'Prism Cannon', rarity: 'U', kind: 'Protocol', slot: 'Weapon', elements: ['arc','plasma','gamma'],
-      section: 'protocol', type: 'weapon', element: 'arc plasma gamma',
-      fits: 'n/a', heat: '2 (proposed)',
-      conditions: 'Never drops — all 3 elemental cannons at read 7/7 (21 reads) fuse into this',
-      effect: `<strong>TRI-ELEMENT</strong> — hits as Arc + Plasma + Gamma at once: every elemental shield is in its vulnerable lane, always <strong>125%</strong>.<br>
-        Carries <strong>all three capstones</strong>: Twin Discharge · Burn-Through · Decay Field.<br>
-        Merged base: TBD (rec 22)`
-    })
-
-  ],
-
-  'protocols-shield': [
-
-    // MORPHIC VEIL
-    renderPlayerCard({
-      name: 'Morphic Veil', rarity: 'ST', kind: 'Protocol', slot: 'Shield', elements: [],
-      section: 'protocol', type: 'shield', element: '', pool: 'game',
-      heat: `${MORPHIC_VEIL.heatPrep} (prep) · ${MORPHIC_VEIL.heatReactivate} (reactivate)`,
-      effect: `Deploy: <strong>+${MORPHIC_VEIL.deployHP}</strong> shield HP — non-elemental, all damage types deal 100%.<br>
-        Reactivate: restore <strong>${MORPHIC_VEIL.restoreByPip[0]}</strong> HP — flat amount, grows by pip level.`,
-      track: MORPHIC_VEIL.restoreByPip.map(v => `+${v}`),
-      capstone: { label: 'Free deploy', text: MORPHIC_VEIL.upgrade }
-    }),
-
-    // ARC SHIELD — DROP-ENABLED 2026-07-31 (ninth sitting): simple ruled chassis so
-    // the reward band's shield slot fires. The ruled capstone (Zero-Cycle) is OWED here.
-    (() => {
-      const pools = [40,45,50,55,60];
-      return renderPlayerCard({
-        name: 'Arc Shield', rarity: 'C', kind: 'Protocol', slot: 'Shield', pool: 'game', elements: ['arc'],
-        section: 'protocol', type: 'shield', element: 'arc',
-        fits: 'Shield slot', heat: '1 (deploy & restore)',
-        conditions: 'Capstone OWED — Zero-Cycle as ruled BENT vs GT-12 (free restores are illegal, the loop-gate stays); redesign lands at the shield sitting',
-        effect: `Deploys <strong>${pools[0]}→${pools[4]}</strong> ARC shield by read · restore <strong>5</strong> per activation.<br>
-          Arc fire hits it weakly (<strong>−25%</strong>); gamma fire hits it hard (<strong>+25%</strong>).<br>
-          <em>vs the Veil (50, no element): more pool if you dodge its weakness — less if you fly into it.</em>`,
-        track: pools.map(v => `deploy ${v}`)
-      });
-    })(),
-
-    // PLASMA SHIELD — DROP-ENABLED 2026-07-31 (ninth sitting): simple ruled chassis so
-    // the reward band's shield slot fires. The ruled capstone (Overfill) is OWED here.
-    (() => {
-      const pools = [40,45,50,55,60];
-      return renderPlayerCard({
-        name: 'Plasma Shield', rarity: 'C', kind: 'Protocol', slot: 'Shield', pool: 'game', elements: ['plasma'],
-        section: 'protocol', type: 'shield', element: 'plasma',
-        fits: 'Shield slot', heat: '1 (deploy & restore)',
-        conditions: 'Capstone OWED — Overfill (ruled at the protocol-block sitting) lands at the shield sitting',
-        effect: `Deploys <strong>${pools[0]}→${pools[4]}</strong> PLASMA shield by read · restore <strong>5</strong> per activation.<br>
-          Plasma fire hits it weakly (<strong>−25%</strong>); arc fire hits it hard (<strong>+25%</strong>).<br>
-          <em>vs the Veil (50, no element): more pool if you dodge its weakness — less if you fly into it.</em>`,
-        track: pools.map(v => `deploy ${v}`)
-      });
-    })(),
-
-    // GAMMA SHIELD — DROP-ENABLED 2026-07-31 (ninth sitting): simple ruled chassis so
-    // the reward band's shield slot fires. The ruled capstone (Slow Field) is OWED here.
-    (() => {
-      const pools = [40,45,50,55,60];
-      return renderPlayerCard({
-        name: 'Gamma Shield', rarity: 'C', kind: 'Protocol', slot: 'Shield', pool: 'game', elements: ['gamma'],
-        section: 'protocol', type: 'shield', element: 'gamma',
-        fits: 'Shield slot', heat: '1 (deploy & restore)',
-        conditions: 'Capstone OWED — Slow Field (ruled at the protocol-block sitting) lands at the shield sitting',
-        effect: `Deploys <strong>${pools[0]}→${pools[4]}</strong> GAMMA shield by read · restore <strong>5</strong> per activation.<br>
-          Gamma fire hits it weakly (<strong>−25%</strong>); plasma fire hits it hard (<strong>+25%</strong>).<br>
-          <em>vs the Veil (50, no element): more pool if you dodge its weakness — less if you fly into it.</em>`,
-        track: pools.map(v => `deploy ${v}`)
-      });
-    })(),
-
-    // PRISM SHIELD (2026-07-31 — the tri-shield merge, the Prism Cannon's twin; opens in design/open.md)
-    renderPlayerCard({
-      name: 'Prism Shield', rarity: 'U', kind: 'Protocol', slot: 'Shield', elements: ['arc','plasma','gamma'],
-      section: 'protocol', type: 'shield', element: 'arc plasma gamma',
-      fits: 'n/a', heat: '1 deploy (proposed)',
-      conditions: 'Never drops — all 3 elemental shields at read 7/7 (21 reads) fuse into this',
-      effect: `Carries <strong>all three shield capstones</strong>: Zero-Cycle · Overfill · Slow Field.<br>
-        <strong>Is all three elements — every elemental attack lands in the resisted lane: 75%.</strong> Kinetic bypass unchanged.<br>
-        Merged deploy: TBD (rec 80)`
-    })
-
-  ],
-
-  'protocols-system': [
-
-    // RECONFIGURE
-    renderPlayerCard({
-      name: 'Reconfigure', rarity: 'ST', kind: 'Protocol', slot: 'System', elements: [],
-      section: 'protocol', type: 'system', element: '', pool: 'game',
-      heat: '0, escalating',
-      effect: `Host protocol for the System track. Lets you run <strong>System routines</strong> this activation — deck manipulation, heat economy, intel.<br>
-        <strong>Cost 0.</strong> Playing it <strong>+1</strong> to its cost · ending the round <strong>−1</strong> (floor 0).`
-    })
-
-  ],
-
-  'routines': [
-
-    // SUPERCHARGE
-    (() => {
-      const base   = CANNON_UPGRADES[0][1];
-      const pct    = [20,22,24,26,30];
-      const selfDmg = [5,4,3,2,0];
-      return renderPlayerCard({
-        name: 'Supercharge', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: ['arc'],
-        section: 'routine', type: 'weapon', element: 'arc',
-        fits: 'Arc Cannon', heat: '1',
-        conditions: `${selfDmg[0]}% current shield HP self-damage`,
-        matrix: { rows: [['base', MATRIX_COLS.map(s => floor(rps(base,'arc',s) * (1 + pct[0]/100)))]] },
-        effect: `<strong>+${pct[0]}%</strong> damage this activation`,
-        track: pct.map((p, i) => `+${p}% / −${selfDmg[i]}% shield`)
-      });
-    })(),
-
-    // SHIELD DRAIN
-    (() => {
-      const base  = CANNON_UPGRADES[0][1];
-      const tiers = [25,30,35,40,50];
-      return renderPlayerCard({
-        name: 'Shield Drain', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['arc','gamma'],
-        section: 'routine', type: 'weapon', element: 'arc gamma',
-        fits: 'Arc Cannon · Gamma Cannon', heat: '3',
-        matrix: { rows: [['base', MATRIX_COLS.map(s => '+' + floor(rps(base,'arc',s) * tiers[0]/100))]] },
-        effect: `<strong>${tiers[0]}%</strong> of damage dealt → shield repair`,
-        track: tiers.map(t => `${t}%`),
-        capstone: { text: `hull if hull damaged` }
-      });
-    })(),
-
-    // OVERLOAD
-    (() => {
-      const base  = CANNON_UPGRADES[0][1];
-      const tiers = [
-        { bonus: 75,  shieldCost: 10 },
-        { bonus: 100, shieldCost: 15 },
-        { bonus: 150, shieldCost: 20 }
-      ];
-      const t = tiers[0];
-      return renderPlayerCard({
-        name: 'Overload', rarity: 'E', kind: 'Routine', slot: 'Weapon', elements: ['arc','plasma'],
-        section: 'routine', type: 'weapon', element: 'arc plasma',
-        fits: 'Arc Cannon · Plasma Cannon', heat: '4',
-        conditions: 'Cannot play at 0 shield HP',
-        matrix: { rows: [['base', MATRIX_COLS.map(s => floor(rps(base,'arc',s) * (1 + t.bonus/100)))]] },
-        effect: `Drain <strong>${t.shieldCost}%</strong> current shield → <strong>+${t.bonus}%</strong> damage`,
-        track: tiers.map(tier => `+${tier.bonus}% / −${tier.shieldCost}% shield`),
-        capstone: { text: `if &lt;50% shield, cost halved · −1 heat` }
-      });
-    })(),
-
-    // COMPROMISE
-    (() => {
-      const track = [50,60,70,85,100];
-      return renderPlayerCard({
-        name: 'Compromise', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['plasma','gamma'],
-        section: 'routine', type: 'weapon', element: 'plasma gamma',
-        fits: 'Plasma Cannon · Gamma Cannon', heat: '2',
-        effect: `Enemy shield reactivation reduced by <strong>${track[0]}%</strong> for the rest of this round.`,
-        track: track.map(v => `−${v}%`),
-        capstone: { text: `reactivation restores 0 HP` }
-      });
-    })(),
-
-    // BREACH VECTOR (was Armour Spike — renamed + reworked 2026-07-27, its pool turn)
-    (() => {
-      const ladder = [
-        { fx: '+1 / 10 missing', heat: 2 },
-        { fx: '+1 / 8 missing',  heat: 2 },
-        { fx: '+1 / 5 missing',  heat: 2 },
-        { fx: '+1 / 5 missing',  heat: 1 },
-        { fx: '+2 / 5 missing',  heat: 1 },
-      ];
-      return renderPlayerCard({
-        name: 'Breach Vector', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: [],
-        section: 'routine', type: 'weapon', element: '', pool: 'game',
-        fits: 'Any weapon protocol', heat: `${ladder[0].heat} (drops with upgrade)`,
-        conditions: 'Scales with MISSING shield only — +0 at full shields, +0 vs shieldless enemies',
-        effect: `This activation's attacks deal <strong>+1 damage per 10 shield the enemy is missing</strong> (live at fire time, rounded down).`,
-        track: ladder.map(t => `${t.fx} · ${t.heat}h`)
-      });
-    })(),
-
-    // QUANTIC READ (new 2026-07-31 — the kill-credit read source, read-economy sitting)
-    (() => {
-      const ladder = [
-        { fx: '+5',  heat: 6 },
-        { fx: '+6',  heat: 6 },
-        { fx: '+8',  heat: 5 },
-        { fx: '+10', heat: 4 },
-      ];
-      return renderPlayerCard({
-        name: 'Quantic Read', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: [],
-        section: 'routine', type: 'weapon', element: '', pool: 'game',
-        fits: 'Any weapon protocol',
-        heat: `${ladder[0].heat} → 4 with upgrades`,
-        conditions: 'Stages ALONE — protocol + this card only. No kill, no read: the whiff is the weakness',
-        effect: `<strong>+5 damage</strong> this activation. <strong>If the target is destroyed by this activation: +1 read</strong> to the weapon protocol ${PICON.weapon} staged with it.`,
-        track: ladder.map(t => `${t.fx} · ${t.heat}h`)
-      });
-    })(),
-
-    // SYNAPTIC LINK
-    (() => {
-      const ladder = [
-        { fx: '+1/lvl · print 1', heat: 3 },
-        { fx: '+1/lvl · print 2', heat: 2 },
-        { fx: '+2/lvl · print 2', heat: 2 },
-        { fx: '+2/lvl · print 3', heat: 2 },
-      ];
-      return renderPlayerCard({
-        name: 'Synaptic Link', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: [],
-        section: 'routine', type: 'weapon', element: '', pool: 'game',
-        fits: 'Any weapon protocol',
-        heat: `${ladder[0].heat} → 2 with upgrades`,
-        conditions: 'Staged cards don’t count — the second routine slot works against it. Weakest with a level-1 deck',
-        effect: `Attacks this activation <strong>+1 damage per LEVEL of routines in your hand</strong>. Then <strong>discard your hand</strong> and <strong>print 1</strong>.`,
-        track: ladder.map(t => `${t.fx} · ${t.heat}h`)
-      });
-    })(),
-
-    // HEAVY BORE — RULED IN 2026-07-31 (fifth sitting): un-gated per category law,
-    // +3→8 @1h, MA affinity = the flat ignores penetration. Mirrors data/cards.json.
-    (() => {
-      const track = [3,4,5,6,8];
-      return renderPlayerCard({
-        name: 'Heavy Bore', rarity: 'C', kind: 'Routine', slot: 'Weapon', pool: 'game', elements: [],
-        section: 'routine', type: 'weapon', element: '', family: 'mass-accelerator',
-        fits: 'All weapon protocols', heat: '1',
-        effect: `<strong>+${track[0]}</strong> damage on this activation's attacks.<br>
-          <em>MASS ACCELERATOR AFFINITY: on the Kinetic Core or Kinetic Slug the bonus is NOT reduced by penetration — the full value reaches the hull, shield up or down.</em>`,
-        track: track.map(v => `+${v}`)
-      });
-    })(),
-
-    // BURST LOADER
-    (() => {
-      const track = [50,55,60,65,75];
-      return renderPlayerCard({
-        name: 'Burst Loader', rarity: 'C', kind: 'Routine', slot: 'Weapon', pool: 'game', elements: [],
-        section: 'routine', type: 'weapon', element: '', family: 'mass-accelerator',
-        fits: 'All weapon protocols', heat: '2',
-        conditions: 'MASS ACCELERATOR AFFINITY (ruled 2026-07-31): on the Kinetic Core or Kinetic Slug the second shot fires 10 points higher',
-        effect: `Your weapon fires <strong>TWICE</strong> this activation — the second shot deals <strong>${track[0]}%</strong> of the FIRST SHOT'S FINAL damage (routine bonuses included, then halved with it).<br>
-          <em>Riders are multiplied ~×${(1 + track[0]/100).toFixed(2)}, never doubled — the double-fire balance law.</em>`,
-        track: track.map(v => `2nd shot ${v}%`),
-        capstone: { text: `Beats per-hit damage CAPS: two smaller hits slip under a cap one big hit cannot.` }
-      });
-    })(),
-
-    // ARMOR REND — RULED IN 2026-07-31 (fifth sitting): flat per-hit rework. Applies
-    // AFTER per-hit caps (the anti-Marauder niche). Mirrors data/cards.json.
-    (() => {
-      const track = [2,3,4,5,6];
-      return renderPlayerCard({
-        name: 'Armor Rend', rarity: 'R', kind: 'Routine', slot: 'Weapon', pool: 'game', elements: ['kinetic'],
-        section: 'routine', type: 'weapon', element: 'kinetic', family: 'mass-accelerator',
-        fits: 'Mass Accelerator', heat: '2',
-        effect: `For 1 round, <strong>every hit that reaches the enemy HULL deals +${track[0]} more</strong> — every shot, every damage-over-time tick, each hit of a multi-shot.<br>
-          <em>Does nothing while damage isn't reaching hull — rip the armor, then feed the round. Lands AFTER per-hit damage caps.</em>`,
-        track: track.map(v => `+${v} per hit`)
-      });
-    })(),
-
-    // TRANSDUCE — RULED IN 2026-07-31 (fifth sitting): the bridge routine. The
-    // conversion auto-picks the COUNTER lane vs the live shield (the choice was
-    // dominated — counter is always best — so no pick UI is needed). The old "RPS
-    // floor" capstone died with the choice; T5 = +6. Mirrors data/cards.json.
-    (() => {
-      const ladder = [
-        { fx: 'convert',  heat: 2 },
-        { fx: 'convert',  heat: 1 },
-        { fx: '+2 dmg',   heat: 1 },
-        { fx: '+4 dmg',   heat: 1 },
-        { fx: '+6 dmg',   heat: 1 },
-      ];
-      return renderPlayerCard({
-        name: 'Transduce', rarity: 'R', kind: 'Routine', slot: 'Weapon', pool: 'game', elements: ['kinetic'],
-        section: 'routine', type: 'weapon', element: 'kinetic', family: 'mass-accelerator',
-        fits: 'Mass Accelerator', heat: `${ladder[0].heat} (drops with upgrade)`,
-        effect: `This activation your kinetic shot <strong>TRANSDUCES into energy</strong> — it strikes the enemy SHIELD in its weakest lane (<strong>125%</strong>) instead of bypassing to hull. No elemental shield up = nothing to convert into; the shot stays kinetic.`,
-        track: ladder.map(t => `${t.fx} · ${t.heat}h`)
-      });
-    })(),
-
-    // PARITY DRIVE — RULED IN 2026-07-31 (seventh sitting): Mihai's odd-round engine.
-    (() => {
-      const track = ['+25%','+28%','+32% · 2h','+35% + FLIP · 2h'];
-      return renderPlayerCard({
-        name: 'Parity Drive', rarity: 'R', kind: 'Routine', slot: 'System', pool: 'game', elements: [],
-        section: 'routine', type: 'system', element: '',
-        fits: 'All system protocols', heat: '3 (drops with upgrade)',
-        conditions: 'SCRAMBLES — one use per fight. Multiple copies stack (additively, per the locked % rule)',
-        effect: `For the rest of this fight your attacks deal <strong>+25%</strong> damage on <strong>ODD rounds</strong> (1, 3, 5…).`,
-        track,
-        capstone: { label: 'The Flip', text: `The drive locks to the parity of the round you PLAY it on — played on an even round, it becomes an even-round drive. No choice UI: when you play it IS the choice.` }
-      });
-    })(),
-
-    // HALF LIFE
-    (() => {
-      const track = [25,28,31,35,40];
-      return renderPlayerCard({
-        name: 'Half Life', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: ['gamma'],
-        section: 'routine', type: 'weapon', element: 'gamma',
-        fits: 'Gamma Cannon', heat: '2',
-        effect: `This activation leaves <strong>${track[0]}%</strong> residual radiation — halves each round, stacks per activation`,
-        track: track.map(v => `${v}%`)
-      });
-    })(),
-
-    // IGNITE
-    (() => {
-      const track = [8,9,10,12,15];
-      return renderPlayerCard({
-        name: 'Ignite', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: ['plasma'],
-        section: 'routine', type: 'weapon', element: 'plasma',
-        fits: 'Plasma Cannon', heat: '2',
-        effect: `Apply DoT — <strong>${track[0]}</strong> damage at round start for 2 rounds, stacks independently`,
-        track: track.map(v => `${v}×2`)
-      });
-    })(),
-
-    // THERMAL LANCE
-    (() => {
-      const base  = CANNON_UPGRADES[0][1];
-      const bleed = [15,17,19,22,25];
-      return renderPlayerCard({
-        name: 'Thermal Lance', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['plasma'],
-        section: 'routine', type: 'weapon', element: 'plasma',
-        fits: 'Plasma Cannon', heat: '3',
-        matrix: {
-          rows: [['base', MATRIX_COLS.map(s => '+' + floor(rps(base,'plasma',s) * bleed[0]/100))]],
-          note: 'hull · base cannon'
-        },
-        effect: `<strong>${bleed[0]}%</strong> of shield damage dealt bleeds through to enemy hull<br>
-          <em>DoT active: bleedthrough doubled</em>`,
-        track: bleed.map(v => `${v}% / ${v*2}%`)
-      });
-    })(),
-
-    // SUPERHEATED
-    (() => {
-      const reflect = [10,15,25,35,50];
-      return renderPlayerCard({
-        name: 'Superheated', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['plasma'],
-        section: 'routine', type: 'weapon', element: 'plasma',
-        fits: 'Plasma Cannon', heat: '3 (2 at T5)',
-        effect: `<strong>${reflect[0]}%</strong> of all incoming damage this round is reflected to the attacker — shield first, then hull`,
-        track: reflect.map((v, i) => `${v}%${i === 4 ? ' −1 heat' : ''}`)
-      });
-    })(),
-
-    // MELTDOWN
-    (() => {
-      const tiers = [50,75,100];
-      return renderPlayerCard({
-        name: 'Meltdown', rarity: 'E', kind: 'Routine', slot: 'Weapon', elements: ['plasma'],
-        section: 'routine', type: 'weapon', element: 'plasma', pool: 'out',
-        fits: 'Plasma Cannon', heat: '1',
-        effect: `<strong>${tiers[0]}%</strong> of damage dealt permanently reduces enemy max shield HP`,
-        track: tiers.map(v => `${v}%`),
-        capstone: { text: `TBD` }
-      });
-    })(),
-
-    // IRRADIATE
-    (() => {
-      const track = [6,7,8,9,10];
-      return renderPlayerCard({
-        name: 'Irradiate', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['gamma'],
-        section: 'routine', type: 'weapon', element: 'gamma',
-        fits: 'Gamma Cannon', heat: '3',
-        effect: `Apply fixed gamma burn — <strong>${track[0]}</strong> dmg/round for 3 rounds. Stacks independently.`,
-        track: track.map(v => `${v}×3`),
-        capstone: { text: `ticks also deal 10% hull` }
-      });
-    })(),
-
-    // DESTABILIZE
-    (() => {
-      const track = [10,15,20,25,30];
-      return renderPlayerCard({
-        name: 'Destabilize', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['gamma'],
-        section: 'routine', type: 'weapon', element: 'gamma',
-        fits: 'Gamma Cannon', heat: '3',
-        effect: `Next attack against enemy this round deals <strong>+${track[0]}%</strong> damage. Single trigger.`,
-        track: track.map(v => `+${v}%`),
-        capstone: { text: `triggers twice` }
-      });
-    })(),
-
-    // GAMMA REBOUND
-    (() => {
-      const track = [30,35,40,45,50];
-      return renderPlayerCard({
-        name: 'Gamma Rebound', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: ['gamma'],
-        section: 'routine', type: 'weapon', element: 'gamma',
-        fits: 'Gamma Cannon', heat: '3 (2 at T5)',
-        conditions: 'Requires active DoT on enemy',
-        effect: `Convert <strong>${track[0]}%</strong> of total remaining DoT to immediate damage.`,
-        track: track.map((v, i) => `${v}%${i === 4 ? ' −1 heat' : ''}`)
-      });
-    })(),
-
-    // ARC BARRIER
-    (() => {
-      const track = [15,18,21,24,30];
-      return renderPlayerCard({
-        name: 'Arc Barrier', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: ['arc'],
-        section: 'routine', type: 'shield', element: 'arc',
-        fits: 'Arc Shield', heat: '1',
-        effect: `Incoming damage to Arc Shield reduced by <strong>${track[0]}%</strong> this round.`,
-        track: track.map(v => `${v}%`),
-        capstone: { text: `extends to hull` }
-      });
-    })(),
-
-    // SURGE CONVERSION
-    (() => {
-      const track = [20,25,30,35,45];
-      return renderPlayerCard({
-        name: 'Surge Conversion', rarity: 'R', kind: 'Routine', slot: 'Shield', elements: ['arc'],
-        section: 'routine', type: 'shield', element: 'arc',
-        fits: 'Arc Shield', heat: '2',
-        effect: `<strong>${track[0]}%</strong> of damage dealt to Arc Shield this round → bonus on next weapon activation.`,
-        track: track.map(v => `${v}%`),
-        capstone: { text: `triggers twice` }
-      });
-    })(),
-
-    // THORNS
-    (() => {
-      const track = [30,33,36,40,45];
-      return renderPlayerCard({
-        name: 'Thorns', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: ['arc'],
-        section: 'routine', type: 'shield', element: 'arc',
-        fits: 'Arc Shield', heat: '1',
-        effect: `<strong>${track[0]}%</strong> of damage dealt to Arc Shield this round reflected to enemy shield.`,
-        track: track.map(v => `${v}%`),
-        capstone: { text: `overflows to hull at 0 shield` }
-      });
-    })(),
-
-    // DIMENSIONAL SINK
-    (() => {
-      const track = [20,24,28,33,40];
-      return renderPlayerCard({
-        name: 'Dimensional Sink', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: ['gamma'],
-        section: 'routine', type: 'shield', element: 'gamma',
-        fits: 'Gamma Shield', heat: '1',
-        effect: `<strong>${track[0]}%</strong> of damage dealt to Gamma Shield → HP restored next round, split shield + hull equally.`,
-        track: track.map(v => `${v}%`),
-        capstone: { text: `restored immediately` }
-      });
-    })(),
-
-    // HALF-LIFE FIELD
-    (() => {
-      const track = [18,21,24,28,34];
-      return renderPlayerCard({
-        name: 'Half-Life Field', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: ['gamma'],
-        section: 'routine', type: 'shield', element: 'gamma',
-        fits: 'Gamma Shield', heat: '1',
-        effect: `Restore <strong>${track[0]} shield HP</strong> next round, then halves each round after. Stacks with itself.`,
-        track: track.map(v => `${v} HP`)
-      });
-    })(),
-
-    // BARRIER PULSE (added 2026-07-25 — was missing from the viewer)
-    (() => {
-      const track = [5,7,9,11,14];
-      return renderPlayerCard({
-        name: 'Barrier Pulse', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: ['gamma'],
-        section: 'routine', type: 'shield', element: 'gamma',
-        fits: 'Gamma Shield', heat: '1',
-        effect: `Restore <strong>${track[0]}% of max shield HP</strong> immediately.`,
-        track: track.map(v => `${v}%`)
-      });
-    })(),
-
-    // ENTROPY WELL
-    (() => {
-      const ladder = [
-        { fx: '25%', heat: 2 },
-        { fx: '30%', heat: 2 },
-        { fx: '35%', heat: 2 },
-        { fx: '35%', heat: 1 },
-        { fx: '50%', heat: 1 },
-      ];
-      return renderPlayerCard({
-        name: 'Entropy Well', rarity: 'R', kind: 'Routine', slot: 'Shield', elements: ['gamma'],
-        section: 'routine', type: 'shield', element: 'gamma',
-        fits: 'Gamma Shield', heat: `${ladder[0].heat} (drops with upgrade)`,
-        conditions: 'Once per fight.',
-        effect: `The first time your shield is depleted, it auto-reactivates at <strong>${ladder[0].fx}</strong> of max instead of breaking.`,
-        track: ladder.map(t => `${t.fx} · ${t.heat}h`)
-      });
-    })(),
-
-    // RAD COUNTER (added 2026-07-25 — was missing from the viewer)
-    (() => {
-      const track = [6,8,10,13,18];
-      return renderPlayerCard({
-        name: 'Rad Counter', rarity: 'R', kind: 'Routine', slot: 'Shield', elements: ['gamma'],
-        section: 'routine', type: 'shield', element: 'gamma',
-        fits: 'Gamma Shield', heat: '2',
-        effect: `The first time the shield takes damage this round, the attacker gains <strong>Half Life ${track[0]}</strong> — a Gamma DoT that halves each round.`,
-        track: track.map(v => `HL ${v}`),
-        capstone: { text: `triggers on every hit` }
-      });
-    })(),
-
-    // BACKDRAFT
-    (() => {
-      const track = [4,5,6,8,10];
-      return renderPlayerCard({
-        name: 'Backdraft', rarity: 'R', kind: 'Routine', slot: 'Shield', elements: ['plasma'],
-        section: 'routine', type: 'shield', element: 'plasma',
-        fits: 'Plasma Shield', heat: '2',
-        effect: `When the Plasma Shield is hit this round, the attacker takes <strong>Scorch ${track[0]}</strong> (Plasma DoT).`,
-        track: track.map(v => `Scorch ${v}`),
-        capstone: { text: `on every hit this round` }
-      });
-    })(),
-
-    // ABLATIVE LAYER
-    (() => {
-      const track = [15,18,21,25,30];
-      return renderPlayerCard({
-        name: 'Ablative Layer', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: ['plasma'],
-        section: 'routine', type: 'shield', element: 'plasma',
-        fits: 'Plasma Shield', heat: '1',
-        effect: `Incoming damage to the Plasma Shield reduced <strong>${track[0]}%</strong> this round.`,
-        track: track.map(v => `${v}%`),
-        capstone: { text: `Scorch the attacker for 5` }
-      });
-    })(),
-
-    // PRESSURE VALVE
-    (() => {
-      const track = ['Vent 2','Vent 3','Vent 4','Vent 5','Vent 6, weapons −1 heat'];
-      return renderPlayerCard({
-        name: 'Pressure Valve', rarity: 'C', kind: 'Routine', slot: 'Shield', elements: ['plasma'],
-        section: 'routine', type: 'shield', element: 'plasma',
-        fits: 'Plasma Shield', heat: '0',
-        effect: `On Plasma Shield activation, <strong>vent 2 heat</strong> — reducing current heat and freeing room before the cap this round.`,
-        track: track
-      });
-    })(),
-
-    // PHASE SHIFT
-    (() => {
-      const track = [20,16,12];
-      return renderPlayerCard({
-        name: 'Phase Shift', rarity: 'E', kind: 'Routine', slot: 'Shield', elements: [],
-        section: 'routine', type: 'shield', element: '', pool: 'game',
-        fits: 'All shield protocols', heat: '4',
-        conditions: 'The designed jackpot — sub-threshold hits pass through; collapses after one trigger',
-        effect: `Next incoming attack this round is <strong>negated entirely</strong> if it exceeds the threshold. Small hits pass through.`,
-        track: track.map(v => `&gt;${v} dmg`),
-        capstone: { text: `+deal 15 dmg back to attacker on trigger` }
-      });
-    })(),
-
-    // REINFORCE (new 2026-07-26 — the restore booster; parasitic on the restoring activation)
-    (() => {
-      const track = [5,7,9,12,15];
-      return renderPlayerCard({
-        name: 'Reinforce', rarity: 'ST', kind: 'Routine', slot: 'Shield', elements: [],
-        section: 'routine', type: 'shield', element: '', pool: 'game',
-        fits: 'All shield protocols', heat: '2 (T5: 1)',
-        conditions: 'Boosts THIS activation’s restore — does nothing staged without one; dead when the pool is full',
-        effect: `<strong>This activation's shield restore heals +${track[0]} extra</strong> — real shield HP, persists across rounds. <strong>Starting deck carries ×3 copies</strong> (swapped with Brace 2026-07-31), each tracking its own pips.`,
-        track: track.map(v => `+${v}`),
-        capstone: { text: `heat 2 → 1` }
-      });
-    })(),
-
-    // BRACE (re-ruled 2026-07-25 — nerfed to the new scale, ×3 in the starting deck)
-    (() => {
-      const track = [5,7,9,12,15];
-      return renderPlayerCard({
-        name: 'Brace', rarity: 'ST', kind: 'Routine', slot: 'Shield', elements: [],
-        section: 'routine', type: 'shield', element: '', pool: 'game',
-        fits: 'All shield protocols', heat: '1',
-        effect: `Gain <strong>${track[0]} temporary shield HP</strong> this round — absorbs before your real shield; the remainder vanishes at Vent. <strong>Starting deck carries ×1</strong> (swapped with Reinforce 2026-07-31).`,
-        track: track.map(v => `${v}`)
-      });
-    })(),
-
-    // DEFLECT (100% rework 2026-07-25 — the Parry; old %-reduction design killed by the flat-numbers rule)
-    (() => {
-      const track = [15,18,21,25,30];
-      return renderPlayerCard({
-        name: 'Deflect', rarity: 'ST', kind: 'Routine', slot: 'Shield', elements: [],
-        section: 'routine', type: 'shield', element: '', pool: 'game',
-        fits: 'All shield protocols', heat: '3 (T5: 2)',
-        conditions: 'Blocks the first hit this round only — later hits pass untouched',
-        effect: `<strong>${track[0]} temporary shield against the first hit this round.</strong>`,
-        track: track.map(v => `${v}`),
-        capstone: { text: `heat 3 → 2` }
-      });
-    })(),
-
-    // RATTLE
-    (() => {
-      const ladder = [
-        { fx: 'Next attack −3', heat: 2 },
-        { fx: 'Next attack −4', heat: 2 },
-        { fx: 'Next attack −5', heat: 1 },
-        { fx: 'Next 2 attacks −5', heat: 1 },
-      ];
-      return renderPlayerCard({
-        name: 'Rattle', rarity: 'R', kind: 'Routine', slot: 'Shield', elements: [],
-        section: 'routine', type: 'shield', element: '', pool: 'game',
-        fits: 'Any shield protocol', heat: `${ladder[0].heat} (drops with upgrade)`,
-        conditions: 'One attack consumes one charge — a multi-hit flurry’s first hit eats the mark',
-        effect: `The enemy's <strong>next attack deals −3 damage</strong>. Persists until consumed · stacks as charges · the intent row shows the reduced number.`,
-        track: ladder.map(t => `${t.fx} · ${t.heat}h`),
-        capstone: { text: `<strong>−5 on the next two attacks</strong> — the mark covers a second swing` }
-      });
-    })(),
-
-    // CLEANSE
-    (() => {
-      const ladder = [
-        { fx: 'Remove 1 random',          heat: 2 },
-        { fx: 'Remove 1 random',          heat: 1 },
-        { fx: 'Remove all',               heat: 1 },
-        { fx: 'Remove all +50% → shield', heat: 1 },
-        { fx: 'Remove all +100% → shield', heat: 1 },
-      ];
-      return renderPlayerCard({
-        name: 'Cleanse', rarity: 'R', kind: 'Routine', slot: 'Shield', elements: [],
-        section: 'routine', type: 'shield', element: '',
-        fits: 'All shield protocols', heat: `${ladder[0].heat} (drops with upgrade)`,
-        effect: `<strong>Remove a random DoT/debuff</strong> on your ship. High tiers remove all and convert the cleansed damage into shield HP.`,
-        track: ladder.map(t => `${t.fx} · ${t.heat}h`)
-      });
-    })(),
-
-    // ALPHA STRIKE (new 2026-07-25 — the Opener, Deflect's weapon mirror; name provisional)
-    (() => {
-      const track = [8,9,11,13,15];
-      return renderPlayerCard({
-        name: 'Alpha Strike', rarity: 'ST', kind: 'Routine', slot: 'Weapon', elements: [],
-        section: 'routine', type: 'weapon', element: '', pool: 'game',
-        fits: 'All weapon protocols', heat: '3 (T5: 2)',
-        conditions: 'Playable only on your first activation this round — any earlier activation closes the window',
-        effect: `<strong>+${track[0]} damage</strong>, only as the round's first activation.`,
-        track: track.map(v => `+${v}`),
-        capstone: { text: `heat 3 → 2` }
-      });
-    })(),
-
-    // SPIN UP (new 2026-07-26 — the ramp; Reinforce's attack-side mirror)
-    (() => {
-      const track = [2,3,4,5,5];
-      return renderPlayerCard({
-        name: 'Spin Up', rarity: 'ST', kind: 'Routine', slot: 'Weapon', elements: [],
-        section: 'routine', type: 'weapon', element: '', pool: 'game',
-        fits: 'All weapon protocols', heat: '2 (T5: 1)',
-        conditions: 'Bonus attaches to THE STAGED PROTOCOL only — lasts the rest of the fight, resets between fights',
-        effect: `<strong>This activation's protocol ${PICON.weapon} permanently gains +${track[0]} damage for the rest of the fight.</strong> Stacks per play; the protocol's displayed base updates on the spot.`,
-        track: track.map(v => `+${v}`),
-        capstone: { text: `heat 2 → 1` }
-      });
-    })(),
-
-    // SIGNAL GAIN (new 2026-07-25 — the starter kit's weapon routine; replaces Armour Spike there)
-    (() => {
-      const track = [2,3,4,5,5];
-      return renderPlayerCard({
-        name: 'Signal Gain', rarity: 'ST', kind: 'Routine', slot: 'Weapon', elements: [],
-        section: 'routine', type: 'weapon', element: '', pool: 'game',
-        fits: 'All weapon protocols', heat: '2 (T5: 1)',
-        effect: `<strong>+${track[0]} damage</strong> this activation — flat, any weapon. <strong>Starting deck carries ×3 copies</strong>, each tracking its own pips.`,
-        track: track.map(v => `+${v}`),
-        capstone: { text: `heat 2 → 1` }
-      });
-    })(),
-
-    // FOCUS FIRE (100% reworked 2026-07-27 — the first debuff card: Target Lock)
-    (() => {
-      const ladder = [
-        { now: 5, heat: 3 },
-        { now: 6, heat: 3 },
-        { now: 6, heat: 2 },
-        { now: 7, heat: 2 },
-        { now: 7, heat: 1 },
-      ];
-      return renderPlayerCard({
-        name: 'Focus Fire', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: [],
-        section: 'routine', type: 'weapon', element: '', pool: 'game',
-        fits: 'Any weapon protocol', heat: `${ladder[0].heat} (drops with upgrade)`,
-        effect: `This activation's attacks deal <strong>+5 damage</strong>, and the enemy gains <strong>Target Lock</strong>: your next weapon ${PICON.weapon} activation against them also deals <strong>+5</strong>. Persists until consumed · stacks as charges.`,
-        track: ladder.map(t => `+${t.now} / +${t.now} next · ${t.heat}h`),
-        capstone: { text: `+7 now / applies <strong>Target Lock ×2</strong> — the next 2 weapon activations each deal +7` }
-      });
-    })(),
-
-    // CALIBRATE — OUT 2026-07-27 (the pool's first Out; effect banked as a future System routine)
-    (() => {
-      const track = [1,1,1,1,2];
-      return renderPlayerCard({
-        name: 'Calibrate', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: [],
-        section: 'routine', type: 'weapon', element: '', pool: 'out',
-        fits: 'All weapon protocols', heat: '0',
-        effect: `Your next weapon activation this round costs <strong>−${track[0]} heat</strong>. <em>Effect banked — returns as a System routine.</em>`,
-        track: track.map(v => `−${v} heat`)
-      });
-    })(),
-
-    // CALCULATED
-    (() => {
-      const ladder = [
-        { fx: '100% flat', heat: 2 },
-        { fx: '105% flat', heat: 2 },
-        { fx: '110% flat', heat: 2 },
-        { fx: '110% flat', heat: 1 },
-        { fx: '120% flat', heat: 1 },
-      ];
-      return renderPlayerCard({
-        name: 'Calculated', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: [],
-        section: 'routine', type: 'weapon', element: '',
-        fits: 'All weapon protocols', heat: `${ladder[0].heat} (drops with upgrade)`,
-        effect: `RPS multiplier <strong>ignored entirely</strong> — this activation deals a flat <strong>100%</strong> regardless of shield type.`,
-        track: ladder.map(t => `${t.fx} · ${t.heat}h`)
-      });
-    })(),
-
-    // FLANKING
-    (() => {
-      const track = [20,24,28,34,40];
-      return renderPlayerCard({
-        name: 'Flanking', rarity: 'C', kind: 'Routine', slot: 'Weapon', elements: [],
-        section: 'routine', type: 'weapon', element: '',
-        fits: 'All weapon protocols', heat: '1',
-        effect: `<strong>${track[0]}%</strong> of this activation's damage bypasses the shield and hits hull directly; the rest resolves normally.`,
-        track: track.map(v => `${v}%`)
-      });
-    })(),
-
-    // SUPPRESS
-    (() => {
-      const ladder = [
-        { fx: 'Block this round',          heat: 2 },
-        { fx: 'Block this round',          heat: 1 },
-        { fx: 'Block; −50% next round',    heat: 1 },
-        { fx: 'Block this + next round',   heat: 1 },
-        { fx: 'Block 2 rds +10% strip',    heat: 1 },
-      ];
-      return renderPlayerCard({
-        name: 'Suppress', rarity: 'R', kind: 'Routine', slot: 'Weapon', elements: [],
-        section: 'routine', type: 'weapon', element: '',
-        fits: 'All weapon protocols', heat: `${ladder[0].heat} (drops with upgrade)`,
-        effect: `The enemy <strong>cannot reactivate its shield</strong> this round.`,
-        track: ladder.map(t => `${t.fx} · ${t.heat}h`)
-      });
-    })(),
-
-    // MOONFALL
-    renderPlayerCard({
-      name: 'Moonfall', rarity: 'U', kind: 'Routine', slot: 'Weapon', elements: ['arc','plasma','gamma'],
-      section: 'routine', type: 'weapon', element: 'arc plasma gamma',
-      fits: 'Moonlit Phase Blade only', heat: 'TBD',
-      effect: `At the start of your next round, 7 satellite drones each fire once — 7 hits at [TBD] dmg each, shield → hull order, 125% vs any energy shield. Then applies <strong>Scorch</strong> (Plasma DoT) and <strong>Radiation</strong> (Gamma DoT). Both stack with existing instances.<br>
-        Damage values: TBD`
-    }),
-
-    // ACCUMULATOR (new 2026-07-25 — the overload engine; Mihai design; first 4-tier Rare)
-    (() => {
-      const ladder = [
-        { carry: 2, heat: 4 },
-        { carry: 3, heat: 4 },
-        { carry: 4, heat: 3 },
-        { carry: 4, heat: 2 },
-      ];
-      return renderPlayerCard({
-        name: 'Accumulator', rarity: 'R', kind: 'Routine', slot: 'System', elements: [],
-        section: 'routine', type: 'system', element: '', pool: 'game',
-        fits: 'System protocols', heat: '4 (drops with upgrade)',
-        conditions: 'Auto-scrambles on execution — one play per fight; the engine outlives the card',
-        effect: `<strong>Install the overload engine:</strong> for the rest of the fight, unused heat at round end carries into next round as extra budget — up to <strong>${ladder[0].carry}</strong>. The gauge shows carried heat as an OVERLOAD segment past the ceiling.`,
-        track: ladder.map(t => `carry ${t.carry} · ${t.heat}h`)
-      });
-    })(),
-
-    // HOT SWAP (new 2026-07-25 — scramble-then-print compile cycle; Mihai design. Burn→Scramble rename 2026-07-31)
-    (() => {
-      const ladder = [
-        { scr: '2 random', heat: 3 },
-        { scr: '1 random', heat: 3 },
-        { scr: '1 random', heat: 2 },
-        { scr: '1 random', heat: 1 },
-        { scr: '1 chosen', heat: 1 },
-      ];
-      return renderPlayerCard({
-        name: 'Hot Swap', rarity: 'C', kind: 'Routine', slot: 'System', elements: [],
-        section: 'routine', type: 'system', element: '', pool: 'game',
-        fits: 'System protocols', heat: '3 (drops with upgrade)',
-        conditions: 'Scramble resolves FIRST — the fresh prints are never at risk',
-        effect: `<strong>Scramble ${ladder[0].scr} routines, then print 2.</strong> Scrambled routines go to the scrambled pool — unstageable this fight (back next fight; Delete is the forever word).`,
-        track: ladder.map(t => `scramble ${t.scr} · ${t.heat}h`),
-        capstone: { text: `you choose the scramble` }
-      });
-    })(),
-
-    // HOTFIX (new 2026-07-31 — the starter heal; the first card to carry the Scramble keyword)
-    (() => {
-      const track = [5,7,9,12,15];
-      return renderPlayerCard({
-        name: 'Hotfix', rarity: 'ST', kind: 'Routine', slot: 'System', elements: [],
-        section: 'routine', type: 'system', element: '', pool: 'game',
-        fits: 'System protocols', heat: '2 (T5: 1)',
-        conditions: 'Scrambles on play — unstageable for the rest of this fight (once per fight per copy)',
-        effect: `<strong>Restore ${track[0]} hull</strong> — real, persistent hull HP.`,
-        track: track.map(v => `+${v}`),
-        capstone: { text: `heat 2 → 1` }
-      });
-    })(),
-
-    // SPOOLER (new 2026-07-26 — the deferred print; completes the starting deck)
-    (() => {
-      const ladder = [
-        { print: 1, heat: 3 },
-        { print: 2, heat: 3 },
-        { print: 2, heat: 2 },
-        { print: 2, heat: 1 },
-        { print: 2, heat: 1 },
-      ];
-      return renderPlayerCard({
-        name: 'Spooler', rarity: 'ST', kind: 'Routine', slot: 'System', elements: [],
-        section: 'routine', type: 'system', element: '', pool: 'game',
-        fits: 'System protocols', heat: '3 (drops with upgrade)',
-        conditions: 'The extra prints arrive NEXT round only — stacking adds volume to that round, never extends to later rounds',
-        effect: `<strong>Next round, print +${ladder[0].print} routine.</strong>`,
-        track: ladder.map(t => `+${t.print} · ${t.heat}h`),
-        capstone: { label: 'Rider', text: `next round starts at EXACTLY 0 heat — overrides the shield baseline, Heat Buffer debts, and enemy heat injection.` }
-      });
-    })(),
-
-    // HEAT BUFFER (new 2026-07-25 — the heat loan; System trio candidate 1, ruled in)
-    (() => {
-      const ladder = [
-        { vent: 1, debt: 2 },
-        { vent: 2, debt: 2 },
-        { vent: 3, debt: 2 },
-        { vent: 4, debt: 2 },
-        { vent: 4, debt: 1 },
-      ];
-      return renderPlayerCard({
-        name: 'Heat Buffer', rarity: 'ST', kind: 'Routine', slot: 'System', elements: [],
-        section: 'routine', type: 'system', element: '', pool: 'game',
-        fits: 'System protocols', heat: '0',
-        conditions: 'The debt is unavoidable — next round starts with the loaned heat already on the gauge',
-        effect: `<strong>Vent ${ladder[0].vent} heat now — start next round at +${ladder[0].debt}</strong>.`,
-        track: ladder.map(t => `−${t.vent} / +${t.debt} next`),
-        capstone: { text: `debt 2 → 1` }
-      });
-    })(),
-
-    // PHASE SIGHT
-    (() => {
-      const ladder = [
-        { fx: 'Look 2, draw 1', heat: 3 },
-        { fx: 'Look 2, draw 1', heat: 2 },
-        { fx: 'Look 3, draw 1', heat: 2 },
-        { fx: 'Look 3, draw 2', heat: 2 },
-        { fx: 'Look 4, draw 2', heat: 1 },
-      ];
-      return renderPlayerCard({
-        name: 'Phase Sight', rarity: 'C', kind: 'Routine', slot: 'System', elements: [],
-        section: 'routine', type: 'system', element: '', pool: 'game',
-        fits: 'System protocols', heat: `${ladder[0].heat} (drops with upgrade)`,
-        conditions: 'Draws are MANDATORY — you must draw the required count, wanted or not',
-        effect: `<strong>Prefetch</strong> — look at the top 2 of the draw pile: <strong>draw 1, discard 1</strong>. Everything looked at leaves the pile.`,
-        track: ladder.map(t => `${t.fx} · ${t.heat}h`)
-      });
-    })(),
-
-    // DECODE
-    (() => {
-      const ladder = [
-        { fx: 'Print 1', heat: 2 },
-        { fx: 'Print 2', heat: 2 },
-        { fx: 'Print 2', heat: 1 },
-        { fx: 'Print 3', heat: 1 },
-        { fx: 'Print 3', heat: 1 },
-      ];
-      return renderPlayerCard({
-        name: 'Decode', rarity: 'C', kind: 'Routine', slot: 'System', elements: [],
-        section: 'routine', type: 'system', element: '', pool: 'game',
-        fits: 'System protocols', heat: `${ladder[0].heat} (drops with upgrade)`,
-        effect: `<strong>Print 1</strong> routine.`,
-        track: ladder.map(t => `${t.fx} · ${t.heat}h`),
-        capstone: { text: `Print 3 — <strong>1 chosen</strong> (search the draw pile for any routine), 2 random` }
-      });
-    })(),
-
-    // COOLANT
-    (() => {
-      const ladder = [
-        'Vent 2',
-        'Vent 3',
-        'Vent 4, print 1',
-        'Vent 4, print 2',
-      ];
-      return renderPlayerCard({
-        name: 'Coolant', rarity: 'R', kind: 'Routine', slot: 'System', elements: [],
-        section: 'routine', type: 'system', element: '', pool: 'game',
-        fits: 'System protocols', heat: '0 (all tiers)',
-        conditions: 'Once per combat — the spent card stays in this fight’s deck as a CURSE: drawn, dead, unstageable',
-        effect: `<strong>Vent 2 heat.</strong> Free, instant, once — then the curse clogs your draws for the rest of the fight.`,
-        track: ladder
-      });
-    })(),
-
-    // DEEP READ (new 2026-07-31 — Mihai's in-fight calibrator, bounds ruled C: once per fight AND heavy heat; name provisional)
-    (() => {
-      const ladder = [
-        { fx: '+1 read', heat: 6 },
-        { fx: '+1 read', heat: 5 },
-        { fx: '+2 reads', heat: 5 },
-        { fx: '+2 reads', heat: 4 },
-      ];
-      return renderPlayerCard({
-        name: 'Deep Read', rarity: 'R', kind: 'Routine', slot: 'System', elements: [],
-        section: 'routine', type: 'system', element: '', pool: 'game',
-        fits: 'System protocols', heat: `${ladder[0].heat} → 4 with upgrades`,
-        conditions: 'Once per fight — pure setup: no damage, no shield, this round gets nothing',
-        effect: `The protocol ${PICON.any} staged in your <strong>next activation</strong> gains <strong>+1 read</strong> (permanent).`,
-        track: ladder.map(t => `${t.fx} · ${t.heat}h`)
-      });
-    })(),
-
-    // CORE DUMP (name proposed — Mihai's exhaust Epic, 2026-07-31 second sitting)
-    (() => {
-      return renderPlayerCard({
-        name: 'Flush', rarity: 'E', kind: 'Routine', slot: 'System', elements: [],
-        section: 'routine', type: 'system', element: '', pool: 'game',
-        fits: 'System protocols', heat: '0',
-        conditions: 'Scrambles on play — once per fight',
-        effect: `<strong>Full heat release</strong> — vent ALL heat. Then <strong>2 random cards in your hand cost +1 heat</strong> until played.`,
-        track: ['full vent · 2 cards +1 heat', 'full vent · 1 card +1 heat', 'full vent · 1 card +1 · gains CACHED (stays in hand on Vent)'],
-      });
-    })(),
-
-    // OVERCLOCK (from the effect bank 2026-07-25 — the Heat Inversion's flagship)
-    (() => {
-      return renderPlayerCard({
-        name: 'Overclock', rarity: 'E', kind: 'Routine', slot: 'System', elements: [],
-        section: 'routine', type: 'system', element: '', pool: 'game',
-        fits: 'System protocols', heat: '1 (T3: 0)',
-        conditions: 'The thermal hangover: next round starts at +1 heat',
-        effect: `This round your <strong>heat cap +2</strong> — the sanctioned big turn: raise the ceiling, never gain resource.`,
-        track: ['cap +2 · h1', 'cap +3 · h1', 'cap +3 · h0'],
-      });
-    })()
-
-  ],
-
-  'wip': []
+// ─── CARDS — READ LIVE FROM data/cards.json (repair plan C1 / B6.2) ──────────
+//
+// The viewer's hand-maintained copy of every card DIED here on 2026-08-01. There is
+// one card database — build/v1/data/cards.json — and the game and this page both
+// render from it. Edit an op value there and both faces change in the same keystroke.
+//
+// The page needs a server (fetch does not work on file://). The game's title screen
+// CARD LIBRARY button opens it correctly.
+
+// ── the token formatter ──────────────────────────────────────────────────────
+// KEEP IN SYNC WITH build/v1/core/card-text.mjs. This page is standalone HTML with
+// no module loader, so the two small functions live here as a copy. The grammar and
+// behaviour must match exactly — tests/card-text.test.mjs guards the original.
+//   {opName:field} · {tier:field} · {card:heat} · {shield:field}
+//   {calc:penShot} = floor(damage.base × damage.penetration) · {calc:vent} = |heat op|
+// An unresolvable token renders ⚠{token} so drift is loud, never silent.
+
+const TOKEN_RE = /\{([A-Za-z][A-Za-z0-9]*):([A-Za-z][A-Za-z0-9]*)\}/g;
+const isNum = v => typeof v === 'number' && Number.isFinite(v);
+
+function cardHeatAt(card, i) {
+  return Array.isArray(card.heatByTier) ? card.heatByTier[i] : card.heat;
+}
+function findOp(tier, name) { return (tier.ops || []).find(o => o.op === name) || null; }
+
+function resolveToken(card, tier, i, ns, field) {
+  if (ns === 'tier') return tier ? tier[field] : undefined;
+  if (ns === 'card') return field === 'heat' ? cardHeatAt(card, i) : (card ? card[field] : undefined);
+  if (ns === 'shield') return card && card.shield ? card.shield[field] : undefined;
+  if (ns === 'calc') {
+    if (field === 'penShot') {
+      const d = findOp(tier, 'damage');
+      return (d && isNum(d.base) && isNum(d.penetration)) ? Math.floor(d.base * d.penetration) : undefined;
+    }
+    if (field === 'vent') {
+      const h = findOp(tier, 'heat');
+      return (h && isNum(h.amount)) ? Math.abs(h.amount) : undefined;
+    }
+    return undefined;
+  }
+  const op = findOp(tier, ns);
+  return op ? op[field] : undefined;
+}
+
+// bold = true wraps every resolved number in <strong>, the viewer's house style.
+function renderCardText(card, i = 0, bold = false) {
+  const tier = card && card.tiers ? card.tiers[i] : null;
+  if (!tier) return '';
+  return (tier.text || '').replace(TOKEN_RE, (whole, ns, field) => {
+    const v = resolveToken(card, tier, i, ns, field);
+    if (v === undefined || v === null || v === '') return '⚠' + whole;
+    return bold ? `<strong>${v}</strong>` : String(v);
+  });
+}
+
+const PRIMARY = {
+  damage: { field: 'base', label: 'damage' },
+  modFlat: { field: 'amount', label: 'damage' },
+  modFlatPerMissingShield: { field: 'amount', label: 'damage' },
+  modFlatPerHandLevel: { field: 'amount', label: 'damage per hand level' },
+  modPct: { field: 'amount', label: '% damage' },
+  dot: { field: 'fixed', label: 'burn' },
+  weaponBuff: { field: 'perTick', label: 'burn per tick' },
+  rend: { field: 'amount', label: 'rend' },
+  mark: { field: 'amount', label: 'mark' },
+  incomingReduce: { field: 'value', label: 'block' },
+  shieldRestore: { field: 'pct', label: '% restore' },
+  restoreBonus: { field: 'amount', label: 'restore' },
+  hull: { field: 'amount', label: 'hull' },
+  draw: { field: 'n', label: 'card printed' },
+  drawNextRound: { field: 'n', label: 'card next round' },
+  prefetch: { field: 'look', label: 'card seen' },
+  heat: { field: 'amount', label: 'heat' },
+  heatCap: { field: 'amount', label: 'heat cap' },
+  carryHeat: { field: 'max', label: 'carry' },
+  startHeatNext: { field: 'amount', label: 'starting heat next round' },
+  onKillRead: { field: 'amount', label: 'read on kill' },
+  pendingRead: { field: 'amount', label: 'read' },
+  protocolBonus: { field: 'amount', label: 'protocol bonus' },
+  scrambleRandom: { field: 'n', label: 'card scrambled' },
+  parityBuff: { field: 'pct', label: '%' },
+  decayField: { field: 'erode', label: 'max shield eroded' }
 };
+const NO_CHANGE = 'no change — plays build toward the next version';
+
+function primaryReading(tier) {
+  for (const o of (tier && tier.ops) || []) {
+    const s = PRIMARY[o.op];
+    if (s && isNum(o[s.field])) return { name: o.op, field: s.field, label: s.label, value: o[s.field] };
+  }
+  return null;
+}
+const signedN = n => (n > 0 ? '+' + n : '−' + Math.abs(n));
+
+function autoDelta(card, i) {
+  const tier = card.tiers[i], prev = card.tiers[i - 1];
+  if (!prev) return NO_CHANGE;
+  const parts = [];
+  const now = primaryReading(tier), was = primaryReading(prev);
+  if (now && was && now.name === was.name && now.field === was.field && now.value !== was.value) {
+    parts.push(`${signedN(now.value - was.value)} ${now.label} (${was.value} → ${now.value})`);
+  }
+  const hNow = cardHeatAt(card, i), hWas = cardHeatAt(card, i - 1);
+  if (isNum(hNow) && isNum(hWas) && hNow !== hWas) {
+    parts.push(`costs ${Math.abs(hNow - hWas)} ${hNow < hWas ? 'less' : 'more'} heat (${hWas} → ${hNow})`);
+  }
+  return parts.length ? parts.join(', and ') : NO_CHANGE;
+}
+
+function renderDelta(card, i) {
+  const tier = card && card.tiers ? card.tiers[i] : null;
+  if (!tier) return '';
+  const stored = tier.delta;
+  if (stored == null || stored === '') return '';
+  if (stored === 'auto') return autoDelta(card, i);
+  // Hand-written deltas keep their voice — and may carry tokens, resolved the same way.
+  return stored.replace(TOKEN_RE, (whole, ns, field) => {
+    const v = resolveToken(card, tier, i, ns, field);
+    return (v === undefined || v === null || v === '') ? '⚠' + whole : String(v);
+  });
+}
+
+function tierValue(card, i) {
+  const tier = card && card.tiers ? card.tiers[i] : null;
+  if (!tier) return null;
+  const r = primaryReading(tier);
+  if (r) return { label: r.label, value: r.value };
+  if (isNum(tier.pool)) return { label: 'shield pool', value: tier.pool };
+  if (isNum(tier.restore)) return { label: 'restore', value: tier.restore };
+  return null;
+}
+
+// ── card database → the viewer's card objects ────────────────────────────────
+
+const SLOT_OF = { weapon: 'Weapon', shield: 'Shield', system: 'System' };
+const PRETTY = id => id.replace(/-/g, ' ').replace(/\b\w/g, m => m.toUpperCase());
+
+function poolOf(c) { return c.inGame ? 'game' : (c.inSlice ? 'unassigned' : 'out'); }
+
+function slotOf(c) {
+  if (c.kind === 'protocol') return SLOT_OF[c.protocolType] || 'System';
+  return SLOT_OF[(c.compat && c.compat.class) || ''] || 'System';
+}
+
+// "Fits" — what this card can attach to, straight from compat / protocolType.
+function fitsOf(c) {
+  if (c.kind === 'protocol') return c.family ? PRETTY(c.family) : SLOT_OF[c.protocolType] + ' slot';
+  const cm = c.compat || {};
+  if (cm.protocols && cm.protocols.length) return cm.protocols.map(PRETTY).join(' · ');
+  return cm.class ? `Any ${cm.class} protocol` : null;
+}
+
+// "Heat cost" — the price ladder. Leading integer first: render() parses it for sorting.
+function heatOf(c) {
+  if (Array.isArray(c.heatByTier) && c.heatByTier.length) {
+    const h = c.heatByTier;
+    return h.every(v => v === h[0]) ? String(h[0]) : `${h[0]} → ${h[h.length - 1]} by v${h.length}`;
+  }
+  if (c.protocolType === 'shield') {
+    const up = (c.tiers[0] && c.tiers[0].baselineHeat != null) ? c.tiers[0].baselineHeat : 1;
+    return `${up} upkeep / round`;
+  }
+  if (c.escalatingCost) return `${c.heat || 0}, escalating +${c.escalatingCost.step || 1} per swap`;
+  return c.heat != null ? String(c.heat) : null;
+}
+
+// "Conditions" — the ⚠ lines, built from the data's own flags and governors.
+const FLAG_NOTE = {
+  'direct-only': 'Direct-play only — no staged version',
+  'out-of-slice': 'Out of the current slice',
+  'in-progress': 'In design — placeholder numbers'
+};
+function conditionsOf(c) {
+  const out = [];
+  if (!c.inGame) out.push(c.inSlice ? 'Not yet ruled in' : 'Out of the drop pool');
+  if (c.cooldown) out.push(`Cooldown: ${c.cooldown.freeUses ?? 0} free uses, then +${c.cooldown.ramp ?? 1} heat`);
+  if (c.escalatingCost) out.push(`Escalating: +${c.escalatingCost.step || 1} heat per play`);
+  for (const f of c.flags || []) if (FLAG_NOTE[f]) out.push(FLAG_NOTE[f]);
+  return out;
+}
+
+// The vs-shield matrix — only for cards that carry a damage op in an ELEMENTAL lane.
+// Kinetic has no lane (all three columns read 1.00), so it gets no matrix, same as before.
+function matrixOf(c) {
+  const first = findOp(c.tiers[0] || {}, 'damage');
+  if (!first || !isNum(first.base) || !RPS[first.type] || first.type === 'kinetic') return null;
+  const last = findOp(c.tiers[c.tiers.length - 1] || {}, 'damage');
+  const rows = [['v1', MATRIX_COLS.map(s => rps(first.base, first.type, s))]];
+  if (last && isNum(last.base) && c.tiers.length > 1) {
+    rows.push([`v${c.tiers.length}`, MATRIX_COLS.map(s => rps(last.base, last.type || first.type, s))]);
+  }
+  return { rows };
+}
+
+// The upgrade track — the primary VALUE ladder, one row per version, exactly the shape
+// this table has always had. v1 names the value; later rows are bare numbers so the
+// ladder reads at a glance. The heat column rides along when the price moves.
+// (The full prose delta for each step lives on the card in-game; here it is the numbers.)
+function trackOf(c) {
+  if (!c.tiers || c.tiers.length < 2) return null;
+  const heats = Array.isArray(c.heatByTier) ? c.heatByTier : null;
+  const varies = heats && !heats.every(h => h === heats[0]);
+  return c.tiers.map((t, i) => {
+    const v = tierValue(c, i);
+    const heat = varies ? ` · ${heats[i]}h` : '';
+    if (!v) return heat ? heat.slice(3) : '—';
+    return (i === 0 ? `${v.value} ${v.label}` : String(v.value)) + heat;
+  });
+}
+
+// The capstone box — the top version's own delta line, when it names something.
+function capstoneOf(c) {
+  const n = (c.tiers || []).length;
+  if (n < 2) return null;
+  const d = renderDelta(c, n - 1);
+  if (!d || d === NO_CHANGE) return null;
+  const m = d.match(/^capstone[:\s—-]*(.*)$/i);
+  return { label: null, text: m ? m[1] : d };
+}
+
+function viewerCard(c) {
+  const slot = slotOf(c);
+  return renderPlayerCard({
+    name: c.name,
+    rarity: c.rarity,
+    kind: c.kind === 'protocol' ? 'Protocol' : 'Routine',
+    slot,
+    elements: c.damageType ? [c.damageType] : [],
+    section: c.kind === 'protocol' ? 'protocol' : 'routine',
+    type: (c.kind === 'protocol' ? c.protocolType : (c.compat && c.compat.class)) || '',
+    element: c.damageType || '',
+    pool: poolOf(c),
+    family: c.family || '',
+    fits: fitsOf(c),
+    heat: heatOf(c),
+    conditions: conditionsOf(c),
+    matrix: matrixOf(c),
+    effect: renderCardText(c, 0, true),
+    track: trackOf(c),
+    capstone: capstoneOf(c)
+  });
+}
+
+// One pass over the database → the five section grids the page already renders.
+function buildCards(db) {
+  const out = { 'protocols-weapon': [], 'protocols-shield': [], 'protocols-system': [], routines: [], wip: [] };
+  for (const p of db.protocols || []) {
+    const key = 'protocols-' + (p.protocolType || 'system');
+    (out[key] || out['protocols-system']).push(viewerCard(p));
+  }
+  for (const r of db.routines || []) out.routines.push(viewerCard(r));
+  return out;
+}
+
+// ── the fetch ────────────────────────────────────────────────────────────────
+// Which path works depends on where the server is rooted (build/ for the preview
+// server, build/v1/ for Mihai's http-server, which reaches this file by symlink).
+// Probe in order, first hit wins — the same pattern the game uses for the reverse link.
+const DATA_CANDIDATES = ['v1/data/cards.json', 'data/cards.json', '../data/cards.json', '../v1/data/cards.json'];
+
+async function loadCardDb() {
+  for (const url of DATA_CANDIDATES) {
+    try {
+      const r = await fetch(url, { cache: 'no-store' });
+      if (r.ok) return await r.json();
+    } catch { /* next candidate */ }
+  }
+  return null;
+}
+
+function showNoServer() {
+  document.body.innerHTML =
+    `<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+                 background:#07080b;color:#c8ccd4;font-family:'JetBrains Mono',ui-monospace,monospace;
+                 text-align:center;padding:40px;">
+      <div style="max-width:560px;">
+        <div style="font-size:12px;letter-spacing:4px;color:#ff5c7a;margin-bottom:18px;">NO CARD DATA</div>
+        <div style="font-size:16px;line-height:1.7;">The viewer needs the dev server — open it via the game's
+          <strong style="color:#22d2ff;">CARD LIBRARY</strong> button.</div>
+        <div style="font-size:12px;color:#6b6f78;margin-top:20px;line-height:1.8;">
+          It reads <code>v1/data/cards.json</code> live, so it always shows the same numbers as the game.
+          Opened straight off the filesystem (<code>file://</code>) the browser blocks that read.</div>
+      </div>
+    </div>`;
+}
 
 // ─── FILTER ───────────────────────────────────────────────────────────────────
 
@@ -2147,9 +1327,7 @@ document.getElementById('nav-toggle').addEventListener('click', () => {
 
 // ─── RENDER ───────────────────────────────────────────────────────────────────
 
-function render() {
-  let complete = 0, inProgress = 0;
-
+function render(CARDS, db) {
   for (const [sectionId, cardList] of Object.entries(CARDS)) {
     const container = document.getElementById(sectionId);
     if (!container) continue;
@@ -2165,15 +1343,13 @@ function render() {
       const m = heatText.trim().match(/^-?\d+/);
       c.dataset.heat = m ? m[0] : '';
     });
-    if (sectionId === 'wip') inProgress += cardList.length;
-    else complete += cardList.length;
   }
 
   const metaEl = document.getElementById('meta-line');
   const total   = document.querySelectorAll('#cards-page .card').length;
   const inGame  = document.querySelectorAll('#cards-page .card[data-pool="game"]').length;
   const out     = document.querySelectorAll('#cards-page .card[data-pool="out"]').length;
-  metaEl.dataset.base = `Card rework — last updated: 2026-07-31 &nbsp;·&nbsp; ${total} cards &nbsp;·&nbsp; `
+  metaEl.dataset.base = `Live from <code>v1/data/cards.json</code> &nbsp;·&nbsp; ${total} cards &nbsp;·&nbsp; `
     + `<span style="color:#7ddf8a;">In game: ${inGame}</span> &nbsp;·&nbsp; `
     + `<span style="color:#c9a44a;">Unassigned: ${total - inGame - out}</span> &nbsp;·&nbsp; `
     + `<span style="color:#d97b7b;">Out: ${out}</span>`;
@@ -2192,7 +1368,11 @@ function render() {
   applyFilters();
 }
 
-render();
+// One source of truth: nothing renders until the card database is in hand.
+loadCardDb().then(db => {
+  if (!db) return showNoServer();
+  render(buildCards(db), db);
+});
 </script>
 </body>
 </html>
