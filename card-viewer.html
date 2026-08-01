@@ -866,6 +866,8 @@ function renderPlayerCard(d) {
 // behaviour must match exactly — tests/card-text.test.mjs guards the original.
 //   {opName:field} · {tier:field} · {card:heat} · {shield:field}
 //   {calc:penShot} = floor(damage.base × damage.penetration) · {calc:vent} = |heat op|
+//   {calc:shot2} = the second damage op's base (Twin Discharge's follow-up shot)
+//   {rps:strong|weak|strongPct|weakPct} = the elemental wheel, from tuning.json
 // An unresolvable token renders ⚠{token} so drift is loud, never silent.
 
 const TOKEN_RE = /\{([A-Za-z][A-Za-z0-9]*):([A-Za-z][A-Za-z0-9]*)\}/g;
@@ -876,10 +878,27 @@ function cardHeatAt(card, i) {
 }
 function findOp(tier, name) { return (tier.ops || []).find(o => o.op === name) || null; }
 
+// the elemental wheel, handed over from data/tuning.json by the fetch below
+let RPS = null;
+function resolveRps(card, tier, field) {
+  if (!RPS || !RPS.beats) return undefined;
+  const d = findOp(tier, 'damage');
+  const el = (d && d.type) || (card && card.damageType) || null;
+  if (field === 'strongPct') return Math.round((RPS.counter - 1) * 100);
+  if (field === 'weakPct') return Math.round((1 - RPS.resisted) * 100);
+  if (field === 'strongMult') return Math.round(RPS.counter * 100);
+  if (field === 'weakMult') return Math.round(RPS.resisted * 100);
+  if (!el || !RPS.beats[el]) return undefined;
+  if (field === 'strong') return RPS.beats[el];
+  if (field === 'weak') return Object.keys(RPS.beats).find(w => RPS.beats[w] === el);
+  return undefined;
+}
+
 function resolveToken(card, tier, i, ns, field) {
   if (ns === 'tier') return tier ? tier[field] : undefined;
   if (ns === 'card') return field === 'heat' ? cardHeatAt(card, i) : (card ? card[field] : undefined);
   if (ns === 'shield') return card && card.shield ? card.shield[field] : undefined;
+  if (ns === 'rps') return resolveRps(card, tier, field);
   if (ns === 'calc') {
     if (field === 'penShot') {
       const d = findOp(tier, 'damage');
@@ -888,6 +907,10 @@ function resolveToken(card, tier, i, ns, field) {
     if (field === 'vent') {
       const h = findOp(tier, 'heat');
       return (h && isNum(h.amount)) ? Math.abs(h.amount) : undefined;
+    }
+    if (field === 'shot2') {
+      const d2 = (tier.ops || []).filter(o => o.op === 'damage')[1];
+      return (d2 && isNum(d2.base)) ? d2.base : undefined;
     }
     return undefined;
   }
@@ -1111,8 +1134,8 @@ function buildCards(db) {
 // Probe in order, first hit wins — the same pattern the game uses for the reverse link.
 const DATA_CANDIDATES = ['v1/data/cards.json', 'data/cards.json', '../data/cards.json', '../v1/data/cards.json'];
 
-async function loadCardDb() {
-  for (const url of DATA_CANDIDATES) {
+async function loadJsonCandidates(names) {
+  for (const url of names) {
     try {
       const r = await fetch(url, { cache: 'no-store' });
       if (r.ok) return await r.json();
@@ -1120,6 +1143,11 @@ async function loadCardDb() {
   }
   return null;
 }
+
+const loadCardDb = () => loadJsonCandidates(DATA_CANDIDATES);
+// the elemental wheel and its two percentages live in tuning.json — the {rps:…} tokens
+// on every cannon face read it, so the wheel is never restated in copy (note 10)
+const loadTuning = () => loadJsonCandidates(DATA_CANDIDATES.map(u => u.replace('cards.json', 'tuning.json')));
 
 function showNoServer() {
   document.body.innerHTML =
@@ -1369,8 +1397,9 @@ function render(CARDS, db) {
 }
 
 // One source of truth: nothing renders until the card database is in hand.
-loadCardDb().then(db => {
+Promise.all([loadCardDb(), loadTuning()]).then(([db, tuning]) => {
   if (!db) return showNoServer();
+  if (tuning && tuning.rps) RPS = tuning.rps;
   render(buildCards(db), db);
 });
 </script>
