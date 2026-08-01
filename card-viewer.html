@@ -553,24 +553,37 @@
 <script>
 // ─── SINGLE SOURCE OF TRUTH ──────────────────────────────────────────────────
 
-const RPS = {
-  arc:     { plasma: 1.25, gamma: 1.00, arc:    0.75 },
-  plasma:  { gamma:  1.25, arc:   1.00, plasma: 0.75 },
-  gamma:   { arc:    1.25, plasma: 1.00, gamma:  0.75 },
-  kinetic: { plasma: 1.00, gamma:  1.00, arc:    1.00 }
-};
-
 // The hand-kept card numbers that used to live here (CANNON_UPGRADES, KINETIC_CORE,
 // MORPHIC_VEIL, SHIELD_COMMON, PLAYER_HULL) are GONE — 2026-08-01, repair plan C1.
-// Every card number now comes from v1/data/cards.json at load time. RPS above stays:
-// it is the elemental lane table the matrices are drawn through, not card data.
+// Every card number now comes from v1/data/cards.json at load time. The elemental lane
+// table that used to sit here is gone too: the wheel in tuning.json is the whole truth
+// (feel-pass note 10), so the matrices below are drawn through `RPS` — loaded from
+// data/tuning.json at the bottom of this file — exactly like the engine does it.
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
 const floor = Math.floor;
 
+// Mirrors core/resolver.js rpsMultiplier() — one wheel, read from tuning.json.
+const TRI_ELEMENT = 'prism';
+function isElemental(type) {
+  return !!RPS && !!RPS.beats && (type === TRI_ELEMENT || !!RPS.beats[type]);
+}
+function rpsMultiplier(weaponType, shieldType) {
+  if (!RPS || !RPS.beats) return 1.0;
+  if (weaponType === 'kinetic') return 1.0;
+  if (!shieldType || shieldType === 'typeless' || shieldType === 'none') return 1.0;
+  const { beats, counter, resisted, same, neutral } = RPS;
+  if (weaponType === TRI_ELEMENT) return counter;
+  if (shieldType === TRI_ELEMENT) return resisted;
+  if (beats[weaponType] === shieldType) return counter;
+  if (beats[shieldType] === weaponType) return resisted;
+  if (weaponType === shieldType) return same;
+  return neutral;
+}
+
 function rps(base, weaponType, shieldType) {
-  return floor(base * RPS[weaponType][shieldType]);
+  return floor(base * rpsMultiplier(weaponType, shieldType));
 }
 
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -596,11 +609,16 @@ function card(rarity, extra, content, opts = {}) {
 
 function ecChip(s) { return `<span class="echip ${s.atk ? 'atk' : ''}">${s.label}</span>`; }
 
+// What a shield of type `t` does to each incoming weapon lane — derived from the wheel,
+// never hand-kept. Under feel-pass note 10 a shield resists the element it BEATS and is
+// weak to the element that beats it; the mirror is an even fight (the old "resists its
+// own element" rule is retired, so `neutral` is the mirror now).
 function rpsLine(t) {
-  const rel = { arc:['arc','gamma','plasma'], plasma:['plasma','arc','gamma'], gamma:['gamma','plasma','arc'] }[t];
-  if (!rel) return '';
+  if (!RPS || !RPS.beats || !RPS.beats[t]) return '';
+  const res  = RPS.beats[t];                                        // this shield beats it → 75%
+  const weak = Object.keys(RPS.beats).find(w => RPS.beats[w] === t); // it beats this shield → 125%
+  const neu  = t;                                                   // mirror → even
   const cl = { arc:'e-arc', plasma:'e-plasma', gamma:'e-gamma' };
-  const [res, weak, neu] = rel;
   return `resists <span class="${cl[res]}">${res}</span> &nbsp;·&nbsp; weak to <span class="${cl[weak]}">${weak}</span> &nbsp;·&nbsp; neutral <span class="${cl[neu]}">${neu}</span>`;
 }
 
@@ -653,7 +671,9 @@ function enemyCard(e) {
   return `<div class="ecard ${e.cls}${e.wip ? ' wip' : ''}" data-eclass="${e.cls}" data-echapter="${chap}">${head}${stype}${hp}${intent}${phases}${load}${drops}</div>`;
 }
 
-const ENEMIES = {
+// Built on demand, not at parse time: the shield-relationship line reads the wheel from
+// tuning.json, which only lands after the fetch. render() calls this once, after load.
+const enemiesBoard = () => ({
   'enemies-standard': [
     enemyCard({ cls:'standard', name:'SCAVENGER PROBE', type:'Drone', chapter:'1', tier:'T1 · Teacher (on-ramp) · fight 1, scripted',
       shieldType:'arc', shield:20, hull:55, intentTitle:'strict two-beat',
@@ -742,7 +762,7 @@ const ENEMIES = {
       shield_p:{protocol:'TBD', ok:false, note:'design pending'},
       drops:['Moonlit Phase Blade (U) + Moonfall (U)'] }),
   ],
-};
+});
 
 function divider() { return `<hr class="divider">`; }
 
@@ -878,7 +898,10 @@ function cardHeatAt(card, i) {
 }
 function findOp(tier, name) { return (tier.ops || []).find(o => o.op === name) || null; }
 
-// the elemental wheel, handed over from data/tuning.json by the fetch below
+// THE elemental wheel — the single RPS binding in this file, handed over from
+// data/tuning.json by the fetch at the bottom. Both the {rps:…} tokens and the
+// vs-shield matrices read it. Do not add a second `RPS` above: a duplicate
+// declaration is a parse error and takes the whole viewer down (2026-08-01).
 let RPS = null;
 function resolveRps(card, tier, field) {
   if (!RPS || !RPS.beats) return undefined;
@@ -1059,7 +1082,7 @@ function conditionsOf(c) {
 // Kinetic has no lane (all three columns read 1.00), so it gets no matrix, same as before.
 function matrixOf(c) {
   const first = findOp(c.tiers[0] || {}, 'damage');
-  if (!first || !isNum(first.base) || !RPS[first.type] || first.type === 'kinetic') return null;
+  if (!first || !isNum(first.base) || !isElemental(first.type) || first.type === 'kinetic') return null;
   const last = findOp(c.tiers[c.tiers.length - 1] || {}, 'damage');
   const rows = [['v1', MATRIX_COLS.map(s => rps(first.base, first.type, s))]];
   if (last && isNum(last.base) && c.tiers.length > 1) {
@@ -1384,7 +1407,7 @@ function render(CARDS, db) {
   metaEl.innerHTML = metaEl.dataset.base;
 
   let enemyCount = 0;
-  for (const [sectionId, list] of Object.entries(ENEMIES)) {
+  for (const [sectionId, list] of Object.entries(enemiesBoard())) {
     const container = document.getElementById(sectionId);
     if (!container) continue;
     container.innerHTML = list.join('');
