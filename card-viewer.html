@@ -189,6 +189,8 @@
             stroke-linecap: round; stroke-linejoin: round; vertical-align: -2px; margin-right: 3px; }
   .card-effect .cat-ic { margin: 0 1px; vertical-align: -2px; }
   .tag-type    { background: #1e1e2e; color: #a0a0c0; }
+  /* derived behaviour tags (wave 2, Lane T) — hover for the plain sentence */
+  .tag-behaviour { background: #0d2630; color: #6fd4e8; cursor: help; }
   .tag-ST      { background: #2a2a3a; color: #e8e8f0; }
   .tag-C       { background: #1a2040; color: #6699dd; }
   .tag-R       { background: #12301f; color: #4ecc88; }
@@ -589,7 +591,52 @@ function rps(base, weaponType, shieldType) {
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 function tags(...list) {
-  return list.map(t => `<span class="tag ${t.cls}">${t.label}</span>`).join('');
+  return list.map(t => `<span class="tag ${t.cls}"${t.title ? ` title="${t.title.replace(/"/g, '&quot;')}"` : ''}>${t.label}</span>`).join('');
+}
+
+// ── DERIVED BEHAVIOUR TAGS — MIRRORS build/v1/core/card-tags.mjs ─────────────
+// Feel-pass wave 2, Lane T1 (ruling 5a-A). Every tag is derived from the card's own
+// data; there is no hand-kept list of "cards that scramble" on either side. Keep the
+// derivation rules and the sentences identical to core/card-tags.mjs — if they drift,
+// the viewer stops mirroring the game, which is the one thing this page must not do.
+const BEHAVIOUR_TAGS = {
+  fires: { label: 'Fires', def: 'Playing this card fires the weapon you have equipped. The damage on the card is that shot, with this card already counted in.' },
+  engages: { label: 'Engages', def: 'Playing this card brings your shield back up and restores part of its pool. It works even when the pool is at zero.' },
+  prints: { label: 'Prints', def: 'Playing this card draws a card from your deck into your hand. A full hand takes nothing — the card is lost, so play down first.' },
+  scrambles: { label: 'Scrambles', def: 'Playing this card sends it out of the fight — you cannot play it again until the fight ends. It is not deleted; it comes back next fight.' },
+  cached: { label: 'Cached', def: 'This card stays in your hand when you end the round. Everything else in hand is discarded.' },
+  'dead-after-play': { label: 'Dead after play', def: 'Once played, this card keeps being drawn but can never be played again this fight. It sits in your hand as dead weight.' },
+  'stages-alone': { label: 'Stages alone', def: 'This card takes the whole activation. No other routine can be staged beside it.' },
+  'once-per-fight': { label: 'Once per fight', def: 'You can play this card once in a fight. After that it is locked until the next fight starts.' },
+  upkeep: { label: 'Upkeep', def: null } // the sentence quotes the live number — built below
+};
+
+function behaviourTags(c, i = 0) {
+  const tier = (c.tiers || [])[i];
+  if (!tier) return [];
+  const kw = [...(c.keywords || []), ...(tier.keywords || [])];
+  const ops = tier.ops || [];
+  const cls = c.compat ? c.compat.class : null;
+  const isProtocol = c.kind === 'protocol';
+  const ids = [];
+  if (!isProtocol && cls === 'weapon') ids.push('fires');
+  if (!isProtocol && ops.some(o => o.op === 'engageShield' || o.op === 'restoreBonus')) ids.push('engages');
+  if (ops.some(o => o.op === 'draw' || o.op === 'drawNextRound')) ids.push('prints');
+  if (kw.includes('scramble')) ids.push('scrambles');
+  if (kw.includes('cached')) ids.push('cached');
+  if (kw.includes('dead-after-play')) ids.push('dead-after-play');
+  if (kw.includes('stages-alone')) ids.push('stages-alone');
+  const explicitOnce = c.oncePerFight === true || tier.oncePerFight === true || ops.some(o => o.once === true);
+  if (explicitOnce && !ids.includes('scrambles') && !ids.includes('dead-after-play')) ids.push('once-per-fight');
+  if (isProtocol) ids.push('upkeep');
+  return ids.map(id => {
+    const spec = BEHAVIOUR_TAGS[id];
+    if (id === 'upkeep') {
+      const n = tier.baselineHeat != null ? tier.baselineHeat : (c.upkeep != null ? c.upkeep : 1);
+      return { cls: 'tag-behaviour', label: spec.label, title: `${n} heat is charged at the start of every round while this protocol stays equipped. You pay it whether you fire it or not.` };
+    }
+    return { cls: 'tag-behaviour', label: spec.label, title: spec.def };
+  });
 }
 
 function card(rarity, extra, content, opts = {}) {
@@ -819,7 +866,9 @@ function renderPlayerCard(d) {
     { cls: 'tag-' + d.rarity, label: d.rarity },
     { cls: kindCls,           label: d.kind  },
     { cls: slotCls,           label: catIc(d.slot.toLowerCase()) + d.slot },
-    ...(d.elements || []).map(e => ({ cls: elemCls[e], label: cap(e) }))
+    ...(d.elements || []).map(e => ({ cls: elemCls[e], label: cap(e) })),
+    // the DERIVED behaviour tags — the same row the game's card face shows (Lane T2)
+    ...(d.behaviour || [])
   ];
 
   // 2 — STATS: the same three rows, same order, on every card.
@@ -931,9 +980,19 @@ function resolveToken(card, tier, i, ns, field) {
       const h = findOp(tier, 'heat');
       return (h && isNum(h.amount)) ? Math.abs(h.amount) : undefined;
     }
+    // MIRRORS core/card-text.mjs. Since the law-① fix (batch-2 note 22) Twin Discharge's
+    // follow-up is a FRACTION of the first damage op, not a second damage op — this page
+    // still only knew the old shape and printed ⚠ on the Prism Cannon's face.
     if (field === 'shot2') {
+      const d1 = (tier.ops || []).find(o => o.op === 'damage');
+      const mh = (tier.ops || []).find(o => o.op === 'scripted' && o.id === 'multi-hit');
+      if (mh && d1 && isNum(d1.base)) return Math.floor(d1.base * (mh.secondPct != null ? mh.secondPct : 0.5));
       const d2 = (tier.ops || []).filter(o => o.op === 'damage')[1];
       return (d2 && isNum(d2.base)) ? d2.base : undefined;
+    }
+    if (field === 'shot2pct') {
+      const m = (tier.ops || []).find(o => o.op === 'scripted' && o.id === 'multi-hit');
+      return (m && isNum(m.secondPct)) ? Math.round(m.secondPct * 100) : undefined;
     }
     return undefined;
   }
@@ -981,6 +1040,40 @@ const PRIMARY = {
   decayField: { field: 'erode', label: 'max shield eroded' }
 };
 const NO_CHANGE = 'no change — plays build toward the next version';
+// LANE T4 (feel-pass wave 2, ruling 5b) — MIRRORS core/card-text.mjs. On the LAST tier
+// "plays build toward the next version" is a lie; the final rung says so instead. The
+// tier-field and gained-op scans below stop the generator reporting "no change" over a
+// read that really did buy something (a shield pool step, an upkeep drop, a new rider).
+const NO_CHANGE_FINAL = 'final version — nothing further to unlock';
+const TIER_FIELDS = [
+  { field: 'pool', label: 'shield pool', better: 'up' },
+  { field: 'restore', label: 'restore', better: 'up' },
+  { field: 'baselineHeat', label: 'upkeep', better: 'down' }
+];
+const GAINED_OP = {
+  draw: o => `now also prints ${o.n === 1 ? 'a card' : `${o.n} cards`}`,
+  drawNextRound: o => `now also prints ${o.n === 1 ? 'a card' : `${o.n} cards`} next round`,
+  heat: o => (o.amount < 0 ? `now also vents ${Math.abs(o.amount)} heat` : `now also adds ${o.amount} heat`),
+  heatCap: o => `now also raises your heat cap by ${o.amount}`,
+  carryHeat: o => `now also carries up to ${o.max} unspent heat into the next round`,
+  hull: o => `now also repairs ${o.amount} hull`,
+  rend: o => `now also rends ${o.amount}`,
+  mark: o => `now also marks the target for ${o.amount}`,
+  dot: o => `now also burns for ${o.fixed}`,
+  restoreBonus: o => `now also restores ${o.amount} more shield`,
+  incomingReduce: o => `now also blocks ${o.value} of the next hit`,
+  prefetch: o => `now also looks at the top ${o.look} of your draw pile`,
+  pendingRead: o => `now also grants ${o.amount} read${o.amount === 1 ? '' : 's'}`,
+  onKillRead: o => `now also grants ${o.amount} read${o.amount === 1 ? '' : 's'} on a kill`,
+  protocolBonus: o => `now also banks +${o.amount} damage on the weapon`,
+  weaponBuff: o => `now also scorches for ${o.perTick} a tick`,
+  startHeatNext: o => `now also puts ${o.amount} heat on next round's meter`,
+  zeroHeatNextRound: () => 'next round now opens at 0 heat',
+  engageShield: () => 'now also engages the shield',
+  scrambleRandom: o => `now also scrambles ${o.n === 1 ? 'a card' : `${o.n} cards`}`,
+  ventHalf: () => 'now also vents half your heat'
+};
+const opKey = o => (o.op === 'scripted' ? `scripted:${o.id}` : o.op) + (o.when ? `@${o.when}` : '');
 
 function primaryReading(tier) {
   for (const o of (tier && tier.ops) || []) {
@@ -993,17 +1086,31 @@ const signedN = n => (n > 0 ? '+' + n : '−' + Math.abs(n));
 
 function autoDelta(card, i) {
   const tier = card.tiers[i], prev = card.tiers[i - 1];
-  if (!prev) return NO_CHANGE;
+  if (!prev) return ''; // v1 is the floor, not a step — nothing to diff against
+  const isFinal = i === card.tiers.length - 1;
   const parts = [];
   const now = primaryReading(tier), was = primaryReading(prev);
   if (now && was && now.name === was.name && now.field === was.field && now.value !== was.value) {
     parts.push(`${signedN(now.value - was.value)} ${now.label} (${was.value} → ${now.value})`);
   }
+  for (const f of TIER_FIELDS) {
+    const a = prev[f.field], b = tier[f.field];
+    if (!isNum(a) || !isNum(b) || a === b) continue;
+    if (f.better === 'down' && b < a) parts.push(`${f.label} drops to ${b} (${a} → ${b})`);
+    else parts.push(`${signedN(b - a)} ${f.label} (${a} → ${b})`);
+  }
+  const had = new Set((prev.ops || []).map(opKey));
+  for (const o of tier.ops || []) {
+    if (had.has(opKey(o))) continue;
+    const phrase = GAINED_OP[o.op];
+    if (phrase) parts.push(phrase(o));
+  }
   const hNow = cardHeatAt(card, i), hWas = cardHeatAt(card, i - 1);
   if (isNum(hNow) && isNum(hWas) && hNow !== hWas) {
     parts.push(`costs ${Math.abs(hNow - hWas)} ${hNow < hWas ? 'less' : 'more'} heat (${hWas} → ${hNow})`);
   }
-  return parts.length ? parts.join(', and ') : NO_CHANGE;
+  if (parts.length) return parts.join(', and ');
+  return isFinal ? NO_CHANGE_FINAL : NO_CHANGE;
 }
 
 function renderDelta(card, i) {
@@ -1112,7 +1219,7 @@ function capstoneOf(c) {
   const n = (c.tiers || []).length;
   if (n < 2) return null;
   const d = renderDelta(c, n - 1);
-  if (!d || d === NO_CHANGE) return null;
+  if (!d || d === NO_CHANGE || d === NO_CHANGE_FINAL) return null;
   const m = d.match(/^capstone[:\s—-]*(.*)$/i);
   return { label: null, text: m ? m[1] : d };
 }
@@ -1125,6 +1232,7 @@ function viewerCard(c) {
     kind: c.kind === 'protocol' ? 'Protocol' : 'Routine',
     slot,
     elements: c.damageType ? [c.damageType] : [],
+    behaviour: behaviourTags(c, 0),
     section: c.kind === 'protocol' ? 'protocol' : 'routine',
     type: (c.kind === 'protocol' ? c.protocolType : (c.compat && c.compat.class)) || '',
     element: c.damageType || '',
