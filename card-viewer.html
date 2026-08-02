@@ -516,7 +516,7 @@
           <div class="card-row"><span>Drops from</span><span class="card-na">n/a</span></div></div></label>
       <label class="fm-row"><input type="checkbox" data-field="cond" checked>
         <div class="fm-sample"><div class="fm-lbl">Conditions</div>
-          <div class="card-conditions">⚠ Once per fight · stages alone</div></div></label>
+          <div class="card-conditions">⚠ Once per fight · not yet ruled in</div></div></label>
       <label class="fm-row"><input type="checkbox" data-field="matrix" checked>
         <div class="fm-sample"><div class="fm-lbl">Damage matrix</div>
           <div class="mx"><div class="mx-cell mx-rowlbl"></div><div class="mx-cell mx-col">vs Plasma</div><div class="mx-cell mx-col">vs Gamma</div><div class="mx-cell mx-col">vs Arc</div>
@@ -606,6 +606,9 @@ function tags(...list) {
 // data; there is no hand-kept list of "cards that scramble" on either side. Keep the
 // derivation rules and the sentences identical to core/card-tags.mjs — if they drift,
 // the viewer stops mirroring the game, which is the one thing this page must not do.
+// FOSSIL SWEEP 2026-08-02 (batch-3 note 15): the 'stages-alone' tag was deleted on both
+// sides. It described the retired staged grammar and nothing the direct engine checks;
+// the keyword stays in cards.json as a bank, but no surface prints it.
 const BEHAVIOUR_TAGS = {
   fires: { label: 'Fires', def: 'Playing this card fires the weapon you have equipped. The damage on the card is that shot, with this card already counted in.' },
   engages: { label: 'Engages', def: 'Playing this card brings your shield back up and restores part of its pool. It works even when the pool is at zero.' },
@@ -613,7 +616,6 @@ const BEHAVIOUR_TAGS = {
   scrambles: { label: 'Scrambles', def: 'Playing this card sends it out of the fight — you cannot play it again until the fight ends. It is not deleted; it comes back next fight.' },
   cached: { label: 'Cached', def: 'This card stays in your hand when you end the round. Everything else in hand is discarded.' },
   'dead-after-play': { label: 'Dead after play', def: 'Once played, this card keeps being drawn but can never be played again this fight. It sits in your hand as dead weight.' },
-  'stages-alone': { label: 'Stages alone', def: 'This card takes the whole activation. No other routine can be staged beside it.' },
   'once-per-fight': { label: 'Once per fight', def: 'You can play this card once in a fight. After that it is locked until the next fight starts.' },
   upkeep: { label: 'Upkeep', def: null } // the sentence quotes the live number — built below
 };
@@ -632,7 +634,6 @@ function behaviourTags(c, i = 0) {
   if (kw.includes('scramble')) ids.push('scrambles');
   if (kw.includes('cached')) ids.push('cached');
   if (kw.includes('dead-after-play')) ids.push('dead-after-play');
-  if (kw.includes('stages-alone')) ids.push('stages-alone');
   const explicitOnce = c.oncePerFight === true || tier.oncePerFight === true || ops.some(o => o.once === true);
   if (explicitOnce && !ids.includes('scrambles') && !ids.includes('dead-after-play')) ids.push('once-per-fight');
   if (isProtocol) ids.push('upkeep');
