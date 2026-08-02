@@ -881,8 +881,17 @@ function renderPlayerCard(d) {
 
   // 2 — STATS: the same three rows, same order, on every card.
   // Each row carries a field class so the Card-fields modal can toggle it.
+  // The heat row is the PRINTED price ladder. That is the truth this browser can tell:
+  // there is no fight here, so no relief can be live. In a fight the card face prints what
+  // the play will actually charge and strikes this number through beside it (batch-3
+  // note 19) — said in the row's own title so the two readings can never look like a
+  // contradiction. The label itself is load-bearing (render() sorts on it), so the note
+  // rides the title and nothing else moves.
+  const ROW_TITLE = {
+    heat: 'The PRINTED price, per version. In a fight a read or a daemon can lower it — the card face there shows the live price with this one struck through.',
+  };
   const stats = [['Fits', d.fits, 'fits'], ['Heat cost', d.heat, 'heat'], ['Drops from', null, 'drops']]
-    .map(([l, v, f]) => `<div class="card-row row-${f}"><span>${l}</span><span>${v || NA}</span></div>`).join('');
+    .map(([l, v, f]) => `<div class="card-row row-${f}"${ROW_TITLE[f] ? ` title="${ROW_TITLE[f]}"` : ''}><span>${l}</span><span>${v || NA}</span></div>`).join('');
 
   // 3 — CONDITIONS
   const condList = d.conditions ? (Array.isArray(d.conditions) ? d.conditions : [d.conditions]) : [];
