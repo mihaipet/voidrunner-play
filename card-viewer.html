@@ -1185,8 +1185,15 @@ const FLAG_NOTE = {
   'out-of-slice': 'Out of the current slice',
   'in-progress': 'In design — placeholder numbers'
 };
+// BLOCKED cards (ruled 2026-08-02): banked because the engine cannot honour what the card
+// prints, so it must never be offered. The reason lives in the data (cards.json `blocked`)
+// and the viewer just speaks it — protocol D3, the design files lead, the viewer mirrors.
+const BLOCKED_NOTE = {
+  'dot-unimplemented': 'Unavailable — damage over time is not implemented, so this card would do nothing. Banked until the DoT rules are ruled (design/open.md).'
+};
 function conditionsOf(c) {
   const out = [];
+  if (c.blocked) out.push(BLOCKED_NOTE[c.blocked] || `Unavailable — banked (${c.blocked})`);
   if (!c.inGame) out.push(c.inSlice ? 'Not yet ruled in' : 'Out of the drop pool');
   if (c.cooldown) out.push(`Cooldown: ${c.cooldown.freeUses ?? 0} free uses, then +${c.cooldown.ramp ?? 1} heat`);
   if (c.escalatingCost) out.push(`Escalating: +${c.escalatingCost.step || 1} heat per play`);
