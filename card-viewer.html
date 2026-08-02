@@ -121,7 +121,8 @@
      valve only. Change --card-h and the fixed section heights together. */
   :root {
     /* Re-sized 2026-07-31 (Mihai): track = 5-row table, all text one step larger */
-    --card-h:    836px;   /* fixed sections 522 + dividers 85 + padding 38 + effect 190 */
+    --card-h:    898px;   /* fixed sections 522 + dividers 85 + padding 38 + effect 190 + art 62 */
+    --sec-art:    54px;   /* THE SOUL PASS — the card-face art strip (art/card-art.md) */
     --sec-head:   72px;   /* tallest: Moonlit Phase Blade (6 tags → 2 rows) */
     --sec-stats:  64px;   /* 3 label/value rows @ 14px */
     --sec-cond:   76px;   /* tallest: Reinforce (3 wrapped lines @ 12px) */
@@ -138,6 +139,12 @@
   }
 
   .c-sec   { flex: 0 0 auto; overflow: hidden; }
+  /* THE SOUL PASS — the same 96x16 strip the game prints, full bleed over the card's
+     own padding so the viewer mirrors the in-game face (rule D3). */
+  .card-art { flex: 0 0 auto; display: block; height: var(--sec-art);
+    width: calc(100% + 40px); margin: -18px -20px 12px; object-fit: cover;
+    image-rendering: pixelated; image-rendering: crisp-edges;
+    border-bottom: 1px solid #222; }
   .c-head  { height: var(--sec-head); display: flex; flex-direction: column; gap: 8px; }
   .c-stats { height: var(--sec-stats); display: flex; flex-direction: column; gap: 3px; }
   .c-cond  { height: var(--sec-cond); }
@@ -905,6 +912,7 @@ function renderPlayerCard(d) {
   // Each section sits in a display:contents wrapper (.sw-*) carrying its own
   // divider, so the Card-fields modal can hide a section + its divider as one.
   const content = `
+      ${cardArtStrip(d.id)}
       <div class="c-sec c-head">
         <div class="card-name">${d.name}</div>
         <div class="card-tags">${tags(...tagList)}</div>
@@ -1227,6 +1235,7 @@ function capstoneOf(c) {
 function viewerCard(c) {
   const slot = slotOf(c);
   return renderPlayerCard({
+    id: c.id,
     name: c.name,
     rarity: c.rarity,
     kind: c.kind === 'protocol' ? 'Protocol' : 'Routine',
@@ -1276,6 +1285,18 @@ async function loadJsonCandidates(names) {
 }
 
 const loadCardDb = () => loadJsonCandidates(DATA_CANDIDATES);
+// THE SOUL PASS (art/card-art.md) — the same strips the game prints, so the viewer
+// mirrors the card face (rule D3). Rides the same candidate probe: this file is
+// reachable at two URL depths (build/ and build/v1/ via symlink), which is exactly
+// why the art ships as data URIs in a manifest and not as relative <img src> paths.
+let CARD_ART = null;
+const loadCardArt = () => loadJsonCandidates(DATA_CANDIDATES.map(u => u.replace('cards.json', 'card-art.json')));
+function cardArtStrip(id) {
+  if (!CARD_ART || !id) return '';
+  const s = CARD_ART.default;
+  const uri = (CARD_ART.art[s] && CARD_ART.art[s][id]) || null;
+  return uri ? `<img class="card-art" src="${uri}" alt="" aria-hidden="true">` : '';
+}
 // the elemental wheel and its two percentages live in tuning.json — the {rps:…} tokens
 // on every cannon face read it, so the wheel is never restated in copy (note 10)
 const loadTuning = () => loadJsonCandidates(DATA_CANDIDATES.map(u => u.replace('cards.json', 'tuning.json')));
@@ -1528,9 +1549,10 @@ function render(CARDS, db) {
 }
 
 // One source of truth: nothing renders until the card database is in hand.
-Promise.all([loadCardDb(), loadTuning()]).then(([db, tuning]) => {
+Promise.all([loadCardDb(), loadTuning(), loadCardArt()]).then(([db, tuning, art]) => {
   if (!db) return showNoServer();
   if (tuning && tuning.rps) RPS = tuning.rps;
+  if (art && art.art) CARD_ART = art;   // absent = cards render without strips, never broken
   render(buildCards(db), db);
 });
 </script>
