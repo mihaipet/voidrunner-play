@@ -43,28 +43,37 @@
   #nav-toggle {
     font-family: 'Courier New', monospace; font-size: 16px; line-height: 1;
     width: 28px; height: 28px; flex-shrink: 0;
-    border: 1px solid #242432; background: none; color: #8888aa;
+    border: 1px solid #7c7cac; background: none; color: #a8a8c8;
     cursor: pointer; border-radius: 3px;
   }
-  #nav-toggle:hover { border-color: #404058; color: #b0b0e0; }
+  #nav-toggle:hover { border-color: #a0a0d0; color: #e0e0f4; }
 
   .nav-body { display: flex; flex-direction: column; gap: 14px; }
   .nav-search { display: flex; flex-direction: column; gap: 8px; }
 
   .filter-sep {
     width: 100%; height: 1px;
-    background: #222230;
+    background: #3a3a52;
     flex-shrink: 0;
   }
 
   .filter-group { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+
+  /* ─── SIDEBAR CONTRAST PASS (2026-08-07) ────────────────────────
+     Mihai wears glasses: "i can barely see the filters." Every control
+     foreground here is measured against its own ground with the WCAG 2.1
+     relative-luminance formula and holds ≥ 4.5:1 — text AND border.
+     Active states are FILLED, not outlined: the accent colour moves off
+     the text and onto the ground, with near-black ink on top. The hues
+     are the originals, so the palette is unchanged — only where the
+     colour is painted changed. Grounds stay dark; foregrounds got bright. */
 
   .filter-label {
     width: 100%;
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    color: #3a3a50;
+    color: #9a9ac4;               /* was #3a3a50 — 1.80:1, the dimmest text on screen */
     margin: 0 0 2px;
     white-space: nowrap;
   }
@@ -73,30 +82,36 @@
     font-family: 'Courier New', monospace;
     font-size: 11px;
     padding: 3px 9px;
-    border: 1px solid #242432;
+    border: 1px solid #7c7cac;    /* was #242432 — 1.30:1, effectively invisible */
     background: none;
-    color: #555570;
+    color: #a8a8c8;               /* was #555570 — 2.77:1 */
     cursor: pointer;
     text-transform: uppercase;
     letter-spacing: 0.07em;
     border-radius: 2px;
     white-space: nowrap;
-    transition: border-color 0.1s, color 0.1s;
+    transition: border-color 0.1s, color 0.1s, background-color 0.1s;
   }
 
-  .filter-btn:hover { border-color: #404058; color: #8888aa; }
+  .filter-btn:hover { border-color: #a0a0d0; color: #e0e0f4; }
 
-  .filter-btn.active          { background: #16162a; border-color: #4848a0; color: #b0b0e0; }
-  .filter-btn[data-value="kinetic"].active { background: #160e04; border-color: #aa5522; color: #dd9955; }
-  .filter-btn[data-value="arc"].active     { background: #040a18; border-color: #2255aa; color: #5599dd; }
-  .filter-btn[data-value="plasma"].active  { background: #160404; border-color: #aa3333; color: #dd6666; }
-  .filter-btn[data-value="gamma"].active   { background: #04120a; border-color: #229944; color: #55cc88; }
-  .filter-btn[data-value="shield"].active  { background: #04101a; border-color: #226688; color: #55aacc; }
-  .filter-btn[data-value="ST"].active      { background: #14141e; border-color: #5a5a6e; color: #aaaacc; }
-  .filter-btn[data-value="C"].active       { background: #040a18; border-color: #3a6aaa; color: #6699dd; }
-  .filter-btn[data-value="R"].active       { background: #04120a; border-color: #4a7c4a; color: #88cc88; }
-  .filter-btn[data-value="E"].active       { background: #16041a; border-color: #8a3aaa; color: #bb77dd; }
-  .filter-btn[data-value="U"].active       { background: #1a1000; border-color: #cc8800; color: #ddaa22; }
+  /* Active = filled chip, near-black ink, bold. Unmissable beside an outline. */
+  .filter-btn.active {
+    background: #8f8fe0; border-color: #8f8fe0; color: #0a0a12; font-weight: bold;
+  }
+  .filter-btn.active:hover { filter: brightness(1.12); }
+
+  /* Per-value actives: the old TEXT colour becomes the FILL. Same palette. */
+  .filter-btn[data-value="kinetic"].active { background: #dd9955; border-color: #dd9955; }
+  .filter-btn[data-value="arc"].active     { background: #5599dd; border-color: #5599dd; }
+  .filter-btn[data-value="plasma"].active  { background: #dd6666; border-color: #dd6666; }
+  .filter-btn[data-value="gamma"].active   { background: #55cc88; border-color: #55cc88; }
+  .filter-btn[data-value="shield"].active  { background: #55aacc; border-color: #55aacc; }
+  .filter-btn[data-value="ST"].active      { background: #aaaacc; border-color: #aaaacc; }
+  .filter-btn[data-value="C"].active       { background: #6699dd; border-color: #6699dd; }
+  .filter-btn[data-value="R"].active       { background: #88cc88; border-color: #88cc88; }
+  .filter-btn[data-value="E"].active       { background: #bb77dd; border-color: #bb77dd; }
+  .filter-btn[data-value="U"].active       { background: #ddaa22; border-color: #ddaa22; }
 
   /* ─── PAGE ───────────────────────────────────────────────────── */
 
@@ -269,10 +284,10 @@
   .fg-enemies { display: none; }
   body.view-enemies .fg-cards { display: none; }
   body.view-enemies .fg-enemies { display: contents; }
-  .filter-btn[data-filter="view"].active { background: #1a0a0e; border-color: #aa3050; color: #ff7a90; }
-  .filter-btn[data-value="standard"].active { background: #0a1420; border-color: #4a6a8a; color: #7fa8d0; }
-  .filter-btn[data-value="boss"].active     { background: #1a0a10; border-color: #b0445a; color: #ff7a90; }
-  .filter-btn[data-value="rare"].active     { background: #1a1000; border-color: #cc8800; color: #ddaa22; }
+  .filter-btn[data-filter="view"].active    { background: #ff7a90; border-color: #ff7a90; }
+  .filter-btn[data-value="standard"].active { background: #7fa8d0; border-color: #7fa8d0; }
+  .filter-btn[data-value="boss"].active     { background: #ff7a90; border-color: #ff7a90; }
+  .filter-btn[data-value="rare"].active     { background: #ddaa22; border-color: #ddaa22; }
   .card-5perk { border: 1px solid #252535; border-left: 3px solid #5555a0; padding: 8px 10px; background: #0e0e18; }
   .perk5-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #6060a0; margin-bottom: 4px; }
   .perk5-body { color: #c0c0c8; font-size: 13px; line-height: 1.55; }
@@ -282,8 +297,8 @@
 
   #search-box {
     background: transparent;
-    border: 1px solid #333344;
-    color: #c8c8d0;
+    border: 1px solid #7c7cac;    /* was #333344 — 1.61:1 */
+    color: #dcdce8;
     font-family: 'Courier New', monospace;
     font-size: 13px;
     padding: 5px 10px;
@@ -291,8 +306,8 @@
     width: 100%;
   }
   #clear-filters { width: 100%; }
-  #search-box:focus { border-color: #5555a0; }
-  #search-box::placeholder { color: #444455; }
+  #search-box:focus { border-color: #b0b0e0; }
+  #search-box::placeholder { color: #9a9ac4; }  /* was #444455 — 2.09:1 */
 
   /* ─── CARD FIELDS (the display filter — Mihai 2026-07-31) ──────────────
      The modal writes hf-<field> classes on <body>; these rules hide the
@@ -319,7 +334,7 @@
   body.custom-fields .card   { height: auto; }
   body.custom-fields .c-sec  { height: auto !important; }
   body.custom-fields .c-body { flex: 0 0 auto; }
-  #fields-btn.active { background: #1a2040; border-color: #5555a0; color: #9db4ff; }
+  #fields-btn.active { background: #9db4ff; border-color: #9db4ff; color: #0a0a12; }
 
   #fields-modal { position: fixed; inset: 0; z-index: 100; }
   #fields-modal[hidden] { display: none; }
@@ -332,10 +347,10 @@
   .fm-head { display: flex; justify-content: space-between; align-items: center;
     padding: 14px 20px; border-bottom: 1px solid #222; }
   .fm-title { color: #fff; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; }
-  #fm-close { background: none; border: 1px solid #333344; color: #9090a0;
+  #fm-close { background: none; border: 1px solid #7c7cac; color: #a8a8c8;
     font-family: inherit; font-size: 14px; padding: 4px 11px; cursor: pointer; }
-  #fm-close:hover { border-color: #5555a0; color: #c8c8d0; }
-  .fm-hint { color: #7a7a90; font-size: 13px; padding: 12px 20px 0; }
+  #fm-close:hover { border-color: #b0b0e0; color: #e0e0f4; }
+  .fm-hint { color: #a0a0b8; font-size: 13px; padding: 12px 20px 0; }
   .fm-body { overflow-y: auto; padding: 8px 20px 14px; }
   .fm-row { display: flex; gap: 16px; align-items: flex-start;
     padding: 11px 8px; border-bottom: 1px solid #1e1e22; cursor: pointer; }
@@ -344,11 +359,11 @@
   .fm-row input { width: 19px; height: 19px; margin-top: 1px; accent-color: #5555a0; flex: 0 0 auto; cursor: pointer; }
   .fm-sample { flex: 1; min-width: 0; }
   .fm-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
-    color: #6a6a80; margin-bottom: 5px; }
+    color: #9a9ac4; margin-bottom: 5px; }
   .fm-foot { display: flex; justify-content: flex-end; gap: 10px;
     padding: 13px 20px; border-top: 1px solid #222; }
   .fm-foot .filter-btn { width: auto; padding: 8px 20px; font-size: 13px; }
-  #fm-apply { background: #1a2040; border-color: #5555a0; color: #9db4ff; }
+  #fm-apply { background: #9db4ff; border-color: #9db4ff; color: #0a0a12; font-weight: bold; }
 </style>
 </head>
 <body>
