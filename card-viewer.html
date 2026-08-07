@@ -994,6 +994,13 @@ function resolveToken(card, tier, i, ns, field) {
       const d = findOp(tier, 'damage');
       return (d && isNum(d.base) && isNum(d.penetration)) ? Math.floor(d.base * d.penetration) : undefined;
     }
+    // card sitting 2026-08-06/07 — the Kinetic Slug face states the rule and lets the
+    // plate carry the damage, so the efficiency figure is read off the op (50 → 100 at
+    // the capstone). MIRRORS core/card-text.mjs.
+    if (field === 'penPct') {
+      const d = findOp(tier, 'damage');
+      return (d && isNum(d.penetration)) ? Math.round(d.penetration * 100) : undefined;
+    }
     if (field === 'vent') {
       const h = findOp(tier, 'heat');
       return (h && isNum(h.amount)) ? Math.abs(h.amount) : undefined;
