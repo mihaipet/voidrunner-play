@@ -231,6 +231,21 @@
   .card-row span:last-child { color: #d0d0d8; text-align: right; }
   .card-effect { color: #c0c0c8; font-size: 14px; line-height: 1.6; }
   .card-effect strong { color: #ffffff; }
+  /* THE EFFECT ICON RULE (standing rule, 2026-08-08 — art/ui.md). Every effect keyword
+     printed on a face wears its glyph. Deliberately quiet: the WORD keeps the copy's
+     colour and the GLYPH does the carrying, so a sentence with three effects in it is
+     still a sentence and not a chip row. Contrast on this page's #16161a card ground:
+     word #e8e8ef ≈ 13:1, glyph #7fd8ff ≈ 8.4:1 — past the 4.5:1 floor with room. */
+  .ef-word { color: #e8e8ef; font-weight: 600; white-space: nowrap; }
+  .ef-ic { width: 13px; height: 13px; vertical-align: -2px; margin-right: 2px;
+    fill: none; stroke: #7fd8ff; stroke-width: 1.8; stroke-linecap: round;
+    stroke-linejoin: round; display: inline-block; }
+  .ef-word.ef-vent .ef-ic { stroke: #ff9d5c; }
+  .ef-word.ef-dot .ef-ic,
+  .ef-word.ef-rad .ef-ic,
+  .ef-word.ef-radx .ef-ic { stroke: #b9e04a; }
+  /* THE RADIATION FAMILY, told apart by WEIGHT (2026-08-08): RAD outline, RADX solid. */
+  .ef-word.ef-solid .ef-ic { fill: currentColor; color: #b9e04a; stroke-width: 1; }
   /* Upgrade track — one row per tier (Mihai ruling 2026-07-31: tables, not inline) */
   .trk { width: 100%; border-collapse: collapse; }
   .trk td { padding: 3px 6px; border-bottom: 1px solid #1e1e26; font-size: 12.5px; line-height: 1.45; }
@@ -915,14 +930,16 @@ function renderPlayerCard(d) {
     : NA;
 
   // 4 — EFFECT (matrix first, then rules text)
-  const effect = (d.matrix ? matrixBlock(d.matrix) : '') + `<div class="card-effect">${d.effect}</div>`;
+  // THE EFFECT ICON RULE (2026-08-08): every effect keyword in the copy wears its glyph,
+  // from the same map the game reads. Applied at render, never stored on the card data.
+  const effect = (d.matrix ? matrixBlock(d.matrix) : '') + `<div class="card-effect">${effectIconize(d.effect)}</div>`;
 
   // 5 — UPGRADE TRACK: one row per tier (v1…vN), final tier tinted gold —
   // it's the capstone read (Mihai ruling 2026-07-31: tables, not inline text).
   const n = (d.track || []).length;
   const track = n
     ? `<table class="trk">${d.track.map((v, i) =>
-        `<tr${i === n - 1 ? ' class="trk-top"' : ''}><td class="trk-tier">v${i + 1}</td><td class="trk-val">${v}</td></tr>`
+        `<tr${i === n - 1 ? ' class="trk-top"' : ''}><td class="trk-tier">v${i + 1}</td><td class="trk-val">${effectIconize(v)}</td></tr>`
       ).join('')}</table>`
     : NA;
 
@@ -931,7 +948,7 @@ function renderPlayerCard(d) {
   const pip = n ? `${n}/${n}` : '5/5';
   const capstone = cs
     ? `<div class="card-5perk"><div class="perk5-label">${pip}${cs.label ? ' — ' + cs.label : ''}</div>`
-      + `<div class="perk5-body">${cs.text}</div>${cs.matrix ? matrixBlock(cs.matrix) : ''}</div>`
+      + `<div class="perk5-body">${effectIconize(cs.text)}</div>${cs.matrix ? matrixBlock(cs.matrix) : ''}</div>`
     : NA;
 
   // Each section sits in a display:contents wrapper (.sw-*) carrying its own
@@ -1587,8 +1604,43 @@ function render(CARDS, db) {
   applyFilters();
 }
 
+// ── THE EFFECT ICON RULE, MIRRORED (standing rule, 2026-08-08) ───────────────
+// Every effect keyword on a card face wears its glyph — here as in the game. The map AND
+// the glyph paths are imported live from core/effect-icons.mjs, so this page can never
+// disagree with the game about which word wears which mark. It is a dynamic import
+// because this file is a plain <script> with no build step; if it cannot be reached the
+// page renders exactly as it did before — copy still correct, just unmarked.
+let EFFECT_RE = null, EFFECT_LOOKUP = null, EFFECT_GLYPHS = null;
+async function loadEffectIcons() {
+  for (const url of DATA_CANDIDATES.map(u => u.replace('data/cards.json', 'core/effect-icons.mjs'))) {
+    try {
+      const m = await import(url);
+      EFFECT_RE = new RegExp(m.EFFECT_PATTERN, 'gi');
+      EFFECT_LOOKUP = m.effectFor;
+      EFFECT_GLYPHS = m.EFFECT_GLYPHS;
+      return true;
+    } catch { /* next candidate */ }
+  }
+  return false;
+}
+// Applied to already-rendered copy, which carries <strong> around resolved numbers.
+// Safe by construction: the alternation only matches whole effect WORDS, and no tag
+// name, class or attribute in this page's markup is one of them.
+function effectIconize(html) {
+  if (!EFFECT_RE || html == null) return html;
+  EFFECT_RE.lastIndex = 0;
+  return String(html).replace(EFFECT_RE, (m) => {
+    const e = EFFECT_LOOKUP(m);
+    if (!e || !EFFECT_GLYPHS[e.icon]) return m;
+    // `ef-solid` is how a family tells its members apart by WEIGHT rather than by a
+    // second glyph — RADX is RAD filled in (ruled 2026-08-08).
+    return `<span class="ef-word ef-${e.id}${e.solid ? ' ef-solid' : ''}" title="${e.def}">`
+      + `<svg class="ef-ic" viewBox="0 0 24 24">${EFFECT_GLYPHS[e.icon]}</svg>${m}</span>`;
+  });
+}
+
 // One source of truth: nothing renders until the card database is in hand.
-Promise.all([loadCardDb(), loadTuning(), loadCardArt()]).then(([db, tuning, art]) => {
+Promise.all([loadCardDb(), loadTuning(), loadCardArt(), loadEffectIcons()]).then(([db, tuning, art]) => {
   if (!db) return showNoServer();
   if (tuning && tuning.rps) RPS = tuning.rps;
   if (art && art.art) CARD_ART = art;   // absent = cards render without strips, never broken
