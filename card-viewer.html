@@ -642,10 +642,10 @@ function tags(...list) {
 const BEHAVIOUR_TAGS = {
   fires: { label: 'Fires', def: 'Playing this card fires the weapon you have equipped. The damage on the card is that shot, with this card already counted in.' },
   engages: { label: 'Engages', def: 'Playing this card brings your shield back up and restores part of its pool. It works even when the pool is at zero.' },
-  prints: { label: 'Prints', def: 'Playing this card draws a card from your deck into your hand. A full hand takes nothing — the card is lost, so play down first.' },
+  prints: { label: 'Prints', def: 'Playing this card prints a card from your deck into your hand. A full hand takes nothing — the card is lost, so play down first.' },
   scrambles: { label: 'Scrambles', def: 'Playing this card sends it out of the fight — you cannot play it again until the fight ends. It is not deleted; it comes back next fight.' },
   cached: { label: 'Cached', def: 'This card stays in your hand when you end the round. Everything else in hand is discarded.' },
-  'dead-after-play': { label: 'Dead after play', def: 'Once played, this card keeps being drawn but can never be played again this fight. It sits in your hand as dead weight.' },
+  'dead-after-play': { label: 'Dead after play', def: 'Once played, this card keeps being printed but can never be played again this fight. It sits in your hand as dead weight.' },
   'once-per-fight': { label: 'Once per fight', def: 'You can play this card once in a fight. After that it is locked until the next fight starts.' },
   upkeep: { label: 'Upkeep', def: null } // the sentence quotes the live number — built below
 };
